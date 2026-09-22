@@ -134,11 +134,11 @@ create policy "duell beteiligte lesen" on public.duelle for select to authentica
   using (auth.uid() in (spieler_a, spieler_b));
 drop policy if exists "duell anlegen" on public.duelle;
 create policy "duell anlegen" on public.duelle for insert to authenticated
-  with check (spieler_a = auth.uid() and klasse_id = public.meine_klasse()
+  with check (spieler_a = auth.uid() and am_zug = auth.uid() and klasse_id = public.meine_klasse()
               and exists (select 1 from public.profile p where p.id = spieler_b and p.klasse_id = public.meine_klasse()));
 drop policy if exists "duell spielen" on public.duelle;
 create policy "duell spielen" on public.duelle for update to authenticated
-  using (auth.uid() in (spieler_a, spieler_b) and status = 'laeuft')
+  using (am_zug = auth.uid() and status = 'laeuft')   -- nur wer am Zug ist
   with check (auth.uid() in (spieler_a, spieler_b));
 
 -- Live-Aktualisierung für Duelle

@@ -167,7 +167,7 @@ async function viewRangliste(){
     const liste = (data||[]).slice().sort((a,b)=>b[art]-a[art] || a.spitzname.localeCompare(b.spitzname));
     const max = Math.max(1, ...liste.map(x=>x[art]));
     $('#rl').innerHTML = liste.map((x,i)=>`<div class="panel rrow ${x.id===ich.id?'du':''}" style="--k:${i}">
-      <span class="platz p${i+1}">${i+1}</span><span class="ava" style="background:var(--${x.farbe})">${L.esc(x.spitzname[0].toUpperCase())}</span>
+      <span class="platz p${i+1}">${i<3&&window.GFX?GFX.platz(i+1):i+1}</span><span class="ava" style="background:var(--${x.farbe})">${L.esc(x.spitzname[0].toUpperCase())}</span>
       <div class="rname"><b>${L.esc(x.spitzname)}${x.id===ich.id?' <span class="tag">du</span>':''}</b><div class="bar"><i style="width:${Math.round(x[art]/max*100)}%;background:var(--${x.farbe})"></i></div><span class="tiny muted">Level ${x.level} · ${x.abzeichen} Abzeichen</span></div>
       <span class="rxp mono">${x[art]} XP</span></div>`).join('') || '<p class="muted">Noch niemand in der Klasse.</p>';
   };

@@ -65,18 +65,35 @@ function fragenFuer(fach){
 const zuItems = fragen => fragen.map(f => f.t==='R' ? {kind:'R', r: L.aufgabe(f.key, f.seed)} : {kind:'M', e: L.D.einheiten.find(e => e.id===f.id)}).filter(x => x.r || x.e);
 
 /* ---------- Zug spielen ---------- */
-// Was ist in diesem Zug zu tun? Erst offene Runden nachspielen, dann ggf. neue Runde wählen
+// Jede Antwort wird sofort gespeichert – abbrechen und neu starten bringt keine neuen Fragen.
+// Ändern darf den Datensatz nur, wer am Zug ist (Regel in der Datenbank).
+const komplett = (arr, r) => !!arr && arr.length >= r.fragen.length;
+// Neue Runde wählen darf man einmal pro Zug: wenn die letzte Runde vom Gegner stammt (oder noch keine existiert)
+const darfWaehlen = d => d.runden.length < RUNDEN && (!d.runden.length || d.runden[d.runden.length-1].von !== ich());
 function naechsterSchritt(d){
-  const offen = d.runden.findIndex(r => !meine(d, r));
+  const offen = d.runden.findIndex(r => !komplett(meine(d, r), r));
   if (offen >= 0) return {art:'spielen', runde: offen};
-  if (d.runden.length < RUNDEN) return {art:'waehlen'};
-  return {art:'fertig'};
+  if (darfWaehlen(d)) return {art:'waehlen'};
+  return {art:'speichern'};
 }
-async function zug(d){
+async function zug(id){
+  const {data: d, error} = await sb().from('duelle').select('*').eq('id', id).single();
+  if (error || !d){ L.toast('Duell nicht gefunden'); return viewListe(); }
+  if (d.status !== 'laeuft' || d.am_zug !== ich()){ L.toast(d.status === 'laeuft' ? 'Du bist gerade nicht dran – warte auf deinen Gegner.' : 'Dieses Duell ist schon beendet.'); return viewListe(); }
+  weiter(d);
+}
+function weiter(d){
   const s = naechsterSchritt(d);
   if (s.art === 'spielen') return runde(d, s.runde);
   if (s.art === 'waehlen') return fachWaehlen(d);
-  return abschliessen(d);
+  return speichern(d);
+}
+async function schreiben(d, felder){
+  const upd = Object.assign({runden: d.runden, geaendert: new Date().toISOString()}, felder);
+  if (d.id) return sb().from('duelle').update(upd).eq('id', d.id).select().single();
+  const res = await sb().from('duelle').insert(Object.assign({spieler_a: d.spieler_a, spieler_b: d.spieler_b, klasse_id: d.klasse_id, am_zug: ich(), status: 'laeuft'}, upd)).select().single();
+  if (!res.error) d.id = res.data.id;
+  return res;
 }
 function fachWaehlen(d){
   const app = L.app(); const fs = L.D.faecher.filter(f => !f.bald);
@@ -86,57 +103,51 @@ function fachWaehlen(d){
     <div class="eyebrow" style="margin-top:18px">Runde ${d.runden.length+1} von ${RUNDEN}</div><h2>Wähle ein Fach</h2>
     <div class="fachwahl">${angebot.map((f,k)=>`<button class="mode fwahl" data-f="${f.id}" style="--sc:var(--${f.farbe});--k:${k}"><h3 style="color:var(--${f.farbe})">${f.name}</h3><p class="small muted">${L.esc(f.lang)}</p></button>`).join('')}</div></div>`;
   $('#bk').onclick = () => L.go('#/duell');
-  app.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { d._gewaehlt = true; d.runden.push({fach: b.dataset.f, fragen: fragenFuer(b.dataset.f), a: null, b: null}); runde(d, d.runden.length-1); });
-}
-function runde(d, idx){
-  const r = d.runden[idx], items = zuItems(r.fragen), ergebnis = [];
-  const f = L.fachOf(r.fach);
-  L.spielen(items, `Duell · Runde ${idx+1} · ${f ? f.name : ''}`, (i, ok) => { ergebnis[i] = ok; }, async s => {
-    for (let i=0; i<items.length; i++) ergebnis[i] = !!ergebnis[i];
-    if (binA(d)) r.a = ergebnis; else r.b = ergebnis;
-    rundenErgebnis(d, idx);
+  app.querySelectorAll('[data-f]').forEach(b => b.onclick = async () => {
+    app.querySelectorAll('[data-f]').forEach(x => x.disabled = true);
+    d.runden.push({fach: b.dataset.f, von: ich(), fragen: fragenFuer(b.dataset.f), a: null, b: null});
+    const res = await schreiben(d, {});   // Runde sofort festschreiben
+    if (res.error){ d.runden.pop(); L.toast('Speichern fehlgeschlagen – bitte nochmal versuchen'); app.querySelectorAll('[data-f]').forEach(x => x.disabled = false); return; }
+    runde(d, d.runden.length-1);
   });
 }
-// Was kommt nach dieser Runde im selben Zug?
-function danach(d){
-  const offen = d.runden.findIndex(r => !meine(d, r));
-  if (offen >= 0) return {art:'spielen', runde: offen};
-  if (!d._gewaehlt && d.runden.length < RUNDEN) return {art:'waehlen'};
-  return {art:'speichern'};
+function runde(d, idx){
+  const r = d.runden[idx], alle = zuItems(r.fragen);
+  const feld = binA(d) ? 'a' : 'b';
+  r[feld] = r[feld] || [];
+  const start = r[feld].length;             // nach Abbruch an der nächsten offenen Frage weiter
+  const f = L.fachOf(r.fach);
+  L.spielen(alle.slice(start), `Duell · Runde ${idx+1} · ${f ? f.name : ''}`, (i, ok) => {
+    r[feld][start + i] = !!ok;
+    schreiben(d, {}).then(res => { if (res.error) L.toast('Antwort konnte nicht gespeichert werden'); });
+  }, () => rundenErgebnis(d, idx));
 }
 function rundenErgebnis(d, idx){
-  const weiter = danach(d);
+  const nachher = naechsterSchritt(d);
   const r = d.runden[idx], app = L.app();
   const zwischenstand = punkte(d);
+  const er = seine(d, r);
   app.innerHTML = `<div class="session"><div class="panel end pop">
     <div class="eyebrow">Runde ${idx+1} geschafft</div>
     <div class="punkte-reihe">${meine(d, r).map(ok => `<i class="${ok?'ok':'bad'}">${ok?L.ICON.ok:L.ICON.x}</i>`).join('')}</div>
-    <p class="muted">${summe(meine(d, r))} von ${r.fragen.length} richtig${seine(d, r) ? ` · ${L.esc(name(gegner(d)))}: ${summe(seine(d, r))}` : ''}</p>
+    <p class="muted">${summe(meine(d, r))} von ${r.fragen.length} richtig${komplett(er, r) ? ` · ${L.esc(name(gegner(d)))}: ${summe(er)}` : ''}</p>
     <div class="big mono">${zwischenstand.ich} : ${zwischenstand.er}</div>
-    <div class="row" style="justify-content:center"><button class="btn primary" id="w">${weiter.art==='waehlen' ? 'Nächste Runde wählen' : weiter.art==='spielen' ? 'Weiter' : 'Zug beenden'}</button></div>
+    <div class="row" style="justify-content:center"><button class="btn primary" id="w">${nachher.art==='waehlen' ? 'Nächste Runde wählen' : nachher.art==='spielen' ? 'Weiter' : 'Zug beenden'}</button></div>
   </div></div>`;
   if (summe(meine(d, r)) === r.fragen.length){ window.FX && FX.konfetti(120); }
-  // Nach dem Nachspielen wählt man direkt die nächste Runde – danach ist der Gegner dran
-  $('#w').onclick = async () => {
-    if (weiter.art === 'spielen') return runde(d, weiter.runde);
-    if (weiter.art === 'waehlen') return fachWaehlen(d);
-    $('#w').disabled = true; await speichern(d);
-  };
+  $('#w').onclick = () => { $('#w').disabled = true; weiter(d); };
 }
 function punkte(d){ let a = 0, b = 0; d.runden.forEach(r => { a += summe(r.a); b += summe(r.b); }); return binA(d) ? {ich:a, er:b} : {ich:b, er:a}; }
 async function speichern(d){
   const {ich: p1, er: p2} = punkte(d);
-  const fertig = d.runden.length === RUNDEN && d.runden.every(r => r.a && r.b);
-  const upd = {runden: d.runden, punkte_a: binA(d) ? p1 : p2, punkte_b: binA(d) ? p2 : p1, am_zug: fertig ? null : gegner(d), status: fertig ? 'fertig' : 'laeuft', geaendert: new Date().toISOString()};
-  let res;
-  if (d.id) res = await sb().from('duelle').update(upd).eq('id', d.id).select().single();
-  else res = await sb().from('duelle').insert(Object.assign({spieler_a: d.spieler_a, spieler_b: d.spieler_b, klasse_id: d.klasse_id}, upd)).select().single();
+  const fertig = d.runden.length === RUNDEN && d.runden.every(r => komplett(r.a, r) && komplett(r.b, r));
+  const res = await schreiben(d, {punkte_a: binA(d) ? p1 : p2, punkte_b: binA(d) ? p2 : p1, am_zug: fertig ? null : gegner(d), status: fertig ? 'fertig' : 'laeuft'});
   if (res.error){ L.toast('Speichern fehlgeschlagen – bitte nochmal versuchen'); const w=$('#w'); if (w) w.disabled = false; return; }
   L.addXP(SPIEL_XP);
   await laden();
-  abschliessen(res.data, !fertig);
+  abschliessen(res.data);
 }
-function abschliessen(d, wartet){
+function abschliessen(d){
   const app = L.app(), p = punkte(d);
   const fertig = d.status === 'fertig';
   const sieg = p.ich > p.er, remis = p.ich === p.er;
@@ -159,8 +170,8 @@ const ava = id => `<span class="ava" style="background:var(--${(namen[id]||{}).f
 function vs(d){ const p = punkte(d); return `<div class="vs"><div>${ava(ich())}<b>Du</b></div><span class="mono">${p.ich} : ${p.er}</span><div>${ava(gegner(d))}<b>${L.esc(name(gegner(d)))}</b></div></div>`; }
 function rundenTabelle(d){
   return `<div class="rtab">${Array.from({length:RUNDEN}, (_, i) => { const r = d.runden[i]; const f = r && L.fachOf(r.fach);
-    const zeile = arr => arr ? arr.map(ok => `<i class="${ok?'ok':'bad'}"></i>`).join('') : '<i></i><i></i><i></i>';
-    return `<div class="rt"><span class="rt-p">${zeile(r && meine(d, r))}</span><span class="rt-f" style="color:var(--${f?f.farbe:'ink-3'})">${f ? f.name : 'Runde '+(i+1)}</span><span class="rt-p">${zeile(r && seine(d, r) && (meine(d, r) || d.status==='fertig') ? seine(d, r) : null)}</span></div>`; }).join('')}</div>`;
+    const zeile = arr => Array.from({length:FRAGEN}, (_, k) => !arr || arr[k] === undefined ? '<i></i>' : `<i class="${arr[k]?'ok':'bad'}"></i>`).join('');
+    return `<div class="rt"><span class="rt-p">${zeile(r && meine(d, r))}</span><span class="rt-f" style="color:var(--${f?f.farbe:'ink-3'})">${f ? f.name : 'Runde '+(i+1)}</span><span class="rt-p">${zeile(r && komplett(seine(d, r), r) && (komplett(meine(d, r), r) || d.status==='fertig') ? seine(d, r) : null)}</span></div>`; }).join('')}</div>`;
 }
 async function viewListe(){
   const app = L.app();
@@ -174,14 +185,14 @@ async function viewListe(){
     return `<div class="panel drow ${d.status==='fertig'?(p.ich>p.er?'sieg':p.ich<p.er?'niederlage':''):''}">${ava(gegner(d))}<div><b>${L.esc(name(gegner(d)))}</b><div class="small muted">${st}</div></div><span class="mono">${p.ich} : ${p.er}</span>
       ${d.status==='laeuft' && d.am_zug===ich() ? `<div class="row"><button class="btn primary" data-spiel="${d.id}">Spielen</button>${!d.runden.some(r=>r.b) && !binA(d) ? `<button class="btn ghost" data-ab="${d.id}">Ablehnen</button>` : ''}</div>` : d.status==='fertig' ? `<button class="btn" data-rev="${gegner(d)}">Revanche</button>` : ''}</div>`; };
   app.innerHTML = `<button class="btn ghost back" id="bk">${L.ICON.back}Übersicht</button>
-  <div class="section-head" style="margin-top:12px"><div><div class="eyebrow">Gegen deine Klasse</div><h1>Quizduell</h1></div><button class="btn primary" id="neu">${L.ICON.swords}Neues Duell</button></div>
+  <div class="section-head" style="margin-top:12px"><div><div class="eyebrow">Gegen deine Klasse</div><h1>Quizduell</h1><p class="muted small" style="margin-top:6px;max-width:520px">So läuft es: 3 Runden mit je 3 Fragen. Du spielst die Runde deines Gegners nach und wählst dann die nächste – danach ist er dran.</p></div><button class="btn primary" id="neu">${L.ICON.swords}Neues Duell</button></div>
   ${dran.length ? `<section class="section"><div class="section-head"><h2>Du bist dran</h2></div><div class="stack">${dran.map(karte).join('')}</div></section>` : ''}
   ${warten.length ? `<section class="section"><div class="section-head"><h2>Warten auf Gegner</h2></div><div class="stack">${warten.map(karte).join('')}</div></section>` : ''}
   ${fertig.length ? `<section class="section"><div class="section-head"><h2>Beendet</h2></div><div class="stack">${fertig.map(karte).join('')}</div></section>` : ''}
   ${!duelle.length ? '<p class="muted" style="margin-top:24px">Noch keine Duelle. Fordere jemanden heraus!</p>' : ''}`;
   $('#bk').onclick = () => L.go('#/');
   $('#neu').onclick = () => gegnerWaehlen();
-  app.querySelectorAll('[data-spiel]').forEach(b => b.onclick = () => zug(JSON.parse(JSON.stringify(duelle.find(d => d.id===b.dataset.spiel)))));
+  app.querySelectorAll('[data-spiel]').forEach(b => b.onclick = () => { b.disabled = true; zug(b.dataset.spiel); });
   app.querySelectorAll('[data-rev]').forEach(b => b.onclick = () => neuesDuell(b.dataset.rev));
   app.querySelectorAll('[data-ab]').forEach(b => b.onclick = async () => { if (!confirm('Duell ablehnen?')) return; await sb().from('duelle').update({status:'abgelehnt', am_zug:null}).eq('id', b.dataset.ab); viewListe(); });
 }
@@ -201,6 +212,6 @@ async function gegnerWaehlen(){
 function neuesDuell(gegnerId){
   const p = sync().profil();
   if (!namen[ich()]) namen[ich()] = p;
-  fachWaehlen({id:null, spieler_a: ich(), spieler_b: gegnerId, klasse_id: p.klasse_id, runden: [], status:'laeuft'});
+  fachWaehlen({id:null, spieler_a: ich(), spieler_b: gegnerId, klasse_id: p.klasse_id, runden: [], status:'laeuft', am_zug: ich()});
 }
 })();

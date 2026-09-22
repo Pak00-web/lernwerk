@@ -122,10 +122,10 @@ const numEq = base => (inp, val) => { const s = norm(inp); if (!s || !new RegExp
 const GEN = {
   dez2bin(){ const n = rnd(20,255); const rows=[]; let x=n; while(x>0){ rows.push([x+' : 2', Math.floor(x/2), x%2]); x=Math.floor(x/2); }
     return {name:'Dezimal → Dual', thema:'aew-zahl', frage:'Rechne die Dezimalzahl mit der <b>Divisionsmethode</b> in eine Dualzahl (8 Bit) um.', zeige:n+'<sub>10</sub>', loesung:bits(n,8), check:(i)=>numEq(2)(i,n), punkte:3,
-      schritte:'<p class="small muted">So lange durch 2 teilen, bis 0 herauskommt. Reste <b>von unten nach oben</b> lesen.</p>'+tbl(['Rechnung','Ergebnis','Rest'], rows, 2)+'<p style="margin-top:8px">Ergebnis: <code>'+bits(n,8)+'</code></p>'}; },
+      schritte:'<p class="small muted">So lange durch 2 teilen, bis 0 herauskommt. Reste <b>von unten nach oben</b> lesen.</p>'+tbl(['Rechnung','Ergebnis','Rest'], rows, 2)+'<p style="margin-top:8px">Ergebnis: <code>'+bits(n,8)+'</code></p>'+(window.GFX?GFX.stellen(n):'')}; },
   bin2dez(){ const n = rnd(20,255); const b=n.toString(2).padStart(8,'0'); const w=[128,64,32,16,8,4,2,1]; const teile=w.filter((x,i)=>b[i]==='1');
     return {name:'Dual → Dezimal', thema:'aew-zahl', frage:'Rechne die Dualzahl in eine Dezimalzahl um (Additionsmethode).', zeige:grp4(b)+'<sub>2</sub>', loesung:String(n), check:(i)=>numEq(10)(i,n), punkte:2,
-      schritte:tbl(['Stellenwert',...w],[['Bit',...b.split('').map(c=>c==='1'?'<b>1</b>':'0')]])+'<p style="margin-top:8px">Alle Einsen addieren: <code>'+teile.join(' + ')+' = '+n+'</code></p>'}; },
+      schritte:(window.GFX?GFX.stellen(n):tbl(['Stellenwert',...w],[['Bit',...b.split('').map(c=>c==='1'?'<b>1</b>':'0')]]))+'<p style="margin-top:8px">Alle Einsen addieren: <code>'+teile.join(' + ')+' = '+n+'</code></p>'}; },
   dez2hex(){ const n = rnd(100,9999); const rows=[]; let x=n; const H='0123456789ABCDEF'; while(x>0){ rows.push([x+' : 16', Math.floor(x/16), (x%16)+(x%16>9?' ('+H[x%16]+')':'')]); x=Math.floor(x/16); }
     return {name:'Dezimal → Hex', thema:'aew-zahl', frage:'Rechne die Dezimalzahl in eine Hexadezimalzahl um.', zeige:n+'<sub>10</sub>', loesung:hexg(n, n>255?4:2), check:(i)=>numEq(16)(i,n), punkte:3,
       schritte:'<p class="small muted">Durch 16 teilen, Reste von unten nach oben lesen (10=A … 15=F).</p>'+tbl(['Rechnung','Ergebnis','Rest'], rows, 2)+'<p style="margin-top:8px">Ergebnis: <code>'+n.toString(16).toUpperCase()+'</code> · als Bytes <code>'+hexg(n,n>255?4:2)+'</code></p>'}; },
@@ -202,7 +202,7 @@ function viewHome(){
   const kl = S.klausuren.slice(-4).reverse();
   app.innerHTML = `
   <section class="hello">
-    <div class="panel today">
+    <div class="panel today">${window.GFX?`<div class="today-szene">${GFX.szene()}</div>`:''}
       <div class="ring" style="--p:${zielP};--c:var(--accent)"><div><b>${heute}</b><small>von ${S.ziel}<br>heute</small></div></div>
       <div class="stack" style="gap:12px">
         <div><div class="eyebrow">Heute</div><h2>${heute>=S.ziel?'Tagesziel geschafft – stark!':heute?'Weiter so, noch '+(S.ziel-heute)+' bis zum Tagesziel.':'Bereit für die nächste Klausur?'}</h2></div>
@@ -214,9 +214,9 @@ function viewHome(){
       </div>
     </div>
     <div class="panel stats">
-      <div class="stat"><b>${alle.length}</b><span>Lerneinheiten</span></div>
-      <div class="stat"><b>${gelernt}</b><span>sicher gelernt</span></div>
-      <div class="stat"><b>${S.klausuren.length}</b><span>Probe-Klausuren</span></div>
+      <div class="stat"><b data-zahl="${alle.length}">${alle.length}</b><span>Lerneinheiten</span></div>
+      <div class="stat"><b data-zahl="${gelernt}">${gelernt}</b><span>sicher gelernt</span></div>
+      <div class="stat"><b data-zahl="${S.klausuren.length}">${S.klausuren.length}</b><span>Probe-Klausuren</span></div>
       <div class="stat" style="grid-column:1/-1"><div class="bar" title="Gesamtfortschritt"><i style="width:${mastery(alle)}%;background:var(--accent)"></i></div><span>Gesamtfortschritt ${mastery(alle)} %</span></div>
     </div>
   </section>
@@ -234,10 +234,10 @@ function viewHome(){
   <section class="section">
     <div class="section-head"><h2>Spielen</h2><span class="muted small">für zwischendurch · Bestwerte werden gespeichert</span></div>
     <div class="modes spiele">
-      <button class="mode spiel" data-spiel="rennen" style="--sc:var(--its1)"><div class="ico">${ICON.timer}</div><h3>Zeitrennen</h3><p class="small muted">60 Sekunden – so viele richtige wie möglich.</p><span class="best">Rekord ${S.stat.rennenBest}</span></button>
-      <button class="mode spiel" data-spiel="leben" style="--sc:var(--bad)"><div class="ico">${ICON.heart}</div><h3>3 Leben</h3><p class="small muted">Wie weit kommst du? Es wird immer schwerer.</p><span class="best">Rekord ${S.stat.lebenBest}</span></button>
-      ${window.LW_DUELL ? `<button class="mode spiel" data-spiel="duell" style="--sc:var(--aew)"><div class="ico">${ICON.swords}</div><h3>Quizduell</h3><p class="small muted">Fordere jemanden aus deiner Klasse heraus.</p>${window.LW_DUELL.offen() ? '<span class="best heiss">'+window.LW_DUELL.offen()+' × du bist dran</span>' : '<span class="best">3 Runden · 9 Fragen</span>'}</button>` : ''}
-      ${window.LW_SYNC && window.LW_SYNC.angemeldet() ? `<button class="mode spiel" data-spiel="rangliste" style="--sc:var(--dk)"><div class="ico">${ICON.trophy}</div><h3>Rangliste</h3><p class="small muted">Wer sammelt diese Woche die meisten XP?</p><span class="best">Level ${level().n} · ${S.xp} XP</span></button>` : ''}
+      <button class="mode spiel" data-spiel="rennen" style="--sc:var(--its1)">${kachelBild('rennen', ICON.timer)}<h3>Zeitrennen</h3><p class="small muted">60 Sekunden – so viele richtige wie möglich.</p><span class="best">Rekord ${S.stat.rennenBest}</span></button>
+      <button class="mode spiel" data-spiel="leben" style="--sc:var(--bad)">${kachelBild('leben', ICON.heart)}<h3>3 Leben</h3><p class="small muted">Wie weit kommst du? Es wird immer schwerer.</p><span class="best">Rekord ${S.stat.lebenBest}</span></button>
+      ${window.LW_DUELL ? `<button class="mode spiel" data-spiel="duell" style="--sc:var(--aew)">${kachelBild('duell', ICON.swords)}<h3>Quizduell</h3><p class="small muted">Fordere jemanden aus deiner Klasse heraus.</p>${window.LW_DUELL.offen() ? '<span class="best heiss">'+window.LW_DUELL.offen()+' × du bist dran</span>' : '<span class="best">3 Runden · 9 Fragen</span>'}</button>` : ''}
+      ${window.LW_SYNC && window.LW_SYNC.angemeldet() ? `<button class="mode spiel" data-spiel="rangliste" style="--sc:var(--dk)">${kachelBild('rangliste', ICON.trophy)}<h3>Rangliste</h3><p class="small muted">Wer sammelt diese Woche die meisten XP?</p><span class="best">Level ${level().n} · ${S.xp} XP</span></button>` : ''}
     </div>
   </section>
 
@@ -253,6 +253,7 @@ function viewHome(){
   <p class="foot">${window.LW_SYNC && window.LW_SYNC.angemeldet() ? 'Lernfortschritt wird in deinem Konto gespeichert.' : 'Lernfortschritt wird in diesem Browser gespeichert.'}</p>`;
   app.querySelectorAll('[data-spiel]').forEach(b => b.onclick = () => ['duell','rangliste'].includes(b.dataset.spiel) ? go('#/'+b.dataset.spiel) : startSpiel(b.dataset.spiel));
   const ab = $('#abzMehr'); if (ab) ab.onclick = () => go('#/abzeichen');
+  app.querySelectorAll('[data-zahl]').forEach(b => FX.hochzaehlen(b, +b.dataset.zahl, 900));
   $('#goOn').onclick = () => startSession({titel:'Weiterlernen', kinds:['K','M','R'], scope:{}, n:15});
   const w = $('#goWeak'); if (w) w.onclick = () => startSession({titel:'Schwächen trainieren', kinds:['K','M'], scope:{}, n:15, nurSchwach:true});
   app.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => startMode(b.dataset.mode, {}));
@@ -261,23 +262,24 @@ function viewHome(){
 function abzStreifen(){
   const da = FX.ABZ.filter(a=>S.abz[a.id]).sort((a,b)=>S.abz[b.id]-S.abz[a.id]);
   return `<section class="section"><div class="section-head"><h2>Abzeichen</h2><button class="btn ghost" id="abzMehr">${ICON.trophy}${da.length} von ${FX.ABZ.length} · alle ansehen</button></div>
-    <div class="abz-streifen">${da.length ? da.slice(0,8).map(a=>`<div class="abz-mini" title="${esc(a.name)}: ${esc(a.text)}">${a.sym}</div>`).join('') : '<p class="muted small">Noch keine Abzeichen – beantworte deine erste Frage richtig!</p>'}</div></section>`;
+    <div class="abz-streifen">${da.length ? da.slice(0,8).map((a,k)=>`<div class="abz-mini" style="--k:${k}" title="${esc(a.name)}: ${esc(a.text)}">${FX.medaille(a)}</div>`).join('') : '<p class="muted small">Noch keine Abzeichen – beantworte deine erste Frage richtig!</p>'}</div></section>`;
 }
 function viewAbzeichen(){
   const ctx = {S, streak, level:()=>level().n};
   app.innerHTML = `<button class="btn ghost back" id="bk">${ICON.back}Übersicht</button>
   <div style="margin-top:12px"><div class="eyebrow">Sammlung</div><h1>Abzeichen</h1><p class="muted" style="margin-top:6px">${FX.ABZ.filter(a=>S.abz[a.id]).length} von ${FX.ABZ.length} freigeschaltet</p></div>
   <div class="abz-grid">${FX.ABZ.map((a,k)=>{ const hat = S.abz[a.id]; const f = !hat && a.fort ? a.fort(ctx) : null;
-    return `<div class="panel abz ${hat?'hat':'zu'}" style="--k:${k}"><div class="abz-sym">${hat?a.sym:ICON.lock}</div><h3>${esc(a.name)}</h3><p class="small muted">${esc(a.text)}</p>${hat?`<span class="tiny muted">seit ${new Date(hat).toLocaleDateString('de-DE')}</span>`: f?`<div class="bar"><i style="width:${Math.min(100,Math.round(f[0]/f[1]*100))}%;background:var(--accent)"></i></div><span class="tiny muted">${Math.min(f[0],f[1])} / ${f[1]}</span>`:''}</div>`; }).join('')}</div>`;
+    return `<div class="panel abz ${hat?'hat':'zu'}" style="--k:${k}"><div class="abz-sym">${hat?FX.medaille(a):(window.GFX?GFX.gesperrt():ICON.lock)}</div><h3>${esc(a.name)}</h3><p class="small muted">${esc(a.text)}</p>${hat?`<span class="tiny muted">seit ${new Date(hat).toLocaleDateString('de-DE')}</span>`: f?`<div class="bar"><i style="width:${Math.min(100,Math.round(f[0]/f[1]*100))}%;background:var(--accent)"></i></div><span class="tiny muted">${Math.min(f[0],f[1])} / ${f[1]}</span>`:''}</div>`; }).join('')}</div>`;
   $('#bk').onclick = () => go('#/');
 }
+const kachelBild = (k, ico) => window.GFX ? `<div class="kachel-bild">${GFX.kachel[k]}</div>` : `<div class="ico">${ico}</div>`;
 function modeTile(mode, ico, t, sub, col){ return `<button class="mode" data-mode="${mode}"><div class="ico" style="color:${col}">${ICON[ico]}</div><h3>${t}</h3><p class="small muted">${sub}</p></button>`; }
 function fachCard(f){
   const th = D.themen.filter(t=>t.fach===f.id);
-  if (f.bald) return `<div class="fach soon" style="--fc:var(--${f.farbe})"><div class="fach-head"><div class="ring sm" style="--p:0"><div><b>–</b></div></div><div><h3>${f.name}</h3><div class="small muted">${f.lang}</div></div></div><p class="small muted">Noch keine Unterlagen. Sobald im Unterricht etwas dran war, kommt es hier dazu.</p></div>`;
+  if (f.bald) return `<div class="fach soon" style="--fc:var(--${f.farbe})"><div class="fach-head"><div class="ring sm" style="--p:0"><div><b>–</b></div></div><div><h3>${f.name}</h3><div class="small muted">${f.lang}</div></div>${window.GFX&&GFX.fach[f.id]?`<div class="fach-bild">${GFX.fach[f.id]}</div>`:''}</div><p class="small muted">Noch keine Unterlagen. Sobald im Unterricht etwas dran war, kommt es hier dazu.</p></div>`;
   const list = einheitenIn({fach:f.id}); const m = mastery(list);
   return `<button class="fach" data-fach="${f.id}" style="--fc:var(--${f.farbe})">
-    <div class="fach-head"><div class="ring sm" style="--p:${m};--c:var(--${f.farbe})"><div><b>${m}%</b></div></div><div><h3>${f.name}</h3><div class="small muted">${f.lang} · ${list.length} Einheiten</div></div></div>
+    <div class="fach-head"><div class="ring sm" style="--p:${m};--c:var(--${f.farbe})"><div><b>${m}%</b></div></div><div><h3>${f.name}</h3><div class="small muted">${f.lang} · ${list.length} Einheiten</div></div>${window.GFX&&GFX.fach[f.id]?`<div class="fach-bild">${GFX.fach[f.id]}</div>`:''}</div>
     <div class="themes">${th.map(t=>{const l=einheitenIn({themen:[t.id]}); const mm=mastery(l); return `<div class="th"><span>${esc(t.name)}</span><div class="bar"><i style="width:${mm}%;background:var(--${f.farbe})"></i></div></div>`;}).join('')}</div>
   </button>`;
 }
@@ -400,7 +402,7 @@ function renderK(e){
   $('#q').innerHTML = `${qhead(e)}
   <div class="card3d" id="card"><div class="card-in" id="cin">
     <div class="face"><div class="eyebrow">Frage</div><div class="q">${md(e.frage)}</div><div class="hint">Erst selbst antworten (laut oder im Kopf), dann umdrehen. <span class="mono">Leertaste</span></div></div>
-    <div class="face back-face"><div class="eyebrow">Musterlösung</div><div class="answer">${md(e.antwort)}</div>${srcHtml(e.quelle)}</div>
+    <div class="face back-face"><div class="eyebrow">Musterlösung</div><div class="answer">${md(e.antwort)}</div>${window.GFX?GFX.bild(e):''}${srcHtml(e.quelle)}</div>
   </div></div>
   <div id="act" class="row" style="margin-top:16px"><button class="btn primary" id="flip" style="flex:1">Umdrehen</button></div>`;
   const cin=$('#cin'); requestAnimationFrame(()=>{ const h=Math.max(...[...cin.children].map(c=>c.scrollHeight)); cin.style.minHeight=Math.max(300,h)+'px'; });
@@ -444,7 +446,7 @@ function renderM(e, examMode){
     target.querySelectorAll('.opt').forEach(b=>{ const i=+b.dataset.o, o=e.optionen[i]; b.disabled=true; b.classList.remove('sel');
       if (o[1] && sel.has(i)) b.classList.add('right'); else if (!o[1] && sel.has(i)) b.classList.add('wrong'); else if (o[1]) b.classList.add('miss');
       if (o[2] && session.modus!=='rennen') b.insertAdjacentHTML('beforeend', `<span class="why">${md(o[2])}</span>`); });
-    $('#mfb').innerHTML = `<div class="feedback ${ok?'ok':'bad'} pop">${ok?ICON.ok+pick(LOB):ICON.x+'Nicht ganz – schau dir die Erklärungen an.'}</div>${session.modus==='rennen'?'':srcHtml(e.quelle)}`;
+    $('#mfb').innerHTML = `<div class="feedback ${ok?'ok':'bad'} pop">${ok?ICON.ok+pick(LOB):ICON.x+'Nicht ganz – schau dir die Erklärungen an.'}</div>${session.modus==='rennen'?'':(window.GFX?GFX.bild(e):'')+srcHtml(e.quelle)}`;
     rateItem(e.id, ok, false);
     const treff = target.querySelector('.opt.right') || $('#check');
     const auto = antwort(ok, treff, ok?10:2, $('#qbox'));
@@ -562,7 +564,7 @@ function renderExamK(e){
   <div class="row" style="margin-top:16px"><button class="btn primary" id="show" style="flex:1">Mit Musterlösung vergleichen</button></div>`;
   $('#show').onclick = () => {
     exam.ant[exam.i] = $('#ta').value; $('#ta').disabled = true;
-    $('#kfb').innerHTML = `<div class="panel" style="margin-top:14px;padding:16px;background:var(--surface-2);box-shadow:none"><div class="eyebrow">Musterlösung</div><div class="answer" style="margin-top:6px">${md(e.antwort)}</div>${srcHtml(e.quelle)}</div>
+    $('#kfb').innerHTML = `<div class="panel" style="margin-top:14px;padding:16px;background:var(--surface-2);box-shadow:none"><div class="eyebrow">Musterlösung</div><div class="answer" style="margin-top:6px">${md(e.antwort)}</div>${window.GFX?GFX.bild(e):''}${srcHtml(e.quelle)}</div>
     <p class="small muted" style="margin-top:12px">Bewerte ehrlich – wie ein Lehrer:</p>
     <div class="rate"><button class="btn no" data-p="0">0 Punkte<small>nicht getroffen</small></button><button class="btn mid" data-p="0.5">${de((e.punkte||2)/2,1)} Punkte<small>teilweise</small></button><button class="btn yes" data-p="1">${e.punkte||2} Punkte<small>vollständig</small></button></div>`;
     $('#show').remove();
@@ -607,6 +609,7 @@ Object.assign(window.LW, {
   // Feste Fragenfolge spielen (Duell): items = [{kind:'M', e} | {kind:'R', r}]
   spielen(items, titel, beiAntwort, beiEnde){ items.forEach(it=>{ if (it.e) delete it.e._order; }); session = {titel, modus:'duell', items, i:0, richtig:0, xp:0, combo:0, cfg:{}, beiAntwort, beiEnde}; go('#/uebung'); },
 });
+if (window.GFX){ $('#logo').innerHTML = GFX.logo(); } FX.hintergrund();
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
 route();
 })();

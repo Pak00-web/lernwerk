@@ -47,7 +47,7 @@ button{font:inherit;color:inherit}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .top .wrap{display:flex;align-items:center;gap:12px;padding-block:12px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);cursor:pointer;background:none;border:0;padding:0}
-.brand-mark{width:34px;height:34px;border-radius:10px;background:var(--ink);display:grid;place-items:center}
+.brand-mark{width:38px;height:38px;border-radius:11px;background:#14213D;display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
 .brand-mark svg{width:20px;height:20px}
 .brand b{font-family:var(--f-display);font-size:22px;font-weight:800;letter-spacing:-.02em}
 .brand span{font-size:12px;color:var(--ink-3);display:block;margin-top:-2px}
@@ -233,8 +233,6 @@ details.steps[open] summary::before{transform:rotate(90deg)}
 @keyframes platzt{0%{transform:scale(1)}30%{transform:scale(1.5);color:var(--bad)}100%{transform:scale(1)}}
 .spiele{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
 .mode.spiel{position:relative;overflow:hidden;border-color:color-mix(in srgb,var(--sc) 35%,var(--line))}
-.mode.spiel::after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%;background:var(--sc);opacity:.08;transition:transform .3s}
-.mode.spiel:hover::after{transform:scale(1.6)}
 .mode.spiel .ico{color:var(--sc);background:color-mix(in srgb,var(--sc) 12%,var(--surface))}
 .best{font-size:12.5px;font-weight:800;color:var(--sc);letter-spacing:.02em}
 .best.heiss{color:#fff;background:var(--sc);border-radius:999px;padding:2px 10px;justify-self:start;animation:puls 1.6s infinite}
@@ -246,7 +244,7 @@ details.steps[open] summary::before{transform:rotate(90deg)}
 .abz{padding:18px;display:grid;gap:6px;justify-items:start;animation:optin .4s both;animation-delay:calc(var(--k,0)*30ms)}
 .abz .abz-sym{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;font-size:30px;background:var(--surface-2)}
 .abz.hat .abz-sym{background:color-mix(in srgb,var(--mark) 45%,var(--surface))}
-.abz.zu{opacity:.7}.abz.zu .abz-sym{color:var(--ink-3)}.abz.zu .abz-sym svg{width:22px;height:22px}
+.abz.zu h3{color:var(--ink-2)}
 .abz .bar{width:100%;height:6px}
 .overlay{position:fixed;inset:0;z-index:65;background:color-mix(in srgb,var(--ink) 45%,transparent);display:grid;place-items:center;padding:16px;animation:fade .2s ease}
 .overlay.weg{opacity:0;transition:opacity .2s}
@@ -291,7 +289,7 @@ details.steps[open] summary::before{transform:rotate(90deg)}
 .rname{display:grid;gap:4px}.rname .bar{height:6px}
 .platz{font-family:var(--f-display);font-weight:800;font-size:20px;text-align:center;color:var(--ink-3)}
 .platz.p1{color:#D4A017}.platz.p2{color:#8A9BB0}.platz.p3{color:#B8733A}
-.platz.p1::before{content:"👑";display:block;font-size:14px;line-height:1}
+.platz-svg{width:32px;height:32px;display:block;margin:auto;animation:popin .5s both}
 .rxp{font-weight:600}
 .drow{display:grid;grid-template-columns:28px 1fr auto auto;gap:12px;align-items:center;padding:12px 16px;text-align:left;width:100%}
 .drow.wahl{cursor:pointer;grid-template-columns:28px 1fr auto;border:1px solid var(--line);font:inherit;color:inherit}
@@ -316,4 +314,88 @@ details.steps[open] summary::before{transform:rotate(90deg)}
 .rt-p i{width:18px;height:18px;border-radius:5px;background:var(--surface-2)}
 .rt-p i.ok{background:var(--ok)}.rt-p i.bad{background:var(--bad)}
 .rt-f{font-weight:800;font-size:13px}
+
+/* ---------- Grafiken und Leben ---------- */
+@property --p{syntax:"<number>";inherits:false;initial-value:0}
+.ring{animation:ringfuellen 1.3s cubic-bezier(.2,.8,.2,1) both}
+@keyframes ringfuellen{from{--p:0}}
+/* Hintergrund */
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.top,main,.foot{position:relative;z-index:1}
+.top{z-index:20}
+.bg-teil{position:absolute;opacity:.16;transform:translateY(calc(var(--sy,0) * var(--t) * -1px))}
+:root[data-theme="dark"] .bg-teil{opacity:.2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bg-teil{opacity:.2}}
+.bg-teil svg{display:block;animation:schweben var(--d,24s) ease-in-out var(--v,0s) infinite alternate}
+@keyframes schweben{from{transform:translate(0,0) rotate(var(--r,0deg))}to{transform:translate(22px,-38px) rotate(calc(var(--r,0deg) * -1))}}
+/* Logo */
+.brand-mark .logo-svg{width:30px;height:30px;overflow:visible}
+.logo-bloecke rect{transform-box:fill-box;transform-origin:center;animation:block .45s cubic-bezier(.2,1.5,.4,1) both;animation-delay:calc(var(--i)*90ms + .1s)}
+@keyframes block{from{transform:scale(0) translateY(6px);opacity:0}}
+.logo-hut{transform-box:fill-box;transform-origin:50% 100%;animation:hut .6s cubic-bezier(.2,1.4,.4,1) .6s both}
+@keyframes hut{from{transform:translateY(-10px) rotate(-20deg);opacity:0}}
+.brand:hover .logo-hut{animation:hutwackeln .6s ease}
+@keyframes hutwackeln{30%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}}
+.brand:hover .logo-bloecke rect{animation:hops .4s ease both;animation-delay:calc(var(--i)*50ms)}
+@keyframes hops{50%{transform:translateY(-3px)}}
+/* Startseite: gestaffeltes Einblenden */
+#app>section,#app>.hello>*{animation:auftritt .55s cubic-bezier(.2,.8,.2,1) both}
+#app>section:nth-of-type(2){animation-delay:.08s}#app>section:nth-of-type(3){animation-delay:.16s}#app>section:nth-of-type(4){animation-delay:.24s}#app>section:nth-of-type(5){animation-delay:.32s}#app>section:nth-of-type(6){animation-delay:.4s}
+#app>.hello>*:nth-child(2){animation-delay:.1s}
+@keyframes auftritt{from{opacity:0;transform:translateY(16px)}}
+.chip.flame svg{animation:flacker .7s ease-in-out infinite alternate;transform-origin:50% 90%}
+/* Heute-Szene */
+.today{position:relative;overflow:hidden}
+.today-szene{position:absolute;right:8px;bottom:0;width:150px;opacity:.95;pointer-events:none}
+.today .stack{position:relative;z-index:1;padding-right:120px}
+@media (max-width:1000px){.today-szene{width:130px;opacity:.5}.today .stack{padding-right:0}}
+@media (max-width:480px){.today-szene{display:none}}
+.szene .zeile{transform-box:fill-box;transform-origin:left;animation:tippen 5s steps(12) infinite;animation-delay:calc(var(--i)*.6s)}
+@keyframes tippen{0%{transform:scaleX(0)}40%,85%{transform:scaleX(1)}100%{transform:scaleX(0)}}
+.szene .dampf{animation:dampf 2.4s ease-in-out infinite;animation-delay:calc(var(--i)*.5s);opacity:0}
+@keyframes dampf{0%{transform:translateY(4px);opacity:0}40%{opacity:.8}100%{transform:translateY(-8px);opacity:0}}
+/* Spiel-Kacheln */
+.kachel-bild{width:64px;height:64px}
+.kachel-bild .ill{width:64px;height:64px;overflow:visible}
+.mode.spiel{border-top:4px solid var(--sc)}
+.mode.spiel:hover .kachel-bild{animation:hops .5s ease}
+.ill-rennen .zeiger{transform-origin:32px 36px;animation:zeiger 3s linear infinite}
+@keyframes zeiger{to{transform:rotate(360deg)}}
+.ill-leben .herz{transform-box:fill-box;transform-origin:center;animation:schlag 1.6s ease-in-out infinite;animation-delay:calc(var(--i)*.25s)}
+@keyframes schlag{0%,40%,100%{transform:scale(1)}15%{transform:scale(1.18)}25%{transform:scale(.95)}}
+.ill-duell .schwert{transition:transform .35s cubic-bezier(.2,1.4,.4,1)}
+.ill-duell .schwert.l{transform:rotate(-14deg);transform-origin:10px 54px}
+.ill-duell .schwert.r{transform:rotate(14deg);transform-origin:54px 54px}
+.ill-duell .funke{opacity:0;transition:opacity .2s;transform-box:fill-box;transform-origin:center}
+.mode.spiel:hover .ill-duell .schwert{transform:none}
+.mode.spiel:hover .ill-duell .funke{opacity:1;animation:funke .5s ease .2s}
+@keyframes funke{from{transform:scale(.3)}to{transform:scale(1.4)}}
+.ill-rang .glanz{animation:glanz 3.2s ease-in-out infinite}
+@keyframes glanz{0%,60%{transform:translateX(0)}100%{transform:translateX(60px)}}
+/* Fach-Bilder */
+.fach-head{position:relative}
+.fach-bild{margin-left:auto;width:56px;height:56px;flex:none}
+.fach-bild .ill{width:56px;height:56px;overflow:visible;transition:transform .3s cubic-bezier(.2,1.4,.4,1)}
+.fach:hover .fach-bild .ill{transform:rotate(-6deg) scale(1.08)}
+.ill-wbl .stift{transform-box:fill-box;transform-origin:100% 0;transition:transform .4s}
+.fach:hover .ill-wbl .stift{transform:translate(-5px,-3px) rotate(-8deg)}
+.ill-its .buegel{transition:transform .35s}
+.fach:hover .ill-its .buegel{transform:translateY(-5px)}
+.ill-aew .cursor{animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+/* Medaillen */
+.medaille{width:100%;height:100%;display:block;overflow:visible}
+.abz-mini{background:none;border:0;box-shadow:none;padding:0;animation:popin .45s both;animation-delay:calc(var(--k,0)*60ms + .3s)}
+.abz-mini:hover .medaille{animation:hops .4s ease}
+.abz .abz-sym{width:64px;height:64px;background:none}
+.abz.hat .abz-sym{background:none}
+.m-glanz{animation:mglanz 4s ease-in-out infinite}
+@keyframes mglanz{0%,70%{transform:rotate(20deg) translateX(0)}100%{transform:rotate(20deg) translateX(80px)}}
+.abz-gross{width:120px;height:120px;font-size:0}
+.medaille.gross{filter:drop-shadow(0 8px 16px rgba(0,0,0,.25))}
+/* Erklär-Grafiken */
+figure.lern-grafik{margin:14px 0 4px;padding:10px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.face figure.lern-grafik{background:var(--surface-2)}
+.lern-grafik svg{width:100%;height:auto;display:block;max-height:260px}
+svg.lern-grafik{width:100%;height:auto;margin-top:12px;display:block}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
