@@ -83,7 +83,14 @@ const ABZ = [
   {id:'fach', stufe:'gold', sym:'hut', zahl:null, name:'Fachexperte',       text:'Ein Fach zu 80 % sicher.',               ok:c=>c.faecher.some(f=>c.mastery(f)>=80)},
   {id:'duell', stufe:'silber', sym:'schwerter', zahl:null, name:'Duellant',          text:'Das erste Quizduell gewonnen.',          ok:c=>c.S.stat.duelleGewonnen>=1},
   {id:'lvl10', stufe:'gold', sym:'krone', zahl:10, name:'Level 10',          text:'Level 10 erreicht.',                     ok:c=>c.level()>=10, fort:c=>[c.level(),10]},
+  // Lernwerk Games (Werte spiegelt games.js aus dem Spielerkonto)
+  {id:'bombe', stufe:'bronze', sym:'bombe', zahl:null, name:'Entschärft',        text:'Ein Bomben-Quiz gewonnen.',               ok:c=>sp(c).bombe>=1},
+  {id:'sammler', stufe:'silber', sym:'karte', zahl:null, name:'Sammler',          text:'20 verschiedene Spielkarten gesammelt.',  ok:c=>sp(c).karten>=20, fort:c=>[sp(c).karten||0,20]},
+  {id:'arena', stufe:'gold', sym:'schwerter', zahl:null, name:'Arena-Gold',       text:'Rang Gold in der Wissens-Arena erreicht.', ok:c=>sp(c).rang>=250, fort:c=>[sp(c).rang||0,250]},
+  {id:'mio', stufe:'gold', sym:null, zahl:'300', name:'Quiz-Millionär',         text:'Alle 9 Stufen im Quiz-Millionär geschafft.', ok:c=>sp(c).mio>=9, fort:c=>[sp(c).mio||0,9]},
+  {id:'pruefung', stufe:'gold', sym:'krone', zahl:null, name:'Prüfung bestanden', text:'Den Prüfungsausschuss im Karten-Kampf besiegt.', ok:c=>sp(c).stufe>=5, fort:c=>[sp(c).stufe||0,5]},
 ];
+const sp = c => c.S.spiele || {};
 const zaehle = (c, re) => Object.entries(c.S.stat.rechnen||{}).filter(([k])=>re.test(k)).reduce((s,[,n])=>s+n,0);
 const hexZahl = c => zaehle(c, /hex/);
 const binZahl = c => zaehle(c, /bin|zk2/);

@@ -200,11 +200,11 @@ function route(){
 
 /* ---------------- Hülle: Navigation, rechte Spalte ---------------- */
 const NAV = [
-  ['#/', 'start', 'Startseite'], ['#/faecher', 'faecher', 'Fächer'], ['#/duell', 'duelle', 'Quiz-Duelle'], ['#/rangliste', 'rang', 'Rangliste'],
+  ['#/', 'start', 'Startseite'], ['#/faecher', 'faecher', 'Fächer'], ['#/games', 'gamepadnav', 'Games'], ['#/duell', 'duelle', 'Quiz-Duelle'], ['#/rangliste', 'rang', 'Rangliste'],
   null,
   ['#/karteikarten', 'karten', 'Karteikarten'], ['#/lernpfad', 'pfad', 'Lernpfad'], ['#/fortschritt', 'fortschritt', 'Fortschritt'], ['#/einstellungen', 'einst', 'Einstellungen'],
 ];
-const TABS = [['#/', 'start', 'Start'], ['#/faecher', 'faecher', 'Fächer'], ['#/duell', 'duelle', 'Duelle'], ['#/rangliste', 'rang', 'Rangliste'], ['#/mehr', 'mehr', 'Mehr']];
+const TABS = [['#/', 'start', 'Start'], ['#/faecher', 'faecher', 'Fächer'], ['#/games', 'gamepadnav', 'Games'], ['#/duell', 'duelle', 'Duelle'], ['#/mehr', 'mehr', 'Mehr']];
 function huelle(){
   const nav = $('#side'); if (!nav || !window.GFX) return;
   nav.innerHTML = NAV.map(n => n ? `<a class="nav" href="${n[0]}" data-nav="${n[0]}">${GFX.nav[n[1]]}<span>${n[2]}</span></a>` : '<div class="nav-gruppe">Mein Lernen</div>').join('')
@@ -298,7 +298,7 @@ function viewHome(){
   else rangKastenAn(null);
 }
 const SCHRITTE = [['aew','buchnav','Fach wählen','Wähle ein Fach oder ein Thema aus eurem Unterricht.'],['wbl','gamepadnav','Lernen & Üben','Karteikarten, Quiz und Rechenaufgaben – und XP sammeln.'],['its2','duelle','Quiz-Duell starten','Fordere jemanden aus deiner Klasse heraus.'],['dk','rang','Aufsteigen & Belohnen','Level aufsteigen, Rangliste erklimmen, Abzeichen sammeln.']];
-const AKT_ICON = {duell:'pokal', verloren:'personen', abz:'schild', level:'stern', klausur:'blatt', ziel:'haken', neu:'personen'};
+const AKT_ICON = {spiel:'pokal', duell:'pokal', verloren:'personen', abz:'schild', level:'stern', klausur:'blatt', ziel:'haken', neu:'personen'};
 function feature(farbe, ico, titel, text, ziel, extra){
   return `<button class="feature ${farbe}" data-ziel="${ziel}">${GFX.appIcon(farbe, ico, 56)}<h3>${titel}</h3><p>${text}</p>${extra?`<span class="feature-extra">${extra}</span>`:''}<span class="feature-pfeil">${ICON.pfeil}</span></button>`;
 }
@@ -779,7 +779,9 @@ function finishExam(){
 /* ---------------- Schnittstelle für konto.js / duell.js ---------------- */
 Object.assign(window.LW, {
   logEintrag, D, ICON, esc, md, toast, go, route, header, save, addXP, level, streak, dayKey, fachOf, themaOf, rechenIn, aufgabe, shuffle, abzeichenPruefen,
-  app: () => app,
+  app: () => app, seitenKopf, vorZeit, konfetti,
+  // Antwort aus einem Spiel: zählt für Karteikasten, Statistik und Abzeichen (XP bucht der Server)
+  antwortVerbuchen(id, ok){ if (!D.einheiten.some(e => e.id === id)) return; rateItem(id, ok, false); if (ok) S.stat.richtig++; save(); abzeichenPruefen(); },
   // Feste Fragenfolge spielen (Duell): items = [{kind:'M', e} | {kind:'R', r}]
   spielen(items, titel, beiAntwort, beiEnde){ items.forEach(it=>{ if (it.e) delete it.e._order; }); session = {titel, modus:'duell', items, i:0, richtig:0, xp:0, combo:0, cfg:{}, beiAntwort, beiEnde}; go('#/uebung'); },
 });

@@ -9,6 +9,7 @@ const FARBEN = ['aew','wbl','its1','its2','dk','accent'];
 const adresse = n => n.trim().toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/[^a-z0-9._-]/g, '_') + '@' + (C.loginDomain || 'lernwerk.example');
 
 let sb = null, ich = null, profil = null, klasseName = '';
+let geprueft = false;   // Anmeldung einmal geprüft (für Ladeanzeigen)
 let resetZeit = 0;   // vom Admin ausgelöster Reset (Server), ältere Lernstände gelten als verworfen
 window.LW_ROUTEN = {'#/admin': viewAdmin, '#/konto': viewKonto, '#/datenschutz': viewDatenschutz, '#/rangliste': viewRangliste};
 
@@ -26,6 +27,7 @@ function kontoChip(){
 let timer = null, laeuftSync = false, offen = false;
 window.LW_SYNC = {
   angemeldet: () => !!profil,
+  bereit: () => geprueft,
   geaendert(){ if (!profil) return; offen = true; clearTimeout(timer); timer = setTimeout(hochladen, 2000); },
   sb: () => sb, ich: () => ich, profil: () => profil,
   async rangliste(){ if (!profil) return null; const {data} = await sb.rpc('rangliste'); return data || []; },
@@ -69,7 +71,7 @@ async function standLaden(){
 
 /* ---------- Anmeldung ---------- */
 async function start(){
-  if (!C.supabaseUrl || !C.supabaseKey || !window.supabase){ kontoChip(); return; }
+  if (!C.supabaseUrl || !C.supabaseKey || !window.supabase){ geprueft = true; kontoChip(); return; }
   sb = window.supabase.createClient(C.supabaseUrl, C.supabaseKey, {auth:{persistSession:true, autoRefreshToken:true}});
   await resetPruefen();
   const {data} = await sb.auth.getSession();
@@ -86,7 +88,7 @@ async function sitzung(s){
     profil = data || null;
     if (profil){ const k = await sb.rpc('klasse_name'); klasseName = k.data || ''; await resetPruefen(); await standLaden(); }
   }
-  kontoChip(); adminNav(); L.neuZeichnen();
+  geprueft = true; kontoChip(); adminNav(); L.neuZeichnen();
   document.dispatchEvent(new CustomEvent('lw-konto', {detail: {profil}}));
 }
 
@@ -274,11 +276,11 @@ function viewDatenschutz(){
     <h2>Welche Daten werden gespeichert?</h2>
     <ul>
       <li><b>Ohne Konto:</b> nichts auf einem Server. Dein Lernstand liegt nur im Speicher deines Browsers (localStorage).</li>
-      <li><b>Mit Konto:</b> dein <b>Spitzname</b>, dein <b>Passwort</b> (nur verschlüsselt als Hash), deine <b>Farbe</b>, dein <b>Lernstand</b> (welche Fragen du wie gut kannst, XP, Abzeichen, Probe-Klausuren), deine <b>XP pro Tag</b> und deine <b>Quizduelle</b>.</li>
+      <li><b>Mit Konto:</b> dein <b>Spitzname</b>, dein <b>Passwort</b> (nur verschlüsselt als Hash), deine <b>Farbe</b>, dein <b>Lernstand</b> (welche Fragen du wie gut kannst, XP, Abzeichen, Probe-Klausuren), deine <b>XP pro Tag</b>, deine <b>Quizduelle</b> und deine <b>Spieldaten</b> aus den Games (Coins, Karten, Deck, Booster, Rangpunkte, Ergebnisse der letzten 50 Spiele, laufende Spiele).</li>
       <li>Es wird <b>keine E-Mail-Adresse</b> und kein echter Name abgefragt.</li>
     </ul>
     <h2>Wer sieht was?</h2>
-    <p>Deine Klasse sieht deinen Spitznamen, deine Farbe, dein Level, die Zahl deiner Abzeichen und deine XP in der Rangliste. Deinen genauen Lernstand sieht niemand außer dir. Duelle sehen nur die beiden Beteiligten.</p>
+    <p>Deine Klasse sieht deinen Spitznamen, deine Farbe, dein Level, die Zahl deiner Abzeichen und deine XP in der Rangliste. Deinen genauen Lernstand sieht niemand außer dir. Duelle, Karten-Kämpfe und Arena-Duelle sehen nur die Beteiligten, Bomben-Quiz-Räume nur die Mitspieler. In der Arena-Rangliste sieht deine Klasse Rang, Rangpunkte, Siege und Niederlagen.</p>
     <h2>Wo liegen die Daten?</h2>
     <p>Die Konten liegen bei <b>Supabase</b> auf einem Server in der EU (Frankfurt). Die Seite selbst wird über <b>GitHub Pages</b> ausgeliefert; dabei verarbeitet GitHub technisch deine IP-Adresse. Schriften werden von Google Fonts geladen.</p>
     <h2>Zweck und Rechtsgrundlage</h2>
@@ -295,7 +297,7 @@ function viewDatenschutz(){
 if (C.supabaseUrl && C.supabaseKey){
   const s = document.createElement('script');
   s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
-  s.onload = start; s.onerror = () => { kontoChip(); };
+  s.onload = start; s.onerror = () => { geprueft = true; kontoChip(); L.neuZeichnen(); };
   document.head.appendChild(s);
-} else kontoChip();
+} else { geprueft = true; kontoChip(); }
 })();

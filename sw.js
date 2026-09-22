@@ -1,7 +1,7 @@
 /* Lernwerk Service Worker: eigene Dateien offline verfügbar, beim Online-Öffnen im Hintergrund aktualisiert.
    Anfragen an Supabase werden nie zwischengespeichert. */
-const CACHE = 'lernwerk-v10';
-const SHELL = ['./', 'index.html', 'css/style.css', 'fragen.js', 'js/grafik.js', 'js/spiel.js', 'js/app.js', 'js/konto.js', 'js/duell.js', 'icons/icon.svg', 'manifest.webmanifest', 'img/hero.jpg'];
+const CACHE = 'lernwerk-v11';
+const SHELL = ['./', 'index.html', 'css/style.css', 'css/games.css', 'fragen.js', 'js/grafik.js', 'js/spiel.js', 'js/app.js', 'js/konto.js', 'js/duell.js', 'js/games-gfx.js', 'js/games.js', 'js/games-karten.js', 'js/games-bombe.js', 'js/games-mio.js', 'js/games-arena.js', 'icons/icon.svg', 'manifest.webmanifest', 'img/hero.jpg'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL).catch(() => {}))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
 self.addEventListener('fetch', e => {

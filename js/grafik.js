@@ -86,6 +86,8 @@ const SYM = {
   hut:`<path d="M-11-2 0-8l11 6-11 6z" style="fill:#fff"/><path d="M-6 1v5c2 2 10 2 12 0V1M11-2v7" ${s('#fff',2)}/>`,
   schwerter:`<path d="M-9 9 7-7M9 9-7-7M-9 4l5 5M9 4 4 9" ${s('#fff',2.4)}/>`,
   krone:`<path d="M-10 6-11-7l6 5 5-8 5 8 6-5-1 13z" style="fill:#fff"/>`,
+  karte:`<rect x="-8" y="-10" width="13" height="18" rx="2" ${s('#fff',2)}/><path d="M-3-13h9a2 2 0 0 1 2 2v15" ${s('#fff',2)}/><path d="M-4-3l2.5 2L2-5" ${s('#fff',2)}/>`,
+  bombe:`<circle cy="2" r="8" style="fill:#fff"/><path d="M4-5l3-4c2-2 4-2 5 0" ${s('#fff',2)}/>`,
 };
 function medaille(stufe, sym, zahl, gross){
   const [c1, c2] = STUFE[stufe] || STUFE.bronze, id = 'm' + Math.random().toString(36).slice(2,8);
