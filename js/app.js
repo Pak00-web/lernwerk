@@ -334,7 +334,7 @@ function heroGegner(d){
 function heroQuiz(){
   clearTimeout(heroT);
   const box = $('#quizkarte'); if (!box) return;
-  const pool = D.einheiten.filter(e => e.typ==='M' && e.optionen.length>=3 && e.optionen.length<=4 && e.optionen.filter(o=>o[1]).length===1 && e.frage.length < 75 && e.optionen.every(o=>o[0].length<30));
+  const pool = D.einheiten.filter(e => e.typ==='M' && e.optionen.length>=3 && e.optionen.length<=4 && e.optionen.filter(o=>o[1]).length===1 && e.frage.length < 75 && e.optionen.every(o=>o[0].length<30 && o[0].split(/s+/).every(w=>w.length<=18)));
   let n = 0;
   const zeige = () => {
     if (!document.body.contains(box)) return;
