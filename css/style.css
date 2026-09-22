@@ -313,8 +313,10 @@ details.steps[open] summary::before{transform:rotate(90deg)}
 @keyframes schweben{from{transform:translate(0,0) rotate(var(--r,0deg))}to{transform:translate(22px,-38px) rotate(calc(var(--r,0deg) * -1))}}
 /* Logo */
 .brand-mark .logo-svg{width:30px;height:30px;overflow:visible}
-.logo-hut{transform-box:fill-box;transform-origin:50% 100%;animation:hut .6s cubic-bezier(.2,1.4,.4,1) .6s both}
-@keyframes hut{from{transform:translateY(-10px) rotate(-20deg);opacity:0}}
+/* Einflug einmalig auf dem ganzen Logo, Wackeln nur beim Drüberfahren – so verschwindet nach dem Hover nichts */
+.brand-mark .logo-svg{animation:hut .6s cubic-bezier(.2,1.4,.4,1) .3s both}
+@keyframes hut{from{transform:translateY(-8px) rotate(-16deg) scale(.7);opacity:0}}
+.logo-hut{transform-box:fill-box;transform-origin:50% 100%}
 .brand:hover .logo-hut{animation:hutwackeln .6s ease}
 @keyframes hutwackeln{30%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}}
 .logo-quaste{transform-box:fill-box;transform-origin:50% 0;animation:quaste 2.6s ease-in-out 1s infinite}
