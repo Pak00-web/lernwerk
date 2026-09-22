@@ -13,8 +13,8 @@ const logo = () => `<svg class="logo-svg" viewBox="0 0 32 32" aria-hidden="true"
     <path d="M9.5 15.2v5.2c0 1.9 3 3.6 6.5 3.6s6.5-1.7 6.5-3.6v-5.2L16 18.3z" fill="url(#lgKappe)"/>
     <path d="M3 12.3 16 6l13 6.3-13 6.3z" fill="url(#lgHut)"/>
     <path d="M3 12.3 16 6l13 6.3" fill="none" stroke="#A9D3FF" stroke-width=".8" stroke-linejoin="round" opacity=".7"/>
+    <g class="logo-quaste"><path d="M26 13.3v6" stroke="#6FB6FF" stroke-width="1.4" stroke-linecap="round"/><circle cx="26" cy="20.2" r="1.3" fill="#6FB6FF"/></g>
   </g>
-  <g class="logo-quaste"><path d="M26 13.3v6" stroke="#6FB6FF" stroke-width="1.4" stroke-linecap="round"/><circle cx="26" cy="20.2" r="1.3" fill="#6FB6FF"/></g>
 </svg>`;
 const icon = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><defs><linearGradient id="lgBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1B2552"/><stop offset="1" stop-color="#0E1535"/></linearGradient></defs><rect width="32" height="32" rx="7" fill="url(#lgBg)"/>${logo().replace(/^<svg[^>]*>|<\/svg>$/g,"")}</svg>`;
 

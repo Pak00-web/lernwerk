@@ -9,7 +9,8 @@ const FARBEN = ['aew','wbl','its1','its2','dk','accent'];
 const adresse = n => n.trim().toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/[^a-z0-9._-]/g, '_') + '@' + (C.loginDomain || 'lernwerk.example');
 
 let sb = null, ich = null, profil = null, klasseName = '';
-window.LW_ROUTEN = {'#/konto': viewKonto, '#/datenschutz': viewDatenschutz, '#/rangliste': viewRangliste};
+let resetZeit = 0;   // vom Admin ausgelöster Reset (Server), ältere Lernstände gelten als verworfen
+window.LW_ROUTEN = {'#/admin': viewAdmin, '#/konto': viewKonto, '#/datenschutz': viewDatenschutz, '#/rangliste': viewRangliste};
 
 /* ---------- Kopfzeile ---------- */
 function kontoChip(){
@@ -48,11 +49,20 @@ async function hochladen(){
 window.addEventListener('online', () => { if (offen) hochladen(); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && offen){ clearTimeout(timer); hochladen(); } });
 
+async function resetPruefen(){
+  try {
+    const {data, error} = await sb.rpc('reset_zeitpunkt');
+    if (error) return;
+    resetZeit = data ? Date.parse(data) : 0;
+    const S = L.stand();
+    if (resetZeit && S.updated && S.updated < resetZeit) L.zuruecksetzen();
+  } catch(e){}
+}
 async function standLaden(){
   const {data, error} = await sb.from('lernstand').select('data, updated_at').eq('user_id', ich.id).maybeSingle();
   if (error) return;
   const lokal = L.stand();
-  const gueltig = data && (data.data.updated||0) >= (C.resetAb||0);   // ältere Server-Stände sind Test-Daten
+  const gueltig = data && (data.data.updated||0) >= Math.max(C.resetAb||0, resetZeit);   // ältere Server-Stände sind Test-Daten
   if (gueltig && (data.data.updated||0) > (lokal.updated||0)) L.uebernehmen(data.data);
   else if (lokal.updated || (data && !gueltig)){ offen = true; hochladen(); }
 }
@@ -61,6 +71,7 @@ async function standLaden(){
 async function start(){
   if (!C.supabaseUrl || !C.supabaseKey || !window.supabase){ kontoChip(); return; }
   sb = window.supabase.createClient(C.supabaseUrl, C.supabaseKey, {auth:{persistSession:true, autoRefreshToken:true}});
+  await resetPruefen();
   const {data} = await sb.auth.getSession();
   await sitzung(data.session);
   sb.auth.onAuthStateChange((ev, s) => { if (ev === 'SIGNED_OUT') sitzung(null); });
@@ -73,9 +84,9 @@ async function sitzung(s){
   if (ich){
     const {data} = await sb.from('profile').select('*').eq('id', ich.id).maybeSingle();
     profil = data || null;
-    if (profil){ const k = await sb.rpc('klasse_name'); klasseName = k.data || ''; await standLaden(); }
+    if (profil){ const k = await sb.rpc('klasse_name'); klasseName = k.data || ''; await resetPruefen(); await standLaden(); }
   }
-  kontoChip(); L.neuZeichnen();
+  kontoChip(); adminNav(); L.neuZeichnen();
   document.dispatchEvent(new CustomEvent('lw-konto', {detail: {profil}}));
 }
 
@@ -192,6 +203,66 @@ function duellListe(d, ichId, max){
     <span class="rxp mono">${x.siege} ${x.siege===1?'Sieg':'Siege'}</span></div>`).join('') || '<p class="muted">Noch niemand in der Klasse.</p>';
 }
 window.LW_SYNC.duellListe = duellListe;
+/* ---------- Admin-Bereich ---------- */
+function adminNav(){
+  const side = $('#side'); if (!side) return;
+  const da = side.querySelector('[data-nav="#/admin"]');
+  if (profil && profil.admin && !da){ const fuss = side.querySelector('.nav-fuss'); fuss.insertAdjacentHTML('beforebegin', `<a class="nav admin-nav" href="#/admin" data-nav="#/admin">${ADMIN_ICO}<span>Admin</span></a>`); }
+  if ((!profil || !profil.admin) && da) da.remove();
+}
+const ADMIN_ICO = '<svg viewBox="0 0 24 24" class="nav-ico" aria-hidden="true"><path d="M12 2.5 20 5.5v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10v-6z" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round"/><path d="m8.8 12 2.2 2.2 4.2-4.4" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"/></svg>';
+const vorZeit = t => { if (!t) return 'nie'; const m = Math.round((Date.now()-Date.parse(t))/60000); if (m < 60) return 'vor ' + Math.max(1,m) + ' Min.'; const h = Math.round(m/60); if (h < 24) return 'vor ' + h + ' Std.'; const d = Math.round(h/24); return 'vor ' + d + (d===1?' Tag':' Tagen'); };
+async function adminRpc(name, args, ok){
+  const {data, error} = await sb.rpc(name, args || {});
+  if (error){ L.toast(error.message.replace(/^.*?: /,'') || 'Fehler'); return null; }
+  if (ok) L.toast(ok);
+  return data === null ? true : data;
+}
+async function viewAdmin(){
+  const app = L.app();
+  if (!profil || !profil.admin){ app.innerHTML = `<div class="konto-box panel"><h2>Kein Zugriff</h2><p class="muted">Der Admin-Bereich ist nur für Admins.</p><button class="btn primary" id="z">Zur Startseite</button></div>`; $('#z').onclick = () => L.go('#/'); return; }
+  app.innerHTML = `<div class="seiten-kopf"><div class="eyebrow">Verwaltung · ${L.esc(klasseName)}</div><h1>Admin</h1><p class="muted">Nur du siehst diese Seite. Alle Aktionen gelten für deine Klasse.</p></div><div id="adm"><p class="muted">Lädt …</p></div>`;
+  const [nutzer, klasse] = await Promise.all([adminRpc('admin_nutzer'), adminRpc('admin_klasse')]);
+  if (!nutzer || !klasse) { $('#adm').innerHTML = '<p class="muted">Admin-Daten konnten nicht geladen werden. Ist der Admin-Nachtrag in Supabase ausgeführt?</p>'; return; }
+  const k = klasse[0] || {}, woche = Date.now() - 7*864e5;
+  const aktiv = nutzer.filter(n => n.zuletzt && Date.parse(n.zuletzt) > woche).length;
+  const duelle = Math.round(nutzer.reduce((s,n)=>s+n.duelle,0)/2);
+  $('#adm').innerHTML = `
+  <div class="adm-oben">
+    <div class="panel adm-kasten"><div class="eyebrow">Klassencode</div><div class="adm-code mono" id="code">${L.esc(k.code||'–')}</div>
+      <div class="row"><button class="btn" id="kopieren">Kopieren</button><button class="btn ghost" id="neuCode">Neuen Code erzeugen</button></div>
+      <p class="tiny muted">Ein neuer Code verhindert, dass entfernte Nutzer sich wieder anmelden. Wer schon drin ist, bleibt drin.</p></div>
+    <div class="panel adm-kasten adm-zahlen"><div><b>${nutzer.length}</b><span>Nutzer</span></div><div><b>${aktiv}</b><span>aktiv (7 Tage)</span></div><div><b>${duelle}</b><span>Duelle</span></div></div>
+    <div class="panel adm-kasten gefahr"><div class="eyebrow">Gefahrenzone</div><b>Fortschritt aller zurücksetzen</b><p class="small muted">Löscht Lernstände, XP, Abzeichen und Duelle aller Nutzer. Konten bleiben erhalten. Auch der Fortschritt in den Browsern wird beim nächsten Öffnen gelöscht.</p><button class="btn no" id="resetAlle">Alles zurücksetzen</button></div>
+  </div>
+  <section class="section"><div class="section-head"><h2>Nutzer</h2><span class="muted small">${nutzer.length} in der Klasse</span></div>
+  <div class="adm-liste">${nutzer.map(n => `<div class="panel adm-nutzer ${n.gesperrt?'gesperrt':''}">
+    <span class="ava" style="background:var(--${n.farbe})">${L.esc(n.spitzname[0].toUpperCase())}</span>
+    <div class="adm-name"><b>${L.esc(n.spitzname)}</b>${n.id===ich.id?' <span class="tag">du</span>':''}${n.admin?' <span class="tag adm-tag">Admin</span>':''}${n.gesperrt?' <span class="tag gesperrt-tag">gesperrt</span>':''}
+      <small>Level ${n.level} · ${n.xp} XP · ${n.duelle} Duelle · zuletzt aktiv ${vorZeit(n.zuletzt)} · dabei seit ${new Date(n.erstellt).toLocaleDateString('de-DE')}</small></div>
+    <div class="adm-aktionen">
+      <button class="btn klein" data-akt="reset" data-id="${n.id}" data-name="${L.esc(n.spitzname)}">Fortschritt löschen</button>
+      <button class="btn klein" data-akt="pw" data-id="${n.id}" data-name="${L.esc(n.spitzname)}">Passwort</button>
+      ${n.id===ich.id ? '' : `<button class="btn klein" data-akt="rolle" data-id="${n.id}" data-wert="${!n.admin}" data-name="${L.esc(n.spitzname)}">${n.admin?'Admin entziehen':'Zum Admin'}</button>
+      <button class="btn klein" data-akt="sperren" data-id="${n.id}" data-wert="${!n.gesperrt}" data-name="${L.esc(n.spitzname)}">${n.gesperrt?'Entsperren':'Sperren'}</button>
+      <button class="btn klein no" data-akt="kick" data-id="${n.id}" data-name="${L.esc(n.spitzname)}">Entfernen</button>`}
+    </div></div>`).join('')}</div></section>`;
+  $('#kopieren').onclick = () => { try { navigator.clipboard.writeText(k.code); L.toast('Klassencode kopiert'); } catch(e){ L.toast(k.code); } };
+  $('#neuCode').onclick = async () => { if (!confirm('Neuen Klassencode erzeugen? Der alte gilt dann nicht mehr.')) return; const c = await adminRpc('admin_neuer_code', {}, 'Neuer Klassencode erzeugt'); if (c) $('#code').textContent = c; };
+  $('#resetAlle').onclick = async () => {
+    if (prompt('Das löscht den Fortschritt ALLER Nutzer. Zum Bestätigen RESET eingeben:') !== 'RESET') return;
+    if (await adminRpc('admin_reset_alle', {}, 'Fortschritt aller zurückgesetzt')){ resetZeit = Date.now(); L.zuruecksetzen(); L.go('#/admin'); viewAdmin(); }
+  };
+  app.querySelectorAll('[data-akt]').forEach(b => b.onclick = async () => {
+    const id = b.dataset.id, name = b.dataset.name, akt = b.dataset.akt; let ok = null;
+    if (akt === 'reset'){ if (!confirm(`Fortschritt von ${name} löschen (XP, Abzeichen, Duelle)?`)) return; ok = await adminRpc('admin_reset_nutzer', {p_uid:id}, `Fortschritt von ${name} gelöscht`); if (ok && id === ich.id){ L.zuruecksetzen(); } }
+    if (akt === 'pw'){ const pw = prompt(`Neues Passwort für ${name} (mindestens 8 Zeichen):`); if (!pw) return; if (pw.length < 8){ L.toast('Mindestens 8 Zeichen'); return; } ok = await adminRpc('admin_passwort', {p_uid:id, p_passwort:pw}, `Passwort von ${name} geändert`); }
+    if (akt === 'rolle'){ const w = b.dataset.wert === 'true'; if (!confirm(w ? `${name} zum Admin machen?` : `${name} die Admin-Rechte entziehen?`)) return; ok = await adminRpc('admin_rolle', {p_uid:id, p_admin:w}, w ? `${name} ist jetzt Admin` : `${name} ist kein Admin mehr`); }
+    if (akt === 'sperren'){ const w = b.dataset.wert === 'true'; if (!confirm(w ? `${name} sperren? Anmelden geht dann nicht mehr.` : `${name} entsperren?`)) return; ok = await adminRpc('admin_sperren', {p_uid:id, p_sperren:w}, w ? `${name} gesperrt` : `${name} entsperrt`); }
+    if (akt === 'kick'){ if (prompt(`${name} endgültig entfernen? Konto und alle Daten werden gelöscht. Zum Bestätigen den Spitznamen eingeben:`) !== name) return; ok = await adminRpc('admin_kicken', {p_uid:id}, `${name} entfernt`); }
+    if (ok) viewAdmin();
+  });
+}
 function viewDatenschutz(){
   const app = L.app();
   app.innerHTML = `<button class="btn ghost back" id="bk">${L.ICON.back}Zurück</button>

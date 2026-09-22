@@ -319,8 +319,9 @@ details.steps[open] summary::before{transform:rotate(90deg)}
 .logo-hut{transform-box:fill-box;transform-origin:50% 100%}
 .brand:hover .logo-hut{animation:hutwackeln .6s ease}
 @keyframes hutwackeln{30%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}}
-.logo-quaste{transform-box:fill-box;transform-origin:50% 0;animation:quaste 2.6s ease-in-out 1s infinite}
-@keyframes quaste{0%,70%,100%{transform:rotate(0)}80%{transform:rotate(14deg)}90%{transform:rotate(-8deg)}}
+.logo-quaste{transform-box:fill-box;transform-origin:50% 0}
+.brand:hover .logo-quaste{animation:quaste .9s ease .15s}
+@keyframes quaste{0%,100%{transform:rotate(0)}35%{transform:rotate(16deg)}65%{transform:rotate(-10deg)}85%{transform:rotate(4deg)}}
 @keyframes hops{50%{transform:translateY(-3px)}}
 /* Startseite: gestaffeltes Einblenden */
 #app>section,#app>.hello>*{animation:auftritt .55s cubic-bezier(.2,.8,.2,1) both}
@@ -638,6 +639,25 @@ body.mit-rail .rail{display:flex;flex-direction:column;gap:18px;padding:22px 0 4
 .bilanz .s{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}
 .bilanz .u{background:color-mix(in srgb,var(--ink) 10%,transparent);color:var(--ink-2)}
 .bilanz .n{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+/* Admin */
+.admin-nav{color:#FFC93C}
+.adm-oben{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.adm-kasten{padding:18px;display:grid;gap:10px;align-content:start}
+.adm-code{font-size:26px;font-weight:600;letter-spacing:.06em;color:#FFC93C}
+.adm-zahlen{grid-template-columns:repeat(3,1fr);text-align:center;align-content:center}
+.adm-zahlen b{display:block;font-size:30px;font-weight:900}.adm-zahlen span{font-size:12.5px;color:var(--ink-3)}
+.gefahr .btn.no{justify-self:start;border-color:var(--bad);color:var(--bad)}
+.adm-liste{display:grid;gap:10px}
+.adm-nutzer{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 16px}
+.adm-nutzer .ava{width:36px;height:36px}
+.adm-nutzer.gesperrt{opacity:.6}
+.adm-name small{display:block;color:var(--ink-3);font-size:12.5px;font-weight:600}
+.adm-aktionen{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.adm-aktionen .btn.klein{min-height:32px;padding:5px 10px;font-size:12.5px}
+.adm-aktionen .btn.no{border-color:color-mix(in srgb,var(--bad) 50%,var(--line));color:var(--bad)}
+.adm-tag{background:color-mix(in srgb,#FFC93C 22%,transparent);color:#FFC93C}
+.gesperrt-tag{background:var(--bad-bg);color:var(--bad)}
+@media (max-width:760px){.adm-nutzer{grid-template-columns:36px minmax(0,1fr)}.adm-aktionen{grid-column:1/-1;justify-content:flex-start}}
 /* Breiten */
 @media (max-width:1320px){
   body.mit-rail .shell{grid-template-columns:220px minmax(0,1fr)}
