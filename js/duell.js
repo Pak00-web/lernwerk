@@ -190,9 +190,12 @@ async function viewListe(){
   ${dran.length ? `<section class="section"><div class="section-head"><h2>Du bist dran</h2></div><div class="stack">${dran.map(karte).join('')}</div></section>` : ''}
   ${warten.length ? `<section class="section"><div class="section-head"><h2>Warten auf Gegner</h2></div><div class="stack">${warten.map(karte).join('')}</div></section>` : ''}
   ${fertig.length ? `<section class="section"><div class="section-head"><h2>Beendet</h2></div><div class="stack">${fertig.map(karte).join('')}</div></section>` : ''}
-  ${!duelle.length ? '<p class="muted" style="margin-top:24px">Noch keine Duelle. Fordere jemanden heraus!</p>' : ''}`;
+  ${!duelle.length ? '<p class="muted" style="margin-top:24px">Noch keine Duelle. Fordere jemanden heraus!</p>' : ''}
+  <section class="section"><div class="section-head"><h2>Duell-Rangliste</h2><button class="btn ghost" id="alleRang">${L.ICON.trophy}Ganze Rangliste</button></div><div class="rliste" id="duellRang"><p class="muted">Lädt …</p></div></section>`;
   $('#bk').onclick = () => L.go('#/');
   $('#neu').onclick = () => gegnerWaehlen();
+  $('#alleRang').onclick = () => { sessionStorage.setItem('lernwerk.rangTab', 'duell'); L.go('#/rangliste'); };
+  sync().duellRangliste().then(r => { const el = $('#duellRang'); if (el) el.innerHTML = sync().duellListe(r, ich(), 5); });
   app.querySelectorAll('[data-spiel]').forEach(b => b.onclick = () => { b.disabled = true; zug(b.dataset.spiel); });
   app.querySelectorAll('[data-rev]').forEach(b => b.onclick = () => neuesDuell(b.dataset.rev));
   app.querySelectorAll('[data-ab]').forEach(b => b.onclick = async () => { if (!confirm('Duell ablehnen?')) return; await sb().from('duelle').update({status:'abgelehnt', am_zug:null}).eq('id', b.dataset.ab); viewListe(); });

@@ -313,14 +313,18 @@ function rangKasten(d){
   const kopf = `<div class="kasten-kopf">${GFX.mini('krone')}<h3>Rangliste</h3></div>`;
   if (!window.LW_SYNC || !window.LW_SYNC.angemeldet()) return kopf + `<p class="muted small">Mit Konto siehst du hier, wer in deiner Klasse vorne liegt.</p><button class="btn primary voll" data-ziel="#/konto">Anmelden</button>`;
   if (!d) return kopf + '<p class="muted small">Lädt …</p>';
-  return kopf + `<div class="seg mini"><button aria-pressed="true" data-rk="woche">Diese Woche</button><button aria-pressed="false" data-rk="gesamt">Allzeit</button></div><ol class="rk-liste" id="rkListe"></ol>`;
+  return kopf + `<div class="seg mini drei"><button aria-pressed="true" data-rk="woche">Woche</button><button aria-pressed="false" data-rk="gesamt">Allzeit</button><button aria-pressed="false" data-rk="duell">Duelle</button></div><ol class="rk-liste" id="rkListe"></ol>`;
 }
 function rangKastenAn(d){
   const k = $('#rangKasten'); if (!k) return;
   k.querySelectorAll('[data-ziel]').forEach(b => b.onclick = () => go(b.dataset.ziel));
   if (!d) return;
   const ich = window.LW_SYNC.ich() && window.LW_SYNC.ich().id;
-  const zeichne = art => { const l = d.slice().sort((a,b)=>b[art]-a[art]).slice(0,5);
+  let duelle = null;
+  const zeichne = async art => {
+    if (art === 'duell'){ if (!duelle) duelle = await window.LW_SYNC.duellRangliste(); const q = x => x.gespielt ? x.siege/x.gespielt : 0; const l = (duelle||[]).slice().sort((a,b)=>b.siege-a.siege||q(b)-q(a)||b.punkte-a.punkte).slice(0,5);
+      $('#rkListe').innerHTML = l.map((x,i)=>`<li class="${x.id===ich?'du':''}"><span class="rk-platz p${i+1}">${i+1}</span><span class="ava" style="background:var(--${x.farbe})">${esc(x.spitzname[0].toUpperCase())}</span><span class="rk-name">${esc(x.spitzname)}${x.id===ich?' <small>(du)</small>':''}</span><span class="rk-xp mono">${x.siege}–${x.niederlagen}</span></li>`).join('') || '<li class="muted small">Noch keine Duelle gespielt.</li>'; return; }
+    const l = d.slice().sort((a,b)=>b[art]-a[art]).slice(0,5);
     $('#rkListe').innerHTML = l.map((x,i)=>`<li class="${x.id===ich?'du':''}"><span class="rk-platz p${i+1}">${i+1}</span><span class="ava" style="background:var(--${x.farbe})">${esc(x.spitzname[0].toUpperCase())}</span><span class="rk-name">${esc(x.spitzname)}${x.id===ich?' <small>(du)</small>':''}</span><span class="rk-xp mono">${x[art].toLocaleString('de-DE')}</span></li>`).join('') || '<li class="muted small">Noch niemand in der Klasse.</li>'; };
   k.querySelectorAll('[data-rk]').forEach(b => b.onclick = () => { k.querySelectorAll('[data-rk]').forEach(x=>x.setAttribute('aria-pressed', x===b)); zeichne(b.dataset.rk); });
   zeichne('woche');

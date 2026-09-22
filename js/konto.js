@@ -28,6 +28,7 @@ window.LW_SYNC = {
   geaendert(){ if (!profil) return; offen = true; clearTimeout(timer); timer = setTimeout(hochladen, 2000); },
   sb: () => sb, ich: () => ich, profil: () => profil,
   async rangliste(){ if (!profil) return null; const {data} = await sb.rpc('rangliste'); return data || []; },
+  async duellRangliste(){ if (!profil) return null; const {data, error} = await sb.rpc('duell_rangliste'); return error ? null : (data || []); },
 };
 async function hochladen(){
   if (!profil || laeuftSync || !offen) return;
@@ -158,13 +159,15 @@ function viewProfil(){
 async function viewRangliste(){
   const app = L.app();
   if (!profil){ app.innerHTML = `<div class="konto-box panel"><h2>Rangliste</h2><p class="muted">Die Rangliste gibt es nur mit Konto.</p><button class="btn primary" id="k">Anmelden</button></div>`; $('#k').onclick = () => L.go('#/konto'); return; }
-  let art = 'woche';
+  let art = 'woche'; try { art = sessionStorage.getItem('lernwerk.rangTab') || 'woche'; sessionStorage.removeItem('lernwerk.rangTab'); } catch(e){}
   app.innerHTML = `<button class="btn ghost back" id="bk">${L.ICON.back}Übersicht</button><div style="margin-top:12px"><div class="eyebrow">${L.esc(klasseName)}</div><h1>Rangliste</h1></div>
-    <div class="seg" style="margin-top:14px"><button aria-pressed="true" data-a="woche">Diese Woche</button><button aria-pressed="false" data-a="gesamt">Gesamt</button></div><div id="rl" class="rliste"><p class="muted">Lädt …</p></div>`;
+    <div class="seg" style="margin-top:14px">${[['woche','Diese Woche'],['gesamt','Gesamt'],['duell','Quiz-Duell']].map(([a,t])=>`<button aria-pressed="${a===art}" data-a="${a}">${t}</button>`).join('')}</div><div id="rl" class="rliste"><p class="muted">Lädt …</p></div>`;
   $('#bk').onclick = () => L.go('#/');
   await hochladen();
   const {data, error} = await sb.rpc('rangliste');
-  const zeichne = () => {
+  let duelle = null;
+  const zeichne = async () => {
+    if (art === 'duell'){ if (!duelle) duelle = await window.LW_SYNC.duellRangliste(); $('#rl').innerHTML = duellListe(duelle, ich.id); return; }
     if (error){ $('#rl').innerHTML = '<p class="muted">Rangliste konnte nicht geladen werden.</p>'; return; }
     const liste = (data||[]).slice().sort((a,b)=>b[art]-a[art] || a.spitzname.localeCompare(b.spitzname));
     const max = Math.max(1, ...liste.map(x=>x[art]));
@@ -176,6 +179,19 @@ async function viewRangliste(){
   app.querySelectorAll('[data-a]').forEach(b => b.onclick = () => { art = b.dataset.a; app.querySelectorAll('[data-a]').forEach(x=>x.setAttribute('aria-pressed', x===b)); zeichne(); });
   zeichne();
 }
+// Rangliste der Quiz-Duelle: Siege zuerst, dann Siegquote, dann richtige Antworten
+function duellListe(d, ichId, max){
+  if (!d) return '<p class="muted">Duell-Rangliste konnte nicht geladen werden.</p>';
+  const quote = x => x.gespielt ? Math.round(x.siege / x.gespielt * 100) : 0;
+  const liste = d.slice().sort((a,b) => b.siege-a.siege || quote(b)-quote(a) || b.punkte-a.punkte || a.spitzname.localeCompare(b.spitzname)).slice(0, max || 99);
+  const top = Math.max(1, ...liste.map(x=>x.siege));
+  return liste.map((x,i)=>`<div class="panel rrow duell-rrow ${x.id===ichId?'du':''}" style="--k:${i}">
+    <span class="platz p${i+1}">${i<3&&window.GFX&&x.siege?GFX.platz(i+1):i+1}</span><span class="ava" style="background:var(--${x.farbe})">${L.esc(x.spitzname[0].toUpperCase())}</span>
+    <div class="rname"><b>${L.esc(x.spitzname)}${x.id===ichId?' <span class="tag">du</span>':''}</b><div class="bar"><i style="width:${Math.round(x.siege/top*100)}%;background:var(--${x.farbe})"></i></div>
+      <span class="bilanz"><em class="s">${x.siege} S</em><em class="u">${x.remis} U</em><em class="n">${x.niederlagen} N</em><span class="tiny muted">${x.gespielt} Duelle · ${quote(x)} % Siege · ${x.punkte} richtige</span></span></div>
+    <span class="rxp mono">${x.siege} ${x.siege===1?'Sieg':'Siege'}</span></div>`).join('') || '<p class="muted">Noch niemand in der Klasse.</p>';
+}
+window.LW_SYNC.duellListe = duellListe;
 function viewDatenschutz(){
   const app = L.app();
   app.innerHTML = `<button class="btn ghost back" id="bk">${L.ICON.back}Zurück</button>

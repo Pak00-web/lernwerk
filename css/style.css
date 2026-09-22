@@ -626,6 +626,13 @@ body.mit-rail .rail{display:flex;flex-direction:column;gap:18px;padding:22px 0 4
 .fachkarte.bald .fk-bild{filter:grayscale(.4)}
 .fk-bald{font-size:12px;font-weight:900;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--fc) 20%,transparent);color:var(--fc)}
 .fk-leer{color:var(--ink-3);font-size:13.5px}
+/* Duell-Rangliste */
+.seg.mini.drei{grid-template-columns:repeat(3,1fr)}
+.bilanz{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bilanz em{font-style:normal;font-size:12px;font-weight:900;border-radius:6px;padding:1px 7px}
+.bilanz .s{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}
+.bilanz .u{background:color-mix(in srgb,var(--ink) 10%,transparent);color:var(--ink-2)}
+.bilanz .n{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
 /* Breiten */
 @media (max-width:1320px){
   body.mit-rail .shell{grid-template-columns:220px minmax(0,1fr)}

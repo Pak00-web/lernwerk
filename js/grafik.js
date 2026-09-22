@@ -164,9 +164,11 @@ const GLYPH = {
   pokal: '<path d="M7 3.5h10v5.5a5 5 0 0 1-10 0z" fill="#fff"/><path d="M7 5.5H4.2a3 3 0 0 0 3 4M17 5.5h2.8a3 3 0 0 1-3 4" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M10.5 14h3v3.5h-3z M8 18h8v2.5H8z" fill="#fff"/>',
   buch: '<path d="M3 5c3-1.4 6-1.4 8.5.4V20c-2.5-1.8-5.5-1.8-8.5-.4z" fill="#fff"/><path d="M21 5c-3-1.4-6-1.4-8.5.4V20c2.5-1.8 5.5-1.8 8.5-.4z" fill="#fff" opacity=".85"/>',
 };
+// Symbolgröße in der Kachel: der flache Controller braucht mehr, damit er nicht verloren wirkt
+const GROESSE = {gamepad:1.65, personen:1.4, pokal:1.4, buch:1.4};
 function kachelIcon(farbe, glyph, gr=56){
   const [a, b] = KACHEL[farbe] || KACHEL.lila, id = 'k' + Math.random().toString(36).slice(2,7);
-  return `<svg viewBox="0 0 48 48" width="${gr}" height="${gr}" class="app-icon" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="48" height="48" rx="13" fill="url(#${id})"/><rect x="1" y="1" width="46" height="23" rx="12" fill="#fff" opacity=".12"/><g transform="translate(12 12)">${(GLYPH[glyph]||'').replace(/COL/g, b)}</g></svg>`;
+  return `<svg viewBox="0 0 48 48" width="${gr}" height="${gr}" class="app-icon" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="48" height="48" rx="13" fill="url(#${id})"/><rect x="1" y="1" width="46" height="23" rx="12" fill="#fff" opacity=".12"/><g transform="translate(24 24) scale(${GROESSE[glyph]||1.35}) translate(-12 -12)">${(GLYPH[glyph]||'').replace(/COL/g, b)}</g></svg>`;
 }
 
 /* ---------- Kleine farbige Status-Icons ---------- */
