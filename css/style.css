@@ -434,31 +434,34 @@ body.mit-rail .rail{display:flex;flex-direction:column;gap:18px;padding:22px 0 4
 .btn.ghost-hell{background:transparent;border:1.5px solid color-mix(in srgb,var(--ink) 35%,transparent);color:var(--ink)}
 .btn.ghost-hell svg{width:16px;height:16px}
 .btn.voll{width:100%;border-radius:999px;min-height:50px}
-.hero-bild{position:relative;min-height:330px}
+.hero-bild{position:relative;min-height:330px;container-type:inline-size}
 .hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 70%;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14%);mask-image:linear-gradient(90deg,transparent 0,#000 14%)}
 .hero-img+.hero-ersatz,.hero-img~.funkeln .schwebt{display:none}
 .hero-ersatz{position:absolute;inset:0;display:flex;align-items:flex-end}
 .hero-svg{width:100%;height:100%}
 @keyframes hschweb{50%{transform:translateY(-6px)}}
-.quizkarte{position:absolute;top:18px;left:50%;transform:translateX(-50%);width:min(310px,48%);background:color-mix(in srgb,#121A38 94%,transparent);border:1px solid #2F3A6E;border-radius:16px;padding:12px 14px 14px;color:#F2F4FF;box-shadow:0 18px 40px rgba(0,0,0,.4);z-index:3}
+.quizkarte{position:absolute;top:18px;left:50%;transform:translateX(-50%);width:clamp(210px,calc(100% - 350px),270px);background:color-mix(in srgb,#121A38 94%,transparent);border:1px solid #2F3A6E;border-radius:14px;padding:10px 12px 12px;color:#F2F4FF;box-shadow:0 18px 40px rgba(0,0,0,.4);z-index:3}
 .quizkarte.wechsel{animation:qkrein .5s cubic-bezier(.2,.9,.3,1.2)}
 @keyframes qkrein{from{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.96)}}
 .qk-kopf{display:flex;justify-content:space-between;align-items:center;font-size:12.5px}
 .qk-fach{display:inline-flex;align-items:center;gap:6px;background:color-mix(in srgb,var(--fc) 25%,#1A2350);color:#fff;border-radius:8px;padding:3px 9px;font-weight:800}
 .qk-fach .nav-ico{width:14px;height:14px}
 .qk-nr{color:#A9B1D6;font-weight:700}
-.qk-frage{text-align:center;font-weight:800;font-size:15px;line-height:1.3;margin:10px 4px 12px}
-.qk-opts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
-.qk-opt{position:relative;min-width:0;display:flex;gap:8px;align-items:center;background:#1E2754;border:1px solid #2F3A6E;border-radius:10px;padding:8px 10px;font-size:12.5px;line-height:1.2;font-weight:700;transition:background .3s,border-color .3s}
+.qk-frage{text-align:center;font-weight:800;font-size:13.5px;line-height:1.3;margin:8px 2px 10px}
+.qk-opts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
+.qk-opt{position:relative;min-width:0;display:flex;gap:8px;align-items:center;background:#1E2754;border:1px solid #2F3A6E;border-radius:9px;padding:6px 8px;font-size:11.5px;line-height:1.2;font-weight:700;transition:background .3s,border-color .3s}
 .qk-opt b{color:#A9B1D6;flex:none}
 .qk-opt span{min-width:0;overflow-wrap:anywhere;hyphens:auto}
 .qk-opt:nth-child(3):last-child{grid-column:span 2}
 .qk-opt.richtig{background:linear-gradient(135deg,#2FCB8E,#17A673);border-color:transparent;color:#fff}
 .qk-opt.richtig b{color:#fff}
-.qk-haken{margin-left:auto;width:20px;height:20px;border-radius:50%;background:#fff;color:#17A673;display:grid;place-items:center;flex:none;animation:popin .4s both}
-.qk-haken svg{width:13px;height:13px}
+.qk-haken{margin-left:auto;width:16px;height:16px;border-radius:50%;background:#fff;color:#17A673;display:grid;place-items:center;flex:none;animation:popin .4s both}
+.qk-haken svg{width:10px;height:10px}
 .spieler{position:absolute;top:78px;display:flex;align-items:center;gap:8px;background:color-mix(in srgb,#0F1638 90%,transparent);border:1px solid #2F3A6E;border-radius:14px;padding:7px 12px 7px 7px;z-index:3;color:#fff;animation:hschweb 6s ease-in-out infinite}
-.spieler.links{left:3%}.spieler.rechts{right:3%;animation-delay:-3s}
+.spieler.links{left:2%}.spieler.rechts{right:2%;animation-delay:-3s}
+.spieler b{max-width:112px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Zu wenig Platz neben der Quiz-Karte: Plaketten nach unten */
+@container (max-width:620px){.spieler{top:auto;bottom:14px}.quizkarte{width:min(290px,86%)}}
 .spieler .ava{width:34px;height:34px;font-size:15px}
 .spieler b{display:block;font-size:14px;line-height:1.1}
 .spieler small{display:flex;align-items:center;gap:3px;font-size:12.5px;font-weight:800;color:#FFD65E}
