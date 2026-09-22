@@ -94,9 +94,15 @@ begin
   delete from auth.users where id = auth.uid();
 end $$;
 
-revoke execute on function public.konto_loeschen() from anon;
-revoke execute on function public.klasse_beitreten(text,text,text) from anon;
-revoke execute on function public.rangliste() from anon;
+revoke execute on function public.meine_klasse(), public.klasse_beitreten(text,text,text), public.klasse_name(), public.rangliste(), public.konto_loeschen() from public, anon;
+
+-- ============ Rechte (unabhängig von den Projekt-Voreinstellungen) ============
+revoke all on public.klassen, public.profile, public.lernstand, public.tages_xp, public.duelle from anon;
+revoke all on public.klassen from authenticated;
+grant select on public.profile to authenticated;
+grant select, insert, update, delete on public.lernstand, public.tages_xp to authenticated;
+grant select, insert, update on public.duelle to authenticated;
+grant execute on function public.meine_klasse(), public.klasse_beitreten(text,text,text), public.klasse_name(), public.rangliste(), public.konto_loeschen() to authenticated;
 
 -- ============ Zugriffsregeln (Row Level Security) ============
 alter table public.klassen   enable row level security;   -- keine Policy: nur über Funktionen erreichbar
