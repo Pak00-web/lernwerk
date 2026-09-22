@@ -7,14 +7,16 @@ const txt = (x, y, t, o={}) => `<text x="${x}" y="${y}" text-anchor="${o.a||'mid
 
 /* ---------- Logo: „L“ aus Bit-Blöcken mit Doktorhut ---------- */
 const logo = () => `<svg class="logo-svg" viewBox="0 0 32 32" aria-hidden="true">
-  <g class="logo-bloecke" style="fill:#FFE066">
-    <rect x="7" y="9" width="5" height="5" rx="1.2" style="--i:0"/><rect x="7" y="15" width="5" height="5" rx="1.2" style="--i:1"/>
-    <rect x="7" y="21" width="5" height="5" rx="1.2" style="--i:2"/><rect x="13" y="21" width="5" height="5" rx="1.2" style="--i:3"/>
-    <rect x="19" y="21" width="5" height="5" rx="1.2" style="--i:4" opacity=".55"/>
+  <defs><linearGradient id="lgHut" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6FB6FF"/><stop offset="1" stop-color="#2F6BFF"/></linearGradient>
+  <linearGradient id="lgKappe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F6BFF"/><stop offset="1" stop-color="#1D4FD1"/></linearGradient></defs>
+  <g class="logo-hut">
+    <path d="M9.5 15.2v5.2c0 1.9 3 3.6 6.5 3.6s6.5-1.7 6.5-3.6v-5.2L16 18.3z" fill="url(#lgKappe)"/>
+    <path d="M3 12.3 16 6l13 6.3-13 6.3z" fill="url(#lgHut)"/>
+    <path d="M3 12.3 16 6l13 6.3" fill="none" stroke="#A9D3FF" stroke-width=".8" stroke-linejoin="round" opacity=".7"/>
   </g>
-  <g class="logo-hut"><path d="M14 9.5 21 6l7 3.5-7 3.5z" style="fill:#FFE066"/><path d="M17.5 11.3v3.2c1 1 6 1 7 0v-3.2" ${s('#FFE066',1.6)}/><path d="M28 9.5v5" ${s('#FFE066',1.2)}/><circle cx="28" cy="15.3" r="1" style="fill:#FFE066"/></g>
+  <g class="logo-quaste"><path d="M26 13.3v6" stroke="#6FB6FF" stroke-width="1.4" stroke-linecap="round"/><circle cx="26" cy="20.2" r="1.3" fill="#6FB6FF"/></g>
 </svg>`;
-const icon = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#14213D"/>${logo().replace(/^<svg[^>]*>|<\/svg>$/g,'')}</svg>`;
+const icon = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><defs><linearGradient id="lgBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1B2552"/><stop offset="1" stop-color="#0E1535"/></linearGradient></defs><rect width="32" height="32" rx="7" fill="url(#lgBg)"/>${logo().replace(/^<svg[^>]*>|<\/svg>$/g,"")}</svg>`;
 
 /* ---------- Hintergrund-Symbole (Linien, currentColor) ---------- */
 const BG = [

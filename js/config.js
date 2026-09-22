@@ -7,5 +7,7 @@ window.LW_CONFIG = {
   betreiber: 'Christian P., Schüler der FIAE-Klasse',
   betreiberKurz: 'Christian',
   kontakt: 'persönlich in der Klasse oder über IServ',
+  // Lernstände, die älter sind als dieser Zeitpunkt, gelten als Test-Daten und werden verworfen (Browser und Server)
+  resetAb: 1790066787632, // 22.09.2026 nach der Testphase
   datenschutzStand: 'September 2026',
 };

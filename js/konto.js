@@ -51,8 +51,9 @@ async function standLaden(){
   const {data, error} = await sb.from('lernstand').select('data, updated_at').eq('user_id', ich.id).maybeSingle();
   if (error) return;
   const lokal = L.stand();
-  if (data && (data.data.updated||0) > (lokal.updated||0)) L.uebernehmen(data.data);
-  else if (lokal.updated){ offen = true; hochladen(); }
+  const gueltig = data && (data.data.updated||0) >= (C.resetAb||0);   // ältere Server-Stände sind Test-Daten
+  if (gueltig && (data.data.updated||0) > (lokal.updated||0)) L.uebernehmen(data.data);
+  else if (lokal.updated || (data && !gueltig)){ offen = true; hochladen(); }
 }
 
 /* ---------- Anmeldung ---------- */

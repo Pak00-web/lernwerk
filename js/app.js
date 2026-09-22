@@ -56,6 +56,8 @@ const neu = () => ({v:1, box:{}, xp:0, days:{}, klausuren:[], ziel:20, updated:0
 const ergaenze = s => { s = Object.assign(neu(), s); s.stat = Object.assign(statNeu(), s.stat); s.abz = s.abz || {}; return s; };
 let S = neu();
 try { const raw = localStorage.getItem(LSK); if (raw) S = ergaenze(JSON.parse(raw)); } catch(e){}
+// Test-Stände von vor dem Reset verwerfen
+if ((S.updated||0) < ((window.LW_CONFIG||{}).resetAb||0)){ S = neu(); try { localStorage.removeItem(LSK); } catch(e){} }
 function save(){
   S.updated = Date.now();
   try { localStorage.setItem(LSK, JSON.stringify(S)); } catch(e){}
@@ -66,6 +68,7 @@ window.LW = {
   stand: () => S,
   uebernehmen(r){ S = ergaenze(JSON.parse(JSON.stringify(r))); try{localStorage.setItem(LSK, JSON.stringify(S));}catch(e){} if (!session && !exam) route(); else header(); },
   neuZeichnen: () => { if (!session && !exam) route(); },
+  zuruecksetzen(){ S = neu(); save(); route(); },
 };
 
 /* ---------------- Fortschritt ---------------- */
@@ -411,8 +414,10 @@ function viewEinstellungen(){
     <div><div class="eyebrow">Tagesziel</div><div class="seg" id="ziel">${[10,20,30,50].map(z=>`<button aria-pressed="${S.ziel===z}" data-z="${z}">${z} Antworten</button>`).join('')}</div></div>
     <div><div class="eyebrow">Darstellung</div><div class="seg" id="thema"><button aria-pressed="${!hell}" data-t="dark">Dunkel</button><button aria-pressed="${hell}" data-t="light">Hell</button></div></div>
     <div><div class="eyebrow">Töne</div><div class="seg" id="toene"><button aria-pressed="${FX.tonAn()}" data-o="1">An</button><button aria-pressed="${!FX.tonAn()}" data-o="0">Aus</button></div></div>
+    <div><div class="eyebrow">Fortschritt</div><button class="btn no" id="reset">Meinen Fortschritt zurücksetzen</button></div>
     <div><div class="eyebrow">Konto</div><div class="row"><button class="btn" data-ziel="#/konto">${konto ? 'Profil & Konto' : 'Anmelden / Konto anlegen'}</button><button class="btn ghost" data-ziel="#/datenschutz">Datenschutz</button><button class="btn ghost" data-ziel="#/abzeichen">${ICON.trophy}Abzeichen</button></div></div>
   </div>`;
+  $('#reset').onclick = () => { if (confirm('Wirklich den ganzen Fortschritt (XP, Level, Abzeichen, Karteikarten-Stand) löschen? Das lässt sich nicht rückgängig machen.')) { window.LW.zuruecksetzen(); toast('Fortschritt zurückgesetzt'); go('#/'); } };
   app.querySelectorAll('[data-z]').forEach(b => b.onclick = () => { S.ziel = +b.dataset.z; save(); viewEinstellungen(); toast('Tagesziel: ' + S.ziel); });
   app.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { thema(b.dataset.t); viewEinstellungen(); });
   app.querySelectorAll('[data-o]').forEach(b => b.onclick = () => { if ((b.dataset.o==='1') !== FX.tonAn()) { FX.tonUmschalten(); tonIcon(); } viewEinstellungen(); });
@@ -437,12 +442,14 @@ function viewAbzeichen(){
 const kachelBild = (k, ico) => window.GFX ? `<div class="kachel-bild">${GFX.kachel[k]}</div>` : `<div class="ico">${ico}</div>`;
 function modeTile(mode, ico, t, sub, col){ return `<button class="mode" data-mode="${mode}"><div class="ico" style="color:${col}">${ICON[ico]}</div><h3>${t}</h3><p class="small muted">${sub}</p></button>`; }
 function fachCard(f){
-  const th = D.themen.filter(t=>t.fach===f.id);
-  if (f.bald) return `<div class="fach soon" style="--fc:var(--${f.farbe})"><div class="fach-head"><div class="ring sm" style="--p:0"><div><b>–</b></div></div><div><h3>${f.name}</h3><div class="small muted">${f.lang}</div></div>${window.GFX&&GFX.fach[f.id]?`<div class="fach-bild">${GFX.fach[f.id]}</div>`:''}</div><p class="small muted">Noch keine Unterlagen. Sobald im Unterricht etwas dran war, kommt es hier dazu.</p></div>`;
-  const list = einheitenIn({fach:f.id}); const m = mastery(list);
-  return `<button class="fach" data-fach="${f.id}" style="--fc:var(--${f.farbe})">
-    <div class="fach-head"><div class="ring sm" style="--p:${m};--c:var(--${f.farbe})"><div><b>${m}%</b></div></div><div><h3>${f.name}</h3><div class="small muted">${f.lang} · ${list.length} Einheiten</div></div>${window.GFX&&GFX.fach[f.id]?`<div class="fach-bild">${GFX.fach[f.id]}</div>`:''}</div>
-    <div class="themes">${th.map(t=>{const l=einheitenIn({themen:[t.id]}); const mm=mastery(l); return `<div class="th"><span>${esc(t.name)}</span><div class="bar"><i style="width:${mm}%;background:var(--${f.farbe})"></i></div></div>`;}).join('')}</div>
+  const th = D.themen.filter(t=>t.fach===f.id), bild = window.GFX && GFX.fach[f.id] ? GFX.fach[f.id] : '';
+  if (f.bald) return `<div class="fachkarte bald" style="--fc:var(--${f.farbe})"><div class="fk-kopf"><div class="fk-bild">${bild}</div><div class="fk-titel"><h3>${f.name}</h3><span>${esc(f.lang)}</span></div><span class="fk-bald">Bald</span></div><p class="fk-leer">Noch keine Unterlagen. Sobald im Unterricht etwas dran war, kommt es hier dazu.</p></div>`;
+  const list = einheitenIn({fach:f.id}), m = mastery(list), due = list.filter(e=>isDue(e.id)).length;
+  return `<button class="fachkarte" data-fach="${f.id}" style="--fc:var(--${f.farbe})">
+    <div class="fk-kopf"><div class="fk-bild">${bild}</div><div class="fk-titel"><h3>${f.name}</h3><span>${esc(f.lang)}</span></div><div class="ring sm" style="--p:${m};--c:var(--${f.farbe})"><div><b>${m}%</b></div></div></div>
+    <div class="fk-chips"><span>${list.length} Einheiten</span><span>${th.length} Themen</span><span class="${due?'faellig':''}">${due} fällig</span></div>
+    <ul class="fk-themen">${th.map(t=>{ const mm = mastery(einheitenIn({themen:[t.id]})); return `<li><span>${esc(t.name)}</span><b>${mm}%</b><div class="fk-bar"><i style="width:${Math.max(mm,2)}%"></i></div></li>`; }).join('')}</ul>
+    <span class="fk-los">Jetzt lernen ${ICON.pfeil}</span>
   </button>`;
 }
 const notenFarbe = n => ({1:'var(--ok)',2:'var(--ok)',3:'var(--accent)',4:'var(--warn)',5:'var(--bad)',6:'var(--bad)'})[n] || 'var(--ink)';
