@@ -42,8 +42,9 @@ function gewinneVerbuchen(){
     if (d.status !== 'fertig' || S.duelleVerbucht.includes(d.id)) continue;
     S.duelleVerbucht.push(d.id); if (S.duelleVerbucht.length > 200) S.duelleVerbucht.shift();
     const [ich_, er] = binA(d) ? [d.punkte_a, d.punkte_b] : [d.punkte_b, d.punkte_a];
-    if (ich_ > er){ S.stat.duelleGewonnen = (S.stat.duelleGewonnen||0) + 1; L.addXP(SIEG_XP); }
-    else L.save();
+    const wer = name(gegner(d));
+    if (ich_ > er){ S.stat.duelleGewonnen = (S.stat.duelleGewonnen||0) + 1; L.logEintrag('duell', `Quiz-Duell gegen ${wer} gewonnen (${ich_}:${er})`); L.addXP(SIEG_XP); }
+    else L.logEintrag('verloren', `Quiz-Duell gegen ${wer}: ${ich_}:${er}`);
   }
 }
 document.addEventListener('lw-konto', async e => {

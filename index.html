@@ -1,27 +1,28 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Lernwerk</title>
 <meta name="description" content="Lernwerk – Lernen für die FIAE-Klasse am Berufskolleg Bocholt-West">
-<meta name="theme-color" content="#14213D">
+<meta name="theme-color" content="#0B1026">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div id="bg" aria-hidden="true"></div>
 <header class="top">
-  <div class="wrap">
+  <div class="top-in">
     <button class="brand" id="homeBtn" aria-label="Zur Startseite">
       <div class="brand-mark" id="logo"></div>
-      <div><b>Lernwerk</b><span>FIAE · Berufskolleg Bocholt-West</span></div>
+      <b class="brand-name">Lernwerk</b>
     </button>
+    <span class="brand-schule">FIAE – Berufskolleg Bocholt-West</span>
     <div class="chips">
       <span class="chip flame" id="streakChip" title="Lern-Serie in Tagen"></span>
       <span class="chip lvl" id="lvlChip" title="Level und Erfahrungspunkte"></span>
@@ -32,7 +33,12 @@
     </div>
   </div>
 </header>
-<main class="wrap" id="app" aria-live="polite"></main>
+<div class="shell">
+  <nav class="side" id="side" aria-label="Hauptmenü"></nav>
+  <main id="app" aria-live="polite"></main>
+  <aside class="rail" id="rail"></aside>
+</div>
+<nav class="tabbar" id="tabbar" aria-label="Menü"></nav>
 <div class="toast" id="toast" role="status"></div>
 <canvas id="confetti" hidden></canvas>
 

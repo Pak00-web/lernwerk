@@ -27,6 +27,7 @@ window.LW_SYNC = {
   angemeldet: () => !!profil,
   geaendert(){ if (!profil) return; offen = true; clearTimeout(timer); timer = setTimeout(hochladen, 2000); },
   sb: () => sb, ich: () => ich, profil: () => profil,
+  async rangliste(){ if (!profil) return null; const {data} = await sb.rpc('rangliste'); return data || []; },
 };
 async function hochladen(){
   if (!profil || laeuftSync || !offen) return;

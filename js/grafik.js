@@ -137,5 +137,73 @@ function stellen(n, w=8){
 const ZUORDNUNG = {w1:'dual', w2:'dual', w3:'dual', i30:'cia', i31:'cia', i32:'cia', i33:'cia', i39:'cia', a1:'lastpflicht', a10:'lastpflicht', a22:'usecase', a23:'usecase', a24:'usecase', a25:'usecase', a27:'usecase', a69:'zweier', a70:'zweier', a68:'hexdual', a65:'division'};
 function bild(e){ const k = e.bild || ZUORDNUNG[e.id]; return k && B[k] ? `<figure class="lern-grafik">${B[k]()}</figure>` : ''; }
 
-window.GFX = {logo, icon, BG, kachel, fach, szene, medaille, gesperrt, platz, bild, stellen};
+/* ---------- Navigation (Linien-Icons) ---------- */
+const ln = d => `<svg viewBox="0 0 24 24" class="nav-ico" aria-hidden="true"><g ${s('currentColor',2)}>${d}</g></svg>`;
+const BUCH = '<path d="M3 5.5c3-1.5 6-1.5 9 .5 3-2 6-2 9-.5V19c-3-1.5-6-1.5-9 .5-3-2-6-2-9-.5z"/><path d="M12 6v13.5"/>';
+const POKAL = '<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 14v4M8 21h8M9.5 18h5"/>';
+const nav = {
+  start: `<svg viewBox="0 0 24 24" class="nav-ico" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7v8.5a1.5 1.5 0 0 1-1.5 1.5h-4.5v-6h-5v6H5a1.5 1.5 0 0 1-1.5-1.5z" style="fill:currentColor"/></svg>`,
+  faecher: ln(BUCH), buchnav: ln(BUCH), duelle: ln(POKAL), pokalnav: ln(POKAL),
+  rang: ln('<path d="M5 20v-7M12 20V5M19 20v-10"/><path d="M3 20.5h18"/>'),
+  karten: ln('<rect x="3" y="6" width="13" height="14" rx="2.5"/><path d="M7 3h11.5A2.5 2.5 0 0 1 21 5.5V17"/>'),
+  pfad: ln('<circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/>'),
+  fortschritt: ln('<path d="M4 20V14M10 20V9M16 20v-6M22 20V4"/>'),
+  einst: ln('<circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/><circle cx="12" cy="12" r="7"/>'),
+  mehr: ln('<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>'),
+  gamepadnav: ln('<path d="M6 8h12a4 4 0 0 1 4 4.5l-.6 4a2.8 2.8 0 0 1-5 1.3L15 16H9l-1.4 1.8a2.8 2.8 0 0 1-5-1.3l-.6-4A4 4 0 0 1 6 8z"/><path d="M7 11v3M5.5 12.5h3M15.5 12h.01M18 13.5h.01"/>'),
+  rakete: `<svg viewBox="0 0 48 48" class="rakete" aria-hidden="true"><path d="M30 6c6 0 12 6 12 12L28 32l-12-12z" style="fill:#5B8CFF"/><circle cx="32" cy="16" r="3.5" style="fill:#0B1026"/><path d="M16 20l-8 2 6-8 8-1zM28 32l-2 8 8-6 1-8z" style="fill:#6C5CFF"/><path d="M16 32c-3 1-5 4-6 8 4-1 7-3 8-6z" style="fill:#FFC93C"/></svg>`,
+};
+
+/* ---------- Farbige App-Icon-Kacheln ---------- */
+const KACHEL = {gruen:['#35D6A0','#0E9C6F'], lila:['#9B8CFF','#5B45E0'], gold:['#FFD65E','#F2A316'], blau:['#58ABFF','#2167E0']};
+const GLYPH = {
+  gamepad: '<path d="M6 8h12a4 4 0 0 1 4 4.5l-.6 4a2.8 2.8 0 0 1-5 1.3L15 16H9l-1.4 1.8a2.8 2.8 0 0 1-5-1.3l-.6-4A4 4 0 0 1 6 8z" fill="#fff"/><path d="M7 11v3M5.5 12.5h3" stroke="COL" stroke-width="1.8" stroke-linecap="round"/><circle cx="15.5" cy="11.6" r="1.1" fill="COL"/><circle cx="18" cy="13.4" r="1.1" fill="COL"/>',
+  personen: '<circle cx="9" cy="8" r="3.4" fill="#fff"/><path d="M2.5 19.5c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6z" fill="#fff"/><circle cx="16.5" cy="8.8" r="2.7" fill="#fff" opacity=".85"/><path d="M15.5 13.6c3.3-.3 6 1.8 6 5.4h-4.3" fill="#fff" opacity=".85"/>',
+  pokal: '<path d="M7 3.5h10v5.5a5 5 0 0 1-10 0z" fill="#fff"/><path d="M7 5.5H4.2a3 3 0 0 0 3 4M17 5.5h2.8a3 3 0 0 1-3 4" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M10.5 14h3v3.5h-3z M8 18h8v2.5H8z" fill="#fff"/>',
+  buch: '<path d="M3 5c3-1.4 6-1.4 8.5.4V20c-2.5-1.8-5.5-1.8-8.5-.4z" fill="#fff"/><path d="M21 5c-3-1.4-6-1.4-8.5.4V20c2.5-1.8 5.5-1.8 8.5-.4z" fill="#fff" opacity=".85"/>',
+};
+function kachelIcon(farbe, glyph, gr=56){
+  const [a, b] = KACHEL[farbe] || KACHEL.lila, id = 'k' + Math.random().toString(36).slice(2,7);
+  return `<svg viewBox="0 0 48 48" width="${gr}" height="${gr}" class="app-icon" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="48" height="48" rx="13" fill="url(#${id})"/><rect x="1" y="1" width="46" height="23" rx="12" fill="#fff" opacity=".12"/><g transform="translate(12 12)">${(GLYPH[glyph]||'').replace(/COL/g, b)}</g></svg>`;
+}
+
+/* ---------- Kleine farbige Status-Icons ---------- */
+const MINI = {
+  flamme: '<path d="M12 2c1 4 6 5.6 6 11a6 6 0 0 1-12 0c0-2.6 1.4-4.4 2.6-5.4 0 2 .9 3 2 3 0-3.4-1-6.2 1.4-8.6z" fill="#FF8A3D"/><path d="M12 13c.6 2 3 2.6 3 5a3 3 0 0 1-6 0c0-1.4.8-2.4 1.6-2.8 0 1 .4 1.4 1 1.4 0-1.4-.4-2.6.4-3.6z" fill="#FFD65E"/>',
+  pokal: '<path d="M7 3h10v6a5 5 0 0 1-10 0z" fill="#FFC93C"/><path d="M7 5H4a3 3 0 0 0 3 4.5M17 5h3a3 3 0 0 1-3 4.5" stroke="#FFC93C" stroke-width="2" fill="none"/><path d="M10.5 14h3v3.5h-3zM8 18h8v2.5H8z" fill="#F2A316"/>',
+  stern: '<path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" fill="#FFC93C"/>',
+  lampe: '<path d="M12 2.5a6.5 6.5 0 0 0-3.8 11.8c.6.5 1 1.2 1 2v.7h5.6v-.7c0-.8.4-1.5 1-2A6.5 6.5 0 0 0 12 2.5z" fill="#FFD65E"/><path d="M9.5 19h5M10.5 21.5h3" stroke="#FFD65E" stroke-width="2" stroke-linecap="round"/>',
+  krone: '<path d="M3 18 2 7l5.5 4L12 4l4.5 7L22 7l-1 11z" fill="#FFC93C"/><rect x="3" y="18.5" width="18" height="2.5" rx="1" fill="#F2A316"/>',
+  schild: '<path d="M12 2.5 20 5.5v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10v-6z" fill="#8B7BFF"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  personen: '<circle cx="9" cy="8" r="3.4" fill="#8B7BFF"/><path d="M2.5 19.5c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6z" fill="#8B7BFF"/><circle cx="16.5" cy="8.8" r="2.7" fill="#5B8CFF"/><path d="M15.5 13.6c3.3-.3 6 1.8 6 5.4h-4.3" fill="#5B8CFF"/>',
+  blatt: '<path d="M6 2.5h8l4.5 4.5v14.5H6z" fill="#58ABFF"/><path d="M9 11h6M9 15h6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>',
+  haken: '<circle cx="12" cy="12" r="9.5" fill="#35D6A0"/><path d="m7.5 12 3 3 6-6" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+};
+const mini = n => `<svg viewBox="0 0 24 24" class="mini-ico" aria-hidden="true">${MINI[n]||MINI.stern}</svg>`;
+
+/* ---------- Hero: Ersatzgrafik bis das Titelbild da ist, dazu Funkeln ---------- */
+const figur = (x, farbe, dunkel, spiegel) => `<g transform="translate(${x} 0)${spiegel?' scale(-1 1)':''}">
+  <path d="M-70 340c0-70 30-110 70-110s70 40 70 110z" fill="${farbe}"/><path d="M-30 232c10 18 50 18 60 0" stroke="${dunkel}" stroke-width="6" fill="none"/>
+  <circle cx="0" cy="180" r="46" fill="#F6C9A4"/><path d="M-48 175c0-40 25-62 50-62s52 20 48 62c-8-18-20-28-48-28-22 0-40 10-50 28z" fill="#5A3A26"/>
+  <circle cx="-15" cy="185" r="4.5" fill="#1B1B2F"/><circle cx="17" cy="185" r="4.5" fill="#1B1B2F"/><path d="M-10 205c7 7 17 7 24 0" stroke="#1B1B2F" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <g transform="rotate(-14 45 286)"><rect x="10" y="260" width="70" height="52" rx="8" fill="#1B2140"/><rect x="16" y="266" width="58" height="40" rx="4" fill="#3F7BFF" opacity=".55"/></g></g>`;
+const heroErsatz = () => `<svg viewBox="0 0 760 340" preserveAspectRatio="xMidYMax meet" class="hero-svg">
+  <defs><radialGradient id="hvg" cx="50%" cy="60%" r="50%"><stop offset="0" stop-color="#FFC93C" stop-opacity=".5"/><stop offset=".45" stop-color="#6C5CFF" stop-opacity=".3"/><stop offset="1" stop-color="#6C5CFF" stop-opacity="0"/></radialGradient></defs>
+  <circle cx="380" cy="240" r="170" fill="url(#hvg)"/>
+  <path d="M330 100 395 195h-30l40 90-95-120h35z" fill="#FFC93C" opacity=".9"/><path d="M450 120 400 200h25l-35 80 80-105h-30z" fill="#8B7BFF" opacity=".85"/>
+  ${figur(150,'#2F6BFF','#1C47B8',false)}${figur(610,'#7B4BE0','#5230A8',true)}
+  <circle cx="380" cy="250" r="58" fill="#2B3BD8" stroke="#FFC93C" stroke-width="7"/><text x="380" y="272" text-anchor="middle" style="font:900 58px var(--f-display);fill:#fff">VS</text>
+</svg>`;
+const STERN = '<path d="M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z" fill="C"/>';
+const funkeln = () => `<div class="funkeln">
+  <svg class="fk f1" viewBox="0 0 24 24">${STERN.replace('C','#FFC93C')}</svg>
+  <svg class="fk f2" viewBox="0 0 24 24">${STERN.replace('C','#8B7BFF')}</svg>
+  <svg class="fk f3" viewBox="0 0 24 24">${STERN.replace('C','#58ABFF')}</svg>
+  <svg class="fk f4" viewBox="0 0 24 24"><path d="M12 2 22 12 12 22 2 12z" fill="#35D6A0"/></svg>
+  <svg class="fk schwebt p1" viewBox="0 0 24 24">${MINI.pokal}</svg>
+  <svg class="fk schwebt p2" viewBox="0 0 24 24"><path d="M1 9 12 3.5 23 9 12 14.5z" fill="#3F7BFF"/><path d="M6 11.5v5c3 2.6 9 2.6 12 0v-5L12 14.5z" fill="#2B4FD1"/><path d="M21 9.5v6" stroke="#FFC93C" stroke-width="1.6"/></svg>
+  <svg class="fk schwebt p3" viewBox="0 0 24 24"><path d="M9 3.5a3.5 3.5 0 0 0-3.4 2.7A3.5 3.5 0 0 0 3.5 12a3.5 3.5 0 0 0 2 5.5A3.5 3.5 0 0 0 11 19V4.6A3.5 3.5 0 0 0 9 3.5zM15 3.5a3.5 3.5 0 0 1 3.4 2.7A3.5 3.5 0 0 1 20.5 12a3.5 3.5 0 0 1-2 5.5A3.5 3.5 0 0 1 13 19V4.6a3.5 3.5 0 0 1 2-1.1z" fill="#6C8BFF"/></svg>
+</div>`;
+
+window.GFX = {nav, appIcon: kachelIcon, mini, heroErsatz, funkeln, logo, icon, BG, kachel, fach, szene, medaille, gesperrt, platz, bild, stellen};
 })();

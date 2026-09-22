@@ -22,6 +22,8 @@ const ICON = {
   heart:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.5-9.3C1.1 8.3 3.2 4.5 7 4.5c2.1 0 3.6 1.2 5 3 1.4-1.8 2.9-3 5-3 3.8 0 5.9 3.8 4.5 7.2C19.5 16.4 12 21 12 21z"/></svg>',
   timer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6M19 5l1.5 1.5"/></svg>',
   swords:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M9.5 6.5 14 2h3v3l-4.5 4.5M5 14l-2 2 2 2M7 17l-2 2"/></svg>',
+  pfeil:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.2-6.5a1 1 0 0 0 0-1.8L9.5 4.6A1 1 0 0 0 8 5.5z"/></svg>',
   lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
 };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -81,13 +83,13 @@ function addXP(n, el){
   S.xp += n; const k = dayKey(); S.days[k] = (S.days[k]||0) + 1; S.xpTag = S.xpTag || {}; S.xpTag[k] = (S.xpTag[k]||0) + n;
   save(); header();
   if (el && n>0){ const r = el.getBoundingClientRect(); const f = document.createElement('div'); f.className='xpfly'; f.textContent='+'+n+' XP'; f.style.left=(r.left+r.width/2-30)+'px'; f.style.top=(r.top-10)+'px'; document.body.appendChild(f); setTimeout(()=>f.remove(),900); }
-  if (level().n > lvlVor){ FX.ton('level'); konfetti(160); FX.fenster(`<div class="lvl-gross">${level().n}</div><div class="eyebrow">Level aufgestiegen</div><h2>Level ${level().n} erreicht!</h2><p class="muted">Bis Level ${level().n+1} brauchst du ${level().need} XP.</p>`); }
-  if (S.days[k] === S.ziel) { toast('Tagesziel geschafft!'); konfetti(90); }
+  if (level().n > lvlVor){ logEintrag('level', 'Level ' + level().n + ' erreicht!'); FX.ton('level'); konfetti(160); FX.fenster(`<div class="lvl-gross">${level().n}</div><div class="eyebrow">Level aufgestiegen</div><h2>Level ${level().n} erreicht!</h2><p class="muted">Bis Level ${level().n+1} brauchst du ${level().need} XP.</p>`); }
+  if (S.days[k] === S.ziel) { logEintrag('ziel', 'Tagesziel geschafft (' + S.ziel + ' Antworten)'); toast('Tagesziel geschafft!'); konfetti(90); }
   abzeichenPruefen();
 }
 function abzeichenPruefen(){
   const neu = FX.pruefeAbzeichen({S, streak, level:()=>level().n, faecher:D.faecher.filter(f=>!f.bald).map(f=>f.id), mastery:fid=>mastery(einheitenIn({fach:fid}))});
-  if (neu.length){ save(); neu.forEach((a,i)=>setTimeout(()=>FX.zeigeAbzeichen(a), 400 + i*1500)); }
+  if (neu.length){ neu.forEach(a => logEintrag('abz', 'Neues Abzeichen: ' + a.name)); save(); neu.forEach((a,i)=>setTimeout(()=>FX.zeigeAbzeichen(a), 400 + i*1500)); }
 }
 /* Treffer/Fehler zentral: Combo, Töne, Animation */
 function treffer(el){
@@ -170,11 +172,9 @@ $('#homeBtn').onclick = () => { go('#/'); };
 $('#abzBtn').onclick = () => go('#/abzeichen');
 const tonIcon = () => { $('#tonBtn').innerHTML = FX.tonAn() ? ICON.ton : ICON.tonAus; $('#tonBtn').setAttribute('aria-label', FX.tonAn()?'Töne aus':'Töne an'); };
 $('#tonBtn').onclick = () => { FX.tonUmschalten(); tonIcon(); }; tonIcon();
-$('#themeBtn').onclick = () => {
-  const r=document.documentElement; const dark = r.dataset.theme ? r.dataset.theme==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-  r.dataset.theme = dark ? 'light' : 'dark'; try{localStorage.setItem('lernwerk.theme', r.dataset.theme);}catch(e){}
-};
-try { const th=localStorage.getItem('lernwerk.theme'); if (th) document.documentElement.dataset.theme=th; } catch(e){}
+function thema(t){ document.documentElement.dataset.theme = t; try{localStorage.setItem('lernwerk.theme', t);}catch(e){} }
+$('#themeBtn').onclick = () => thema(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+try { thema(localStorage.getItem('lernwerk.theme') === 'light' ? 'light' : 'dark'); } catch(e){ document.documentElement.dataset.theme = 'dark'; }
 
 /* ---------------- Router ---------------- */
 let session = null, exam = null;
@@ -182,7 +182,9 @@ function go(h){ if (location.hash === h) route(); else location.hash = h; }
 window.addEventListener('hashchange', route);
 function route(){
   const h = location.hash || '#/';
-  header(); window.scrollTo(0,0);
+  header(); window.scrollTo(0,0); railLeeren(); navAktiv(h); clearTimeout(heroT);
+  const SEITEN = {'#/faecher':viewFaecher, '#/lernen':viewLernen, '#/karteikarten':viewKarteikarten, '#/lernpfad':viewLernpfad, '#/fortschritt':viewFortschritt, '#/einstellungen':viewEinstellungen, '#/mehr':viewMehr};
+  if (SEITEN[h]){ session = null; exam = null; stopTimer(); return SEITEN[h](); }
   if (h.startsWith('#/fach/')) return viewFach(h.split('/')[2]);
   if (h === '#/klausur') return viewKlausurSetup();
   if (h === '#/abzeichen') return viewAbzeichen();
@@ -193,71 +195,231 @@ function route(){
   viewHome();
 }
 
+/* ---------------- Hülle: Navigation, rechte Spalte ---------------- */
+const NAV = [
+  ['#/', 'start', 'Startseite'], ['#/faecher', 'faecher', 'Fächer'], ['#/duell', 'duelle', 'Quiz-Duelle'], ['#/rangliste', 'rang', 'Rangliste'],
+  null,
+  ['#/karteikarten', 'karten', 'Karteikarten'], ['#/lernpfad', 'pfad', 'Lernpfad'], ['#/fortschritt', 'fortschritt', 'Fortschritt'], ['#/einstellungen', 'einst', 'Einstellungen'],
+];
+const TABS = [['#/', 'start', 'Start'], ['#/faecher', 'faecher', 'Fächer'], ['#/duell', 'duelle', 'Duelle'], ['#/rangliste', 'rang', 'Rangliste'], ['#/mehr', 'mehr', 'Mehr']];
+function huelle(){
+  const nav = $('#side'); if (!nav || !window.GFX) return;
+  nav.innerHTML = NAV.map(n => n ? `<a class="nav" href="${n[0]}" data-nav="${n[0]}">${GFX.nav[n[1]]}<span>${n[2]}</span></a>` : '<div class="nav-gruppe">Mein Lernen</div>').join('')
+    + `<div class="nav-fuss">${GFX.nav.rakete}<span>Lernen. Spielen.<br>Besser werden.</span></div>`;
+  $('#tabbar').innerHTML = TABS.map(n => `<a class="tab" href="${n[0]}" data-nav="${n[0]}">${GFX.nav[n[1]]}<span>${n[2]}</span></a>`).join('');
+}
+function navAktiv(h){
+  const basis = h === '#/' || h === '' ? '#/' : '#/' + (h.split('/')[1] || '');
+  const map = {'#/fach':'#/faecher', '#/uebung':'#/', '#/pruefung':'#/', '#/klausur':'#/', '#/abzeichen':'#/fortschritt', '#/konto':'#/einstellungen', '#/datenschutz':'#/einstellungen', '#/lernen':'#/'};
+  const ziel = map[basis] || basis;
+  document.querySelectorAll('[data-nav]').forEach(a => a.classList.toggle('aktiv', a.dataset.nav === ziel || (ziel === '#/mehr' && a.dataset.nav === '#/mehr')));
+}
+const rail = () => $('#rail');
+function railLeeren(){ const r = rail(); if (r) r.innerHTML = ''; document.body.classList.remove('mit-rail'); }
+
+/* ---------------- Aktivitäten ---------------- */
+function logEintrag(art, text){ S.log = S.log || []; S.log.unshift({t: Date.now(), art, text}); if (S.log.length > 30) S.log.length = 30; save(); }
+const vorZeit = t => { const m = Math.round((Date.now()-t)/60000); if (m < 1) return 'gerade eben'; if (m < 60) return 'vor ' + m + ' Min.'; const h = Math.round(m/60); if (h < 24) return 'vor ' + h + (h===1?' Stunde':' Stunden'); const d = Math.round(h/24); return 'vor ' + d + (d===1?' Tag':' Tagen'); };
+
 /* ---------------- Startseite ---------------- */
+let heroT = null;
 function viewHome(){
-  const heute = S.days[dayKey()]||0, zielP = Math.min(100, Math.round(heute/S.ziel*100));
-  const alle = D.einheiten; const faellig = alle.filter(e=>isDue(e.id)).length;
-  const gelernt = alle.filter(e=>boxOf(e.id)>=4).length;
-  const schwach = alle.filter(e=>S.box[e.id] && S.box[e.id].b<=1).length;
-  const kl = S.klausuren.slice(-4).reverse();
+  const alle = D.einheiten, faellig = alle.filter(e=>isDue(e.id)).length, heute = S.days[dayKey()]||0;
+  const eingeloggt = window.LW_SYNC && window.LW_SYNC.angemeldet();
+  const profil = eingeloggt ? window.LW_SYNC.profil() : null;
   app.innerHTML = `
-  <section class="hello">
-    <div class="panel today">${window.GFX?`<div class="today-szene">${GFX.szene()}</div>`:''}
-      <div class="ring" style="--p:${zielP};--c:var(--accent)"><div><b>${heute}</b><small>von ${S.ziel}<br>heute</small></div></div>
-      <div class="stack" style="gap:12px">
-        <div><div class="eyebrow">Heute</div><h2>${heute>=S.ziel?'Tagesziel geschafft – stark!':heute?'Weiter so, noch '+(S.ziel-heute)+' bis zum Tagesziel.':'Bereit für die nächste Klausur?'}</h2></div>
-        <p class="muted small">${faellig} Einheiten sind fällig. Nur Stoff aus eurem Unterricht – jede Frage mit Quelle.</p>
-        <div class="row">
-          <button class="btn primary" id="goOn">${ICON.bolt}Weiterlernen</button>
-          <button class="btn" id="goWeak" ${schwach?'':'disabled'}>${ICON.target}Schwächen trainieren${schwach?' ('+schwach+')':''}</button>
-        </div>
+  <section class="hero">
+    <div class="hero-text">
+      <div class="hero-eyebrow">Lernen. Spielen. Besser werden.</div>
+      <h1 class="hero-titel">Dein Wissen.<br>Dein <span class="verlauf">Spiel.</span></h1>
+      <p class="hero-sub">Lerne euren <span class="hl-gelb">Unterrichtsstoff</span> – spielerisch, interaktiv und mit spannenden Quiz-Duellen. Fordere deine Klasse heraus und werde zum Lern-Champion!</p>
+      <div class="row hero-knoepfe"><button class="btn primary gross" id="goOn">Jetzt starten ${ICON.pfeil}</button><button class="btn ghost-hell gross" id="soGehts">${ICON.play}So funktioniert’s</button></div>
+    </div>
+    <div class="hero-bild" aria-hidden="true">
+      <img class="hero-img" src="img/hero.jpg" alt="" onerror="this.remove()">
+      <div class="hero-ersatz">${GFX.heroErsatz()}</div>
+      <div class="spieler links"><span class="ava" style="background:var(--${profil ? profil.farbe : 'aew'})">${esc((profil ? profil.spitzname : 'Du')[0].toUpperCase())}</span><div><b>${esc(profil ? profil.spitzname : 'Du')}</b><small>${ICON.bolt}${S.xp} <i class="muenze"></i></small></div></div>
+      <div class="spieler rechts" id="heroGegner"><span class="ava" style="background:var(--its2)">?</span><div><b>Klasse</b><small>${ICON.bolt}– <i class="muenze"></i></small></div></div>
+      <div class="quizkarte" id="quizkarte"></div>
+      ${GFX.funkeln()}
+    </div>
+  </section>
+
+  <section class="features">
+    ${feature('gruen','gamepad','Spielerisch lernen','Karteikarten, Quiz, Rechnen, Zeitrennen und 3 Leben – mit Kombos und XP.','#/lernen')}
+    ${feature('lila','personen','Quiz-Duelle','Fordere jemanden aus deiner Klasse heraus und zeige, was du kannst!','#/duell', window.LW_DUELL && window.LW_DUELL.offen() ? window.LW_DUELL.offen()+' × du bist dran' : '')}
+    ${feature('gold','pokal','Fortschritt & Belohnungen','Sammle XP, steige in der Rangliste auf und schalte Abzeichen frei.','#/fortschritt')}
+    ${feature('blau','buch','Alle Fächer & Themen','WBL, ITS1 und AEW – jede Frage aus eurem Unterricht, mit Quelle.','#/faecher')}
+  </section>
+
+  <section class="unten">
+    <div class="panel so-gehts">
+      <div class="kasten-kopf">${GFX.appIcon('lila','personen',30)}<div><h2>So einfach geht’s</h2><p class="muted small">In wenigen Schritten zum Lernerfolg – und dabei noch Spaß haben!</p></div></div>
+      <div class="schritte">${SCHRITTE.map((s,k)=>`${k?`<span class="schritt-pfeil">${ICON.pfeil}</span>`:''}<div class="schritt"><div class="schritt-kopf"><span class="nr" style="background:var(--${s[0]})">${k+1}</span>${GFX.nav[s[1]]}</div><b>${s[2]}</b><p>${s[3]}</p></div>`).join('')}</div>
+    </div>
+    <div class="panel rang-kasten" id="rangKasten">${rangKasten(null)}</div>
+  </section>`;
+
+  // rechte Spalte
+  const L = level(), pro = Math.round(L.rest/L.need*100);
+  document.body.classList.add('mit-rail');
+  rail().innerHTML = `
+    <div class="panel rail-kasten">
+      <div class="kasten-kopf">${GFX.nav.fortschritt}<h3>Deine Statistik</h3></div>
+      <div class="statistik">
+        <div class="ring lvl-ring" style="--p:${pro};--c:var(--akzent-2)"><div><b>Level ${L.n}</b><small>${pro} %</small></div></div>
+        <ul class="stat-liste">
+          <li>${GFX.mini('flamme')}<div><b>${streak()} ${streak()===1?'Tag':'Tage'}</b><small>Serie</small></div></li>
+          <li>${GFX.mini('pokal')}<div><b data-zahl="${S.stat.duelleGewonnen||0}">${S.stat.duelleGewonnen||0}</b><small>Gewonnene Duelle</small></div></li>
+          <li>${GFX.mini('stern')}<div><b data-zahl="${S.xp}">${S.xp}</b><small>Gesamtpunkte (XP)</small></div></li>
+        </ul>
       </div>
+      <div class="tipp">${GFX.mini('lampe')}<div><b>Tipp</b><span>${tipp(faellig, heute)}</span></div></div>
     </div>
-    <div class="panel stats">
-      <div class="stat"><b data-zahl="${alle.length}">${alle.length}</b><span>Lerneinheiten</span></div>
-      <div class="stat"><b data-zahl="${gelernt}">${gelernt}</b><span>sicher gelernt</span></div>
-      <div class="stat"><b data-zahl="${S.klausuren.length}">${S.klausuren.length}</b><span>Probe-Klausuren</span></div>
-      <div class="stat" style="grid-column:1/-1"><div class="bar" title="Gesamtfortschritt"><i style="width:${mastery(alle)}%;background:var(--accent)"></i></div><span>Gesamtfortschritt ${mastery(alle)} %</span></div>
+    <div class="panel rail-kasten">
+      <div class="kasten-kopf">${ICON.bolt}<h3>Aktivitäten</h3></div>
+      <ul class="aktiv-liste">${(S.log||[]).slice(0,5).map(a=>`<li><span class="aktiv-ico ${a.art}">${GFX.mini(AKT_ICON[a.art]||'stern')}</span><div><b>${esc(a.text)}</b><small>${vorZeit(a.t)}</small></div></li>`).join('') || '<li class="leer"><span class="muted small">Noch nichts passiert – leg los, dann erscheinen hier deine Erfolge.</span></li>'}</ul>
     </div>
-  </section>
+    <div class="panel rail-kasten cta-duell">
+      <div class="cta-kopf">${GFX.mini('pokal')}<div><b>Heute noch ein Duell?</b><span>Fordere jetzt jemanden aus deiner Klasse heraus und teste dein Wissen!</span></div></div>
+      <button class="btn primary voll" id="ctaDuell">Duell starten ${ICON.pfeil}</button>
+    </div>`;
 
-  <section class="section">
-    <div class="section-head"><h2>Üben</h2><span class="muted small">alle Fächer gemischt</span></div>
-    <div class="modes">
-      ${modeTile('karten','cards','Karteikarten','Frage, umdrehen, ehrlich bewerten. Nicht Gewusstes kommt öfter.', 'var(--wbl)')}
-      ${modeTile('quiz','quiz','Multiple Choice','Ankreuzen wie in der IHK-Prüfung – mit Erklärung zu jeder Antwort.', 'var(--aew)')}
-      ${modeTile('rechnen','calc','Rechenaufgaben','Dual, Hex, Zweierkomplement, ASCII, Brute Force – immer neue Zahlen.', 'var(--its1)')}
-      ${modeTile('klausur','exam','Klausur-Simulation','Mit Timer, Punkten und Note nach IHK-Schlüssel.', 'var(--accent)')}
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="section-head"><h2>Spielen</h2><span class="muted small">für zwischendurch · Bestwerte werden gespeichert</span></div>
-    <div class="modes spiele">
-      <button class="mode spiel" data-spiel="rennen" style="--sc:var(--its1)">${kachelBild('rennen', ICON.timer)}<h3>Zeitrennen</h3><p class="small muted">60 Sekunden – so viele richtige wie möglich.</p><span class="best">Rekord ${S.stat.rennenBest}</span></button>
-      <button class="mode spiel" data-spiel="leben" style="--sc:var(--bad)">${kachelBild('leben', ICON.heart)}<h3>3 Leben</h3><p class="small muted">Wie weit kommst du? Es wird immer schwerer.</p><span class="best">Rekord ${S.stat.lebenBest}</span></button>
-      ${window.LW_DUELL ? `<button class="mode spiel" data-spiel="duell" style="--sc:var(--aew)">${kachelBild('duell', ICON.swords)}<h3>Quizduell</h3><p class="small muted">Fordere jemanden aus deiner Klasse heraus.</p>${window.LW_DUELL.offen() ? '<span class="best heiss">'+window.LW_DUELL.offen()+' × du bist dran</span>' : '<span class="best">3 Runden · 9 Fragen</span>'}</button>` : ''}
-      ${window.LW_SYNC && window.LW_SYNC.angemeldet() ? `<button class="mode spiel" data-spiel="rangliste" style="--sc:var(--dk)">${kachelBild('rangliste', ICON.trophy)}<h3>Rangliste</h3><p class="small muted">Wer sammelt diese Woche die meisten XP?</p><span class="best">Level ${level().n} · ${S.xp} XP</span></button>` : ''}
-    </div>
-  </section>
-
-  ${abzStreifen()}
-
-  <section class="section">
-    <div class="section-head"><h2>Fächer</h2><span class="muted small">Fortschritt = wie sicher du den Stoff kannst</span></div>
-    <div class="faecher">${D.faecher.map(fachCard).join('')}</div>
-  </section>
-
-  ${kl.length ? `<section class="section"><div class="section-head"><h2>Letzte Probe-Klausuren</h2></div><div class="klist">${kl.map(k=>`
-    <div class="panel krow"><div class="note" style="color:${notenFarbe(k.note)}">${k.note}</div><div><b>${esc(k.titel)}</b><div class="small muted">${k.datum} · ${k.punkte} von ${k.max} Punkten</div></div><div class="mono">${k.prozent} %</div></div>`).join('')}</div></section>` : ''}
-  <p class="foot">${window.LW_SYNC && window.LW_SYNC.angemeldet() ? 'Lernfortschritt wird in deinem Konto gespeichert.' : 'Lernfortschritt wird in diesem Browser gespeichert.'}</p>`;
-  app.querySelectorAll('[data-spiel]').forEach(b => b.onclick = () => ['duell','rangliste'].includes(b.dataset.spiel) ? go('#/'+b.dataset.spiel) : startSpiel(b.dataset.spiel));
-  const ab = $('#abzMehr'); if (ab) ab.onclick = () => go('#/abzeichen');
-  app.querySelectorAll('[data-zahl]').forEach(b => FX.hochzaehlen(b, +b.dataset.zahl, 900));
   $('#goOn').onclick = () => startSession({titel:'Weiterlernen', kinds:['K','M','R'], scope:{}, n:15});
-  const w = $('#goWeak'); if (w) w.onclick = () => startSession({titel:'Schwächen trainieren', kinds:['K','M'], scope:{}, n:15, nurSchwach:true});
-  app.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => startMode(b.dataset.mode, {}));
+  $('#soGehts').onclick = () => FX.fenster(`<div class="eyebrow">So funktioniert’s</div><h2>In 4 Schritten zum Lern-Champion</h2><ol class="so-liste">${SCHRITTE.map(s=>`<li><b>${s[2]}</b><span>${s[3]}</span></li>`).join('')}</ol>`);
+  $('#ctaDuell').onclick = () => go('#/duell');
+  app.querySelectorAll('[data-ziel]').forEach(b => b.onclick = () => go(b.dataset.ziel));
+  document.querySelectorAll('#rail [data-zahl]').forEach(b => FX.hochzaehlen(b, +b.dataset.zahl, 900));
+  heroQuiz();
+  if (eingeloggt && window.LW_SYNC.rangliste) window.LW_SYNC.rangliste().then(d => { const k = $('#rangKasten'); if (!k) return; k.innerHTML = rangKasten(d); rangKastenAn(d); heroGegner(d); });
+  else rangKastenAn(null);
+}
+const SCHRITTE = [['aew','buchnav','Fach wählen','Wähle ein Fach oder ein Thema aus eurem Unterricht.'],['wbl','gamepadnav','Lernen & Üben','Karteikarten, Quiz und Rechenaufgaben – und XP sammeln.'],['its2','duelle','Quiz-Duell starten','Fordere jemanden aus deiner Klasse heraus.'],['dk','rang','Aufsteigen & Belohnen','Level aufsteigen, Rangliste erklimmen, Abzeichen sammeln.']];
+const AKT_ICON = {duell:'pokal', verloren:'personen', abz:'schild', level:'stern', klausur:'blatt', ziel:'haken', neu:'personen'};
+function feature(farbe, ico, titel, text, ziel, extra){
+  return `<button class="feature ${farbe}" data-ziel="${ziel}">${GFX.appIcon(farbe, ico, 56)}<h3>${titel}</h3><p>${text}</p>${extra?`<span class="feature-extra">${extra}</span>`:''}<span class="feature-pfeil">${ICON.pfeil}</span></button>`;
+}
+function tipp(faellig, heute){
+  const dran = window.LW_DUELL ? window.LW_DUELL.offen() : 0;
+  if (dran) return `Du bist in ${dran} ${dran===1?'Duell':'Duellen'} dran!`;
+  if (heute < S.ziel) return `Noch ${S.ziel-heute} Antworten bis zum Tagesziel.`;
+  if (faellig) return `${faellig} Einheiten sind zum Wiederholen fällig.`;
+  return 'Tagesziel geschafft – Zeit für ein Zeitrennen!';
+}
+function rangKasten(d){
+  const kopf = `<div class="kasten-kopf">${GFX.mini('krone')}<h3>Rangliste</h3></div>`;
+  if (!window.LW_SYNC || !window.LW_SYNC.angemeldet()) return kopf + `<p class="muted small">Mit Konto siehst du hier, wer in deiner Klasse vorne liegt.</p><button class="btn primary voll" data-ziel="#/konto">Anmelden</button>`;
+  if (!d) return kopf + '<p class="muted small">Lädt …</p>';
+  return kopf + `<div class="seg mini"><button aria-pressed="true" data-rk="woche">Diese Woche</button><button aria-pressed="false" data-rk="gesamt">Allzeit</button></div><ol class="rk-liste" id="rkListe"></ol>`;
+}
+function rangKastenAn(d){
+  const k = $('#rangKasten'); if (!k) return;
+  k.querySelectorAll('[data-ziel]').forEach(b => b.onclick = () => go(b.dataset.ziel));
+  if (!d) return;
+  const ich = window.LW_SYNC.ich() && window.LW_SYNC.ich().id;
+  const zeichne = art => { const l = d.slice().sort((a,b)=>b[art]-a[art]).slice(0,5);
+    $('#rkListe').innerHTML = l.map((x,i)=>`<li class="${x.id===ich?'du':''}"><span class="rk-platz p${i+1}">${i+1}</span><span class="ava" style="background:var(--${x.farbe})">${esc(x.spitzname[0].toUpperCase())}</span><span class="rk-name">${esc(x.spitzname)}${x.id===ich?' <small>(du)</small>':''}</span><span class="rk-xp mono">${x[art].toLocaleString('de-DE')}</span></li>`).join('') || '<li class="muted small">Noch niemand in der Klasse.</li>'; };
+  k.querySelectorAll('[data-rk]').forEach(b => b.onclick = () => { k.querySelectorAll('[data-rk]').forEach(x=>x.setAttribute('aria-pressed', x===b)); zeichne(b.dataset.rk); });
+  zeichne('woche');
+}
+function heroGegner(d){
+  const ich = window.LW_SYNC.ich() && window.LW_SYNC.ich().id; const g = (d||[]).filter(x=>x.id!==ich).sort((a,b)=>b.woche-a.woche)[0];
+  const el = $('#heroGegner'); if (!el || !g) return;
+  el.innerHTML = `<span class="ava" style="background:var(--${g.farbe})">${esc(g.spitzname[0].toUpperCase())}</span><div><b>${esc(g.spitzname)}</b><small>${ICON.bolt}${g.gesamt} <i class="muenze"></i></small></div>`;
+}
+// Schwebende Quiz-Karte im Hero: echte Fragen, richtige Antwort leuchtet auf
+function heroQuiz(){
+  clearTimeout(heroT);
+  const box = $('#quizkarte'); if (!box) return;
+  const pool = D.einheiten.filter(e => e.typ==='M' && e.optionen.length>=3 && e.optionen.length<=4 && e.optionen.filter(o=>o[1]).length===1 && e.frage.length < 75 && e.optionen.every(o=>o[0].length<30));
+  let n = 0;
+  const zeige = () => {
+    if (!document.body.contains(box)) return;
+    const e = pick(pool), f = fachOfThema(e.thema), opts = shuffle(e.optionen); n = n % 10 + 1;
+    box.innerHTML = `<div class="qk-kopf"><span class="qk-fach" style="--fc:var(--${f.farbe})">${GFX.nav.faecher}${f.name}</span><span class="qk-nr">${n}/10</span></div><div class="qk-frage">${md(e.frage)}</div>
+      <div class="qk-opts">${opts.map((o,k)=>`<div class="qk-opt" data-ok="${o[1]?1:0}"><b>${'ABCD'[k]}</b><span>${md(o[0])}</span></div>`).join('')}</div>`;
+    box.classList.remove('wechsel'); void box.offsetWidth; box.classList.add('wechsel');
+    heroT = setTimeout(() => { const r = box.querySelector('[data-ok="1"]'); if (r){ r.classList.add('richtig'); r.insertAdjacentHTML('beforeend', `<i class="qk-haken">${ICON.ok}</i>`); } heroT = setTimeout(zeige, 3200); }, 2600);
+  };
+  zeige();
+}
+
+/* ---------------- Weitere Seiten ---------------- */
+const seitenKopf = (eyebrow, titel, sub) => `<div class="seiten-kopf"><div class="eyebrow">${eyebrow}</div><h1>${titel}</h1>${sub?`<p class="muted">${sub}</p>`:''}</div>`;
+function viewFaecher(){
+  app.innerHTML = seitenKopf('Alle Fächer & Themen', 'Fächer', 'Fortschritt = wie sicher du den Stoff kannst') + `<div class="faecher">${D.faecher.map(fachCard).join('')}</div>`;
   app.querySelectorAll('[data-fach]').forEach(b => b.onclick = () => go('#/fach/'+b.dataset.fach));
+}
+function viewLernen(){
+  app.innerHTML = seitenKopf('Spielerisch lernen', 'Üben & Spielen', 'Alle Fächer gemischt – such dir aus, worauf du Lust hast.') + `
+  <div class="row" style="margin:6px 0 4px"><button class="btn primary" id="goOn">${ICON.bolt}Weiterlernen</button><button class="btn" id="goWeak">${ICON.target}Schwächen trainieren</button></div>
+  <section class="section"><div class="section-head"><h2>Üben</h2></div><div class="modes">
+    ${modeTile('karten','cards','Karteikarten','Frage, umdrehen, ehrlich bewerten. Nicht Gewusstes kommt öfter.', 'var(--wbl)')}
+    ${modeTile('quiz','quiz','Multiple Choice','Ankreuzen wie in der IHK-Prüfung – mit Erklärung zu jeder Antwort.', 'var(--aew)')}
+    ${modeTile('rechnen','calc','Rechenaufgaben','Dual, Hex, Zweierkomplement, ASCII, Brute Force – immer neue Zahlen.', 'var(--its1)')}
+    ${modeTile('klausur','exam','Klausur-Simulation','Mit Timer, Punkten und Note nach IHK-Schlüssel.', 'var(--akzent)')}
+  </div></section>
+  <section class="section"><div class="section-head"><h2>Spielen</h2><span class="muted small">Bestwerte werden gespeichert</span></div><div class="modes spiele">
+    <button class="mode spiel" data-spiel="rennen" style="--sc:var(--its1)">${kachelBild('rennen', ICON.timer)}<h3>Zeitrennen</h3><p class="small muted">60 Sekunden – so viele richtige wie möglich.</p><span class="best">Rekord ${S.stat.rennenBest}</span></button>
+    <button class="mode spiel" data-spiel="leben" style="--sc:var(--bad)">${kachelBild('leben', ICON.heart)}<h3>3 Leben</h3><p class="small muted">Wie weit kommst du? Es wird immer schwerer.</p><span class="best">Rekord ${S.stat.lebenBest}</span></button>
+    <button class="mode spiel" data-spiel="duell" style="--sc:var(--aew)">${kachelBild('duell', ICON.swords)}<h3>Quizduell</h3><p class="small muted">Fordere jemanden aus deiner Klasse heraus.</p><span class="best">3 Runden · 9 Fragen</span></button>
+  </div></section>`;
+  $('#goOn').onclick = () => startSession({titel:'Weiterlernen', kinds:['K','M','R'], scope:{}, n:15});
+  $('#goWeak').onclick = () => startSession({titel:'Schwächen trainieren', kinds:['K','M'], scope:{}, n:15, nurSchwach:true});
+  app.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => startMode(b.dataset.mode, {}));
+  app.querySelectorAll('[data-spiel]').forEach(b => b.onclick = () => b.dataset.spiel==='duell' ? go('#/duell') : startSpiel(b.dataset.spiel));
+}
+function viewKarteikarten(){
+  const fs = D.faecher.filter(f=>!f.bald);
+  app.innerHTML = seitenKopf('Mein Lernen', 'Karteikarten', 'Wähle ein Fach oder ein einzelnes Thema. Fällige Karten kommen zuerst.') + `<div class="stack">${fs.map(f=>{ const th = D.themen.filter(t=>t.fach===f.id);
+    return `<div class="panel kk-fach" style="--fc:var(--${f.farbe})"><div class="kk-kopf">${GFX.fach[f.id]||''}<div><h2 style="color:var(--${f.farbe})">${f.name}</h2><span class="muted small">${esc(f.lang)}</span></div><button class="btn primary" data-kf="${f.id}">${ICON.cards}Alle Karten</button></div>
+      <div class="kk-themen">${th.map(t=>{ const l = einheitenIn({themen:[t.id]}).filter(e=>e.typ==='K'); if (!l.length) return ''; const due = l.filter(e=>isDue(e.id)).length;
+        return `<button class="kk-thema" data-kt="${t.id}"><span>${esc(t.name)}</span><small>${l.length} Karten · ${due} fällig</small><div class="bar"><i style="width:${mastery(l)}%;background:var(--${f.farbe})"></i></div></button>`; }).join('')}</div></div>`; }).join('')}</div>`;
+  app.querySelectorAll('[data-kf]').forEach(b => b.onclick = () => startMode('karten', {fach:b.dataset.kf}));
+  app.querySelectorAll('[data-kt]').forEach(b => b.onclick = () => startMode('karten', {themen:[b.dataset.kt]}));
+}
+function viewLernpfad(){
+  const fs = D.faecher.filter(f=>!f.bald);
+  app.innerHTML = seitenKopf('Mein Lernen', 'Lernpfad', 'Arbeite dich Station für Station durch. Sterne gibt es für 30, 60 und 90 % Sicherheit.') + `<div class="pfade">${fs.map(f=>{
+    const th = D.themen.filter(t=>t.fach===f.id).map(t=>({t, m:mastery(einheitenIn({themen:[t.id]}))}));
+    const naechste = th.findIndex(x=>x.m < 60);
+    return `<div class="panel pfad" style="--fc:var(--${f.farbe})"><div class="pfad-kopf">${GFX.fach[f.id]||''}<h2 style="color:var(--${f.farbe})">${f.name}</h2></div>
+      <div class="pfad-weg">${th.map((x,i)=>{ const sterne = x.m>=90?3:x.m>=60?2:x.m>=30?1:0;
+        return `<button class="station ${i===naechste?'jetzt':''} ${sterne===3?'fertig':''}" data-st="${x.t.id}" style="--x:${[0,1,2,1][i%4]}"><span class="st-kreis">${i===naechste?ICON.play:sterne===3?ICON.ok:i+1}</span><span class="st-text"><b>${esc(x.t.name)}</b><small>${'★'.repeat(sterne)}<span class="leer">${'★'.repeat(3-sterne)}</span> · ${x.m} %</small></span>${i===naechste?'<span class="st-hier">du bist hier</span>':''}</button>`; }).join('')}</div></div>`; }).join('')}</div>`;
+  app.querySelectorAll('[data-st]').forEach(b => b.onclick = () => startSession({titel: themaOf(b.dataset.st).name, kinds:['K','M','R'], scope:{themen:[b.dataset.st]}, n:12}));
+}
+function viewFortschritt(){
+  const L = level(), tage = []; for (let i=13;i>=0;i--){ const k = dayKey(Date.now()-i*86400000); tage.push([k, (S.xpTag||{})[k]||0]); }
+  const max = Math.max(10, ...tage.map(t=>t[1])); const kl = S.klausuren.slice(-6).reverse();
+  const da = FX.ABZ.filter(a=>S.abz[a.id]).length;
+  app.innerHTML = seitenKopf('Fortschritt & Belohnungen', 'Fortschritt') + `
+  <div class="fs-oben">
+    <div class="panel fs-level"><div class="ring lvl-ring" style="--p:${Math.round(L.rest/L.need*100)};--c:var(--akzent-2)"><div><b>Level ${L.n}</b><small>${L.rest}/${L.need} XP</small></div></div><div><b class="gross-zahl" data-zahl="${S.xp}">${S.xp}</b><span class="muted">XP gesamt</span><br><b class="gross-zahl" data-zahl="${S.stat.richtig}">${S.stat.richtig}</b><span class="muted">richtige Antworten</span></div></div>
+    <div class="panel fs-verlauf"><h3>XP der letzten 14 Tage</h3><div class="balken">${tage.map(([k,v])=>`<div class="b" title="${k}: ${v} XP"><i style="height:${Math.round(v/max*100)}%"></i><small>${k.slice(8)}</small></div>`).join('')}</div></div>
+  </div>
+  <section class="section"><div class="section-head"><h2>Fächer</h2></div><div class="faecher">${D.faecher.filter(f=>!f.bald).map(fachCard).join('')}</div></section>
+  <section class="section"><div class="section-head"><h2>Abzeichen</h2><button class="btn ghost" id="abzMehr">${ICON.trophy}${da} von ${FX.ABZ.length} · alle ansehen</button></div><div class="abz-streifen">${FX.ABZ.filter(a=>S.abz[a.id]).map((a,k)=>`<div class="abz-mini" style="--k:${k}" title="${esc(a.name)}">${FX.medaille(a)}</div>`).join('') || '<p class="muted small">Noch keine Abzeichen.</p>'}</div></section>
+  ${kl.length ? `<section class="section"><div class="section-head"><h2>Probe-Klausuren</h2></div><div class="klist">${kl.map(k=>`<div class="panel krow"><div class="note" style="color:${notenFarbe(k.note)}">${k.note}</div><div><b>${esc(k.titel)}</b><div class="small muted">${k.datum} · ${k.punkte} von ${k.max} Punkten</div></div><div class="mono">${k.prozent} %</div></div>`).join('')}</div></section>` : ''}`;
+  app.querySelectorAll('[data-zahl]').forEach(b => FX.hochzaehlen(b, +b.dataset.zahl, 900));
+  app.querySelectorAll('[data-fach]').forEach(b => b.onclick = () => go('#/fach/'+b.dataset.fach));
+  $('#abzMehr').onclick = () => go('#/abzeichen');
+}
+function viewEinstellungen(){
+  const hell = document.documentElement.dataset.theme === 'light';
+  const konto = window.LW_SYNC && window.LW_SYNC.angemeldet();
+  app.innerHTML = seitenKopf('Mein Lernen', 'Einstellungen') + `<div class="panel setup einst">
+    <div><div class="eyebrow">Tagesziel</div><div class="seg" id="ziel">${[10,20,30,50].map(z=>`<button aria-pressed="${S.ziel===z}" data-z="${z}">${z} Antworten</button>`).join('')}</div></div>
+    <div><div class="eyebrow">Darstellung</div><div class="seg" id="thema"><button aria-pressed="${!hell}" data-t="dark">Dunkel</button><button aria-pressed="${hell}" data-t="light">Hell</button></div></div>
+    <div><div class="eyebrow">Töne</div><div class="seg" id="toene"><button aria-pressed="${FX.tonAn()}" data-o="1">An</button><button aria-pressed="${!FX.tonAn()}" data-o="0">Aus</button></div></div>
+    <div><div class="eyebrow">Konto</div><div class="row"><button class="btn" data-ziel="#/konto">${konto ? 'Profil & Konto' : 'Anmelden / Konto anlegen'}</button><button class="btn ghost" data-ziel="#/datenschutz">Datenschutz</button><button class="btn ghost" data-ziel="#/abzeichen">${ICON.trophy}Abzeichen</button></div></div>
+  </div>`;
+  app.querySelectorAll('[data-z]').forEach(b => b.onclick = () => { S.ziel = +b.dataset.z; save(); viewEinstellungen(); toast('Tagesziel: ' + S.ziel); });
+  app.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { thema(b.dataset.t); viewEinstellungen(); });
+  app.querySelectorAll('[data-o]').forEach(b => b.onclick = () => { if ((b.dataset.o==='1') !== FX.tonAn()) { FX.tonUmschalten(); tonIcon(); } viewEinstellungen(); });
+  app.querySelectorAll('[data-ziel]').forEach(b => b.onclick = () => go(b.dataset.ziel));
+}
+function viewMehr(){
+  app.innerHTML = seitenKopf('Menü', 'Mehr') + `<div class="mehr-liste">${NAV.filter(n=>n && !TABS.some(t=>t[0]===n[0])).concat([['#/lernen','gamepadnav','Üben & Spielen'],['#/abzeichen','pokalnav','Abzeichen'],['#/konto','einst','Konto']]).map(n=>`<a class="panel mehr-eintrag" href="${n[0]}">${GFX.nav[n[1]]}<span>${n[2]}</span>${ICON.pfeil}</a>`).join('')}</div>`;
 }
 function abzStreifen(){
   const da = FX.ABZ.filter(a=>S.abz[a.id]).sort((a,b)=>S.abz[b.id]-S.abz[a.id]);
@@ -266,11 +428,11 @@ function abzStreifen(){
 }
 function viewAbzeichen(){
   const ctx = {S, streak, level:()=>level().n};
-  app.innerHTML = `<button class="btn ghost back" id="bk">${ICON.back}Übersicht</button>
+  app.innerHTML = `<button class="btn ghost back" id="bk">${ICON.back}Fortschritt</button>
   <div style="margin-top:12px"><div class="eyebrow">Sammlung</div><h1>Abzeichen</h1><p class="muted" style="margin-top:6px">${FX.ABZ.filter(a=>S.abz[a.id]).length} von ${FX.ABZ.length} freigeschaltet</p></div>
   <div class="abz-grid">${FX.ABZ.map((a,k)=>{ const hat = S.abz[a.id]; const f = !hat && a.fort ? a.fort(ctx) : null;
     return `<div class="panel abz ${hat?'hat':'zu'}" style="--k:${k}"><div class="abz-sym">${hat?FX.medaille(a):(window.GFX?GFX.gesperrt():ICON.lock)}</div><h3>${esc(a.name)}</h3><p class="small muted">${esc(a.text)}</p>${hat?`<span class="tiny muted">seit ${new Date(hat).toLocaleDateString('de-DE')}</span>`: f?`<div class="bar"><i style="width:${Math.min(100,Math.round(f[0]/f[1]*100))}%;background:var(--accent)"></i></div><span class="tiny muted">${Math.min(f[0],f[1])} / ${f[1]}</span>`:''}</div>`; }).join('')}</div>`;
-  $('#bk').onclick = () => go('#/');
+  $('#bk').onclick = () => go('#/fortschritt');
 }
 const kachelBild = (k, ico) => window.GFX ? `<div class="kachel-bild">${GFX.kachel[k]}</div>` : `<div class="ico">${ico}</div>`;
 function modeTile(mode, ico, t, sub, col){ return `<button class="mode" data-mode="${mode}"><div class="ico" style="color:${col}">${ICON[ico]}</div><h3>${t}</h3><p class="small muted">${sub}</p></button>`; }
@@ -305,7 +467,7 @@ function viewFach(fid){
   <div class="stack">${th.map(t=>{const l=einheitenIn({themen:[t.id]}); const m=mastery(l); const due=l.filter(e=>isDue(e.id)).length; const nK=l.filter(e=>e.typ==='K').length, nM=l.filter(e=>e.typ==='M').length;
     return `<div class="panel topic"><div class="meta"><h3>${esc(t.name)}</h3><div class="bar"><i style="width:${m}%;background:var(--${f.farbe})"></i></div><div class="small muted">${m} % sicher · ${due} fällig · ${nK} Karten · ${nM} Quizfragen${t.rechnen?' · Rechenaufgaben':''}</div></div>
     <div class="row">${nK?`<button class="btn" data-t="${t.id}" data-m="karten">${ICON.cards}Karten</button>`:''}${nM?`<button class="btn" data-t="${t.id}" data-m="quiz">${ICON.quiz}Quiz</button>`:''}${t.rechnen?`<button class="btn" data-t="${t.id}" data-m="rechnen">${ICON.calc}Rechnen</button>`:''}</div></div>`;}).join('')}</div></section>`;
-  $('#bk').onclick = () => go('#/');
+  $('#bk').onclick = () => go('#/faecher');
   app.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
     const scope = b.dataset.t ? {themen:[b.dataset.t]} : {fach:fid};
     if (b.dataset.m==='klausur'){ klausurVorwahl = fid; return go('#/klausur'); }
@@ -586,6 +748,7 @@ function finishExam(){
   const prozent = Math.round(pkt/x.max*100); const n = note(prozent); if (n[1]===1) S.stat.einsen++;
   S.klausuren.push({titel:x.titel, datum:new Date().toLocaleDateString('de-DE'), punkte:+pkt.toFixed(1), max:x.max, prozent, note:n[1]});
   if (S.klausuren.length>30) S.klausuren.shift();
+  logEintrag('klausur', 'Probe-Klausur ' + x.titel + ': Note ' + n[1]);
   addXP(prozent>=50 ? 50 : 15);
   exam = null;
   app.innerHTML = `<div class="session">
@@ -604,12 +767,12 @@ function finishExam(){
 
 /* ---------------- Schnittstelle für konto.js / duell.js ---------------- */
 Object.assign(window.LW, {
-  D, ICON, esc, md, toast, go, route, header, save, addXP, level, streak, dayKey, fachOf, themaOf, rechenIn, aufgabe, shuffle, abzeichenPruefen,
+  logEintrag, D, ICON, esc, md, toast, go, route, header, save, addXP, level, streak, dayKey, fachOf, themaOf, rechenIn, aufgabe, shuffle, abzeichenPruefen,
   app: () => app,
   // Feste Fragenfolge spielen (Duell): items = [{kind:'M', e} | {kind:'R', r}]
   spielen(items, titel, beiAntwort, beiEnde){ items.forEach(it=>{ if (it.e) delete it.e._order; }); session = {titel, modus:'duell', items, i:0, richtig:0, xp:0, combo:0, cfg:{}, beiAntwort, beiEnde}; go('#/uebung'); },
 });
-if (window.GFX){ $('#logo').innerHTML = GFX.logo(); } FX.hintergrund();
+if (window.GFX){ $('#logo').innerHTML = GFX.logo(); huelle(); } FX.hintergrund();
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
 route();
 })();
