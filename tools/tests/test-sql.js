@@ -21,7 +21,7 @@ const ok = (b, t) => { if (b) console.log('  ✓ ' + t); else { fehler++; consol
     alter default privileges in schema public grant all on sequences to anon, authenticated;
     alter default privileges in schema public grant execute on functions to anon, authenticated;
   `);
-  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', '2026-09-23-karten-v2.sql', '2026-09-24-bombe-anzeige.sql', 'spiel-fragen.sql']) {
+  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', '2026-09-23-karten-v2.sql', '2026-09-24-bombe-anzeige.sql', '2026-09-24-karten-feinschliff.sql', 'spiel-fragen.sql']) {
     try { await db.exec(fs.readFileSync(R + f, 'utf8')); console.log('geladen: ' + f); }
     catch (e) { console.log('FEHLER in ' + f + ': ' + e.message); process.exit(1); }
   }
@@ -41,6 +41,8 @@ const ok = (b, t) => { if (b) console.log('  ✓ ' + t); else { fehler++; consol
   const darfNicht = async (uid, sql, t) => { try { await als(uid, sql); ok(false, t + ' (ging durch!)'); } catch (e) { ok(true, t + ' → ' + e.message.slice(0, 60)); } };
   const loesung = async id => (await db.query('select richtig from spiel_fragen where id = $1', [id])).rows[0].richtig;
   const su = (sql, p) => db.query(sql, p);
+  // Kampf-Zugfrage: Spielfrage (ID) oder Rechenfrage (Objekt, Lösung nur im Zustand)
+  const loesungK = async v => typeof v.frage === 'object' ? +(await su("select st->'frage'->>'richtig' r from kampf_zustand where kampf_id = $1", [v.id])).rows[0].r : loesung(v.frage);
 
   console.log('\n== Konto & Rechte');
   const k = await rpc(A, 'spiel_konto');
@@ -137,7 +139,7 @@ const ok = (b, t) => { if (b) console.log('  ✓ ' + t); else { fehler++; consol
   while (v.status === 'laeuft' && zuege < 60) {
     zuege++;
     if (v.phase === 'frage') {
-      const w = (await loesung(v.frage)) + (zuege % 4 === 0 ? 1 : 0);   // jede 4. falsch
+      const w = (await loesungK(v)) + (zuege % 4 === 0 ? 1 : 0);   // jede 4. falsch
       v = await rpc(A, 'kampf_antwort', [v.id, w]);
       if (zuege === 1) ok(v.antwort && v.antwort.ok === true && v.du.fokus === 2 && v.du.hand.length === 5, 'Richtige Antwort: +1 Fokus (2), +1 Karte (5)');
     }
@@ -168,7 +170,7 @@ const ok = (b, t) => { if (b) console.log('  ✓ ' + t); else { fehler++; consol
   const vb = await rpc(B, 'kampf_ansicht', [p.id]);
   ok(vb.dran === false && vb.frage === null && typeof vb.gegner.hand === 'number' && Array.isArray(vb.gegner.fallen) && !('deck' in vb.du && Array.isArray(vb.du.deck)), 'B sieht A\'s Hand, Deck, Fallen und Frage nicht');
   await darfNicht(C, `select kampf_ansicht('${p.id}')`, 'Fremde sehen den Kampf nicht');
-  p = await rpc(A, 'kampf_antwort', [p.id, await loesung(p.frage)]);
+  p = await rpc(A, 'kampf_antwort', [p.id, await loesungK(p)]);
   const falle = p.du.hand.findIndex(id => katalog[id].typ === 'falle' && katalog[id].kosten <= p.du.fokus);
   if (falle >= 0) { p = await rpc(A, 'kampf_spielen', [p.id, falle, null, null]); const vb2 = await rpc(B, 'kampf_ansicht', [p.id]); ok(vb2.gegner.fallen.includes(true) && !JSON.stringify(vb2.log).includes(p.du.fallen.find(Boolean).k), 'Gelegte Falle für B nur als verdeckt sichtbar'); }
   p = await rpc(A, 'kampf_zug_beenden', [p.id]);
@@ -182,6 +184,40 @@ const ok = (b, t) => { if (b) console.log('  ✓ ' + t); else { fehler++; consol
   const pa = await rpc(A, 'kampf_ansicht', [p.id]);
   ok(pa.ergebnis === 'sieg' && pa.belohnung.xp === 50, 'A gewinnt: ' + JSON.stringify(pa.belohnung));
 
+  console.log('\n== Zugfrage: Timer, Rechenfragen, Wiederholungen');
+  const rech = (await su('select _frage_rechnen() f from generate_series(1, 300)')).rows.map(r => r.f);
+  const bitsVon = tk => parseInt(tk.replace(/\s/g, ''), 2);
+  const rechnetRichtig = f => { const [, art, x] = f.id.split('-'), n = +x, l = f.optionen[f.richtig];
+    return art === 'bin2dez' ? +l === n : art === 'dez2bin' ? bitsVon(l) === n : art === 'hex2dez' ? +l === n : art === 'dez2hex' ? parseInt(l, 16) === n
+      : art === 'zk2bin' ? bitsVon(l) === 256 - n : art === 'zk2dez' ? +l === n - 256 : false; };
+  ok(rech.every(f => f.optionen.length === 4 && new Set(f.optionen).size === 4 && f.richtig >= 0 && f.richtig < 4), 'Rechenfragen: immer 4 verschiedene Optionen');
+  ok(rech.every(rechnetRichtig), 'Rechenfragen: markierte Lösung stimmt nachgerechnet (300 Stück)');
+  ok(new Set(rech.map(f => f.id.split('-')[1])).size === 6, 'Rechenfragen: alle 6 Arten kommen vor');
+  let tk = fr;
+  ok(await rpc(A, 'kampf_frage_start', [tk.id]) === 20, 'Timer startet mit 20 s');
+  ok((await rpc(A, 'kampf_ansicht', [tk.id])).frage_rest === 20, 'Ansicht nennt die Restzeit');
+  await su("update kampf_zustand set st = st || jsonb_build_object('frage_ab', extract(epoch from now()) - 30) where kampf_id = $1", [tk.id]);
+  tk = await rpc(A, 'kampf_antwort', [tk.id, await loesungK(tk)]);
+  ok(tk.antwort.ok === false && tk.antwort.zu_spaet === true && tk.phase === 'spielen', 'Richtige Antwort nach 30 s zählt als falsch');
+  tk = await rpc(A, 'kampf_zug_beenden', [tk.id]);
+  if (tk.status === 'laeuft') {
+    tk = await rpc(A, 'kampf_antwort', [tk.id, -1]);
+    ok(tk.antwort.ok === false && tk.antwort.zu_spaet === true, 'Zeit abgelaufen (Wahl −1) zählt als falsch');
+    tk = await rpc(A, 'kampf_zug_beenden', [tk.id]);
+  }
+  if (tk.status === 'laeuft') {
+    await su("update kampf_zustand set st = st || jsonb_build_object('frage', _frage_rechnen()) where kampf_id = $1", [tk.id]);
+    tk = await rpc(A, 'kampf_ansicht', [tk.id]);
+    ok(typeof tk.frage === 'object' && tk.frage.text && tk.frage.optionen.length === 4 && !('richtig' in tk.frage) && !('erklaerung' in tk.frage), 'Rechenfrage in der Ansicht ohne Lösung');
+    await rpc(A, 'kampf_frage_start', [tk.id]);
+    tk = await rpc(A, 'kampf_antwort', [tk.id, await loesungK(tk)]);
+    ok(tk.antwort.ok === true && typeof tk.antwort.richtig === 'number' && tk.antwort.erklaerung, 'Rechenfrage richtig beantwortet, Erklärung kommt mit');
+  }
+  const zl = (await su('select zuletzt_fragen z from spieler_konto where user_id = $1', [A])).rows[0].z;
+  ok(zl.length > 5 && zl.length <= 80, 'Zuletzt gestellte Fragen werden gemerkt (' + zl.length + ')');
+  await su("update spieler_konto set zuletzt_fragen = (select array_agg(id) from spiel_fragen where id <> (select min(id) from spiel_fragen)) where user_id = $1", [A]);
+  const wz = await rpc(A, 'kampf_starten', [null, null, 'leicht']);
+  ok(typeof wz.frage === 'object' || wz.frage === (await su('select min(id) m from spiel_fragen')).rows[0].m, 'Neue Zugfrage meidet die zuletzt gestellten');
   console.log('\n== Quiz-Millionär');
   let m = await rpc(A, 'mio_starten');
   const j = await rpc(A, 'mio_joker', [m.id, 'fifty']);

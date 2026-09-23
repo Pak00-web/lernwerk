@@ -72,25 +72,43 @@ const STAUB_PREIS = {common: 40, rare: 100, epic: 400, legendary: 1600};
 // Regeltext: "Beim Ausspielen:", "Erleuchtet:", "Falle – …:" hervorheben
 const regelText = t => esc(t || '').replace(/(Beim Ausspielen:|Erleuchtet:|Falle – [^:]+:)/g, '<b>$1</b>');
 const kwChips = (sch = []) => sch.map(kw => G.SCHLUESSEL[kw] ? `<span class="kw kw-${kw}" title="${G.SCHLUESSEL[kw][1]}">${G.kwIco(kw)}${G.SCHLUESSEL[kw][0]}</span>` : '').join('');
+// Marken oben rechts im Bild: Schlüsselwörter und Effekt-Arten – auch auf kleinen Karten und auf dem Brett sichtbar
+function effektMarken(k, sch){
+  const m = (sch || k.schluessel || []).slice();
+  if (k.typ === 'monster' && (k.effekt || []).length) m.push('ausspielen');
+  if ((k.erleuchtet || []).length) m.push('erleuchtet');
+  return m.filter(x => G.SCHLUESSEL[x]).map(x => `<span class="mk mk-${x}" title="${G.SCHLUESSEL[x][0]}: ${G.SCHLUESSEL[x][1]}">${G.kwIco(x)}</span>`).join('');
+}
 // Karte im Sammelkarten-Stil. o: {klasse ('klein' = ohne Text), glanz, attr}
+// Seltenheit: Rahmen + Juwel unten, Typ: farbiges Band (Monster/Zauber/Falle), Effekte: Marken oben rechts
 function karte(id, o = {}){
   const k = katalog && katalog[id]; if (!k) return `<div class="lwk leer ${o.klasse || ''}"></div>`;
-  const f = G.FACH[k.fach] || {}, s = SELT[k.seltenheit] || SELT.common;
-  const typ = k.typ === 'monster' ? `Monster · ${ART_NAME[k.art] || 'Wesen'}` : k.typ === 'zauber' ? 'Zauber' : 'Falle';
+  const f = G.FACH[k.fach] || {}, s = SELT[k.seltenheit] || SELT.common, mon = k.typ === 'monster';
+  const band = mon ? `${G.ico.schwert}<span>${ART_NAME[k.art] || 'Wesen'}</span>` : `${G.kwIco(k.typ)}<span>${k.typ === 'zauber' ? 'Zauber' : 'Falle'}</span>`;
   return `<div class="lwk s-${k.seltenheit} t-${k.typ} ${o.klasse || ''} ${o.glanz ? 'glanz' : ''}" data-karte="${id}" style="--fc:${f.farbe};--fd:${f.dunkel}" ${o.attr || ''}><div class="lwk-in">
-    <div class="lwk-bild">${G.kartenBild(k)}<span class="lwk-kosten" title="Kosten: ${k.kosten} Fokus">${k.kosten}</span>${k.seltenheit === 'legendary' ? '<span class="lwk-leg" title="Nur in einem Zug mit richtiger Antwort spielbar">!</span>' : ''}</div>
-    <div class="lwk-name"><span>${esc(k.name)}</span></div>
-    <div class="lwk-typ"><span class="lwk-gem" title="${s[0]}"></span><span>${typ}</span><span class="lwk-fach">${f.name}</span></div>
-    <div class="lwk-text">${kwChips(k.schluessel)}${k.text ? `<p>${regelText(k.text)}</p>` : ''}${k.flavor ? `<p class="lwk-flavor">${esc(k.flavor)}</p>` : ''}</div>
-    ${k.typ === 'monster' ? `<div class="lwk-werte"><span class="lwk-atk" title="Angriff">${G.ico.schwert}<b>${k.angriff}</b></span><span class="lwk-hp" title="Leben">${G.ico.herz}<b>${k.verteidigung}</b></span></div>`
-      : ''}
+    <div class="lwk-bild">${G.kartenBild(k)}<span class="lwk-kosten" title="Kosten: ${k.kosten} Fokus">${k.kosten}</span><span class="lwk-marken">${effektMarken(k)}</span></div>
+    <div class="lwk-band">${band}</div>
+    <div class="lwk-name">${k.seltenheit === 'legendary' ? '<i class="lwk-krone" aria-hidden="true"></i>' : ''}<span>${esc(k.name)}</span></div>
+    <div class="lwk-typ"><span class="lwk-selt">${s[0]}</span><span class="lwk-fach">${f.name}</span></div>
+    <div class="lwk-text">${kwChips(k.schluessel)}${k.text ? `<p>${regelText(k.text)}</p>` : ''}${k.seltenheit === 'legendary' ? '<p class="lwk-legregel">Nur in einem Zug mit richtiger Antwort spielbar.</p>' : ''}${k.flavor ? `<p class="lwk-flavor">${esc(k.flavor)}</p>` : ''}</div>
+    <div class="lwk-fuss">${mon ? `<span class="lwk-atk" title="Angriff">${G.ico.schwert}<b>${k.angriff}</b></span>` : '<span></span>'}<span class="lwk-juwel" title="${s[0]}"></span>${mon ? `<span class="lwk-hp" title="Leben">${G.ico.herz}<b>${k.verteidigung}</b></span>` : '<span></span>'}</div>
   </div></div>`;
+}
+// Noch nicht gesammelt: verdeckt, nur Nummer, Fach und Seltenheit sind zu sehen
+function karteVerdeckt(id, o = {}){
+  const k = katalog[id], f = G.FACH[k.fach] || {}, s = SELT[k.seltenheit] || SELT.common;
+  return `<div class="lwk verdeckt s-${k.seltenheit} ${o.klasse || ''}" data-verdeckt="${id}" style="--fc:${f.farbe};--fd:${f.dunkel}"><div class="lwk-in"><div class="lwk-verdeckt-in">
+    <span class="lwk-nr">#${k.nr}</span><span class="lwk-fragezeichen">?</span><span class="lwk-juwel"></span><span class="lwk-verdeckt-text"><b>${s[0]}</b><small>${f.name}</small></span></div></div></div>`;
 }
 const kartenRueck = (klasse = '') => `<div class="lwk rueck ${klasse}"><div class="lwk-in"><div class="lwk-rueck-in">${window.GFX ? GFX.logo() : ''}<span>Lernwerk</span></div></div></div>`;
 
-// Frage (QuestionCard): Text aus fragen.js, Antworten gemischt, geprüft wird auf dem Server
+// Spielfrage per ID: Einheit aus fragen.js oder Spiel-Variante (D.varianten)
+const spielFrage = id => L.D.einheiten.find(x => x.id === id) || (L.D.varianten || []).find(x => x.id === id);
+// Frage (QuestionCard): Text aus fragen.js, Antworten gemischt, geprüft wird auf dem Server.
+// Statt einer ID geht auch ein Frageobjekt vom Server (Rechenaufgabe: {id, thema, text, optionen[]}).
 function frageHtml(id, o = {}){
-  const e = L.D.einheiten.find(x => x.id === id);
+  if (id && typeof id === 'object'){ const r = id; id = r.id; o.obj = {thema: r.thema, frage: r.text, optionen: r.optionen.map(t => [t])}; }
+  const e = o.obj || spielFrage(id);
   if (!e) return `<div class="gfrage"><p class="muted">Diese Frage kennt deine Lernwerk-Version noch nicht – bitte die Seite neu laden.</p></div>`;
   const t = L.themaOf(e.thema) || {}, f = L.fachOf(t.fach) || {};
   const reihe = L.shuffle(e.optionen.map((_, i) => i));
@@ -117,13 +135,14 @@ function frageFrei(root){ if (!root) return; delete root.dataset.gesperrt; root.
 // Ergebnis zeigen und für Karteikasten/Statistik verbuchen
 function frageAufloesen(root, gewaehlt, richtig, o = {}){
   if (!root) return;
-  const id = root.dataset.frage, ok = gewaehlt === richtig, e = L.D.einheiten.find(x => x.id === id);
+  const id = root.dataset.frage, ok = gewaehlt === richtig, e = spielFrage(id);
   root.querySelectorAll('.gopt').forEach(b => { const i = +b.dataset.o; b.disabled = true; b.classList.remove('sel');
     if (i === richtig) b.classList.add(i === gewaehlt ? 'right' : 'miss'); else if (i === gewaehlt) b.classList.add('wrong'); });
-  if (o.warum && e && !ok && e.optionen[richtig] && e.optionen[richtig][2]){
-    const fb = root.querySelector('.gf-fb'); if (fb) fb.innerHTML = `<p class="small muted gf-warum">${md(e.optionen[richtig][2])}</p>`;
+  const warum = o.erklaerung || (e && e.optionen[richtig] && e.optionen[richtig][2]);
+  if (o.warum && !ok && warum){
+    const fb = root.querySelector('.gf-fb'); if (fb) fb.innerHTML = `<p class="small muted gf-warum">${md(warum)}</p>`;
   }
-  if (!o.nurZeigen){ L.antwortVerbuchen(id, ok); if (window.FX){ if (ok){ FX.ton('ok'); FX.stoss(root.querySelector('.gopt.right'), 20); } else { FX.ton('bad'); FX.wackeln(root); } } }
+  if (!o.nurZeigen){ L.antwortVerbuchen(e && e.basis || id, ok); if (window.FX){ if (ok){ FX.ton('ok'); FX.stoss(root.querySelector('.gopt.right'), 20); } else { FX.ton('bad'); FX.wackeln(root); } } }
   if (tasten === root) tasten = null;
 }
 
@@ -376,7 +395,7 @@ async function viewSammlung(h){
       <div class="seg mini sam-filter">${FILTER.map(([k, t]) => `<button aria-pressed="${filter === k}" data-f="${k}">${t}</button>`).join('')}</div></div>
       <div class="sam-grid">${alle.filter(k => passt(k, filter)).map(k => {
         const hat = konto.sammlung[k.id] || 0, im = anz(k.id), max = k.seltenheit === 'legendary' ? 1 : 2, preis = STAUB_PREIS[k.seltenheit];
-        if (!hat) return `<div class="sam-karte fehlt">${karte(k.id)}<div class="sam-fehlt-leiste"><span>Noch nicht gesammelt</span><button class="btn klein" data-herstellen="${k.id}" ${konto.staub >= preis ? '' : 'disabled'} title="Aus Wissensstaub herstellen">${G.ico.fokus}${preis}</button></div></div>`;
+        if (!hat) return `<div class="sam-karte fehlt">${karteVerdeckt(k.id)}<div class="sam-fehlt-leiste"><span>Noch nicht gesammelt</span><button class="btn klein" data-herstellen="${k.id}" ${konto.staub >= preis ? '' : 'disabled'} title="Aus Wissensstaub herstellen">${G.ico.fokus}${preis}</button></div></div>`;
         const voll = im >= hat || im >= max || deck.length >= DECK_GROESSE;
         return `<div class="sam-karte"><button class="sam-rein ${voll ? 'voll' : ''}" data-rein="${k.id}" ${voll ? 'aria-disabled="true"' : ''}>${karte(k.id, {glanz: glanz[k.id]})}</button>
           <div class="sam-anz"><span>×${hat}${im ? ` · ${im} im Deck` : ''}</span>${hat < max ? `<button class="btn klein ghost" data-herstellen="${k.id}" ${konto.staub >= preis ? '' : 'disabled'} title="Weiteres Exemplar herstellen">${G.ico.fokus}${preis}</button>` : ''}</div></div>`; }).join('') || '<p class="muted">Keine Karten in diesem Filter.</p>'}</div>
@@ -388,7 +407,8 @@ async function viewSammlung(h){
     el.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filter = b.dataset.f; zeichne(); });
     el.querySelectorAll('[data-herstellen]').forEach(b => b.onclick = async () => {
       const k = katalog[b.dataset.herstellen];
-      if (!confirm(`„${k.name}“ für ${STAUB_PREIS[k.seltenheit]} Wissensstaub herstellen?`)) return;
+      const bekannt = konto.sammlung[k.id] > 0;
+      if (!confirm(`${bekannt ? `„${k.name}“` : `Die unbekannte ${SELT[k.seltenheit][0].toLowerCase()}e Karte #${k.nr}`} für ${STAUB_PREIS[k.seltenheit]} Wissensstaub herstellen?`)) return;
       try { konto = await rpc('karte_herstellen', {p_karte: k.id}); window.FX && (FX.ton('abz'), FX.stoss(b, 30)); L.toast(`${k.name} hergestellt!`); zeichne(); } catch(e){ L.toast(fehlerText(e)); } });
     $('#speichern').onclick = async () => { $('#speichern').disabled = true; try { konto = await rpc('deck_speichern', {p_karten: deck}); geaendert = false; L.toast('Deck gespeichert'); zeichne(); } catch(e){ L.toast(fehlerText(e)); $('#speichern').disabled = false; } };
     $('#kaufen').onclick = async () => { try { konto = await rpc('booster_kaufen'); window.FX && FX.ton('combo'); L.toast('Booster gekauft!'); zeichne(); } catch(e){ L.toast(fehlerText(e)); } };
@@ -462,7 +482,7 @@ Object.assign(window.LW_ROUTEN || (window.LW_ROUTEN = {}), {'#/games': route});
 window.LW_GAMES = {
   get katalog(){ return katalog; },
   MODULE, rpc, fehlerText, katalogLaden, kontoLaden, konto: () => konto, nachSpiel, spiegeln, ich, sb, serverZeit, jetzt,
-  rang, rangBadge, RAENGE, karte, kartenRueck, frageHtml, frageBinden, frageFrei, frageAufloesen, hpBar, hpSetzen, schadenZahl, coins,
+  rang, rangBadge, RAENGE, karte, karteVerdeckt, effektMarken, SELT, kartenRueck, spielFrage, frageHtml, frageBinden, frageFrei, frageAufloesen, hpBar, hpSetzen, schadenZahl, coins,
   SELT, STAUB_PREIS, ART_NAME, regelText, kwChips, ergebnisHtml, ergebnisAn, belohnungListe, belohnungEinsetzen, klang, zurueck, laedt, fehlerZeigen, zieleBinden, beimVerlassen, aufEreignis,
 };
 })();

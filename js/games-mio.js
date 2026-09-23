@@ -91,7 +91,7 @@ async function joker(M, art, b){
   let r; try { r = await GM.rpc('mio_joker', {p_id: M.id, p_art: art}); } catch(e){ L.toast(GM.fehlerText(e)); M.busy = false; return; }
   M.joker[art] = false; M.busy = false;
   b.classList.add('benutzt'); b.disabled = true; window.FX && FX.ton('combo');
-  const hilfe = $('#mioHilfe'), e = L.D.einheiten.find(x => x.id === M.frage);
+  const hilfe = $('#mioHilfe'), e = GM.spielFrage(M.frage);
   const buchstabe = i => { const o = document.querySelector(`.gopt[data-o="${i}"] .box`); return o ? o.textContent : '?'; };
   if (art === 'fifty'){
     M.weg = M.weg.concat(r.weg);

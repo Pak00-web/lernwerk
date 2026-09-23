@@ -17,7 +17,7 @@ async function dbStart(){
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.uid', true), '')::uuid $$; create publication supabase_realtime;
     grant usage on schema public, auth to anon, authenticated; grant execute on function auth.uid() to anon, authenticated;
     alter default privileges in schema public grant all on tables to anon, authenticated; alter default privileges in schema public grant execute on functions to anon, authenticated;`);
-  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', '2026-09-23-karten-v2.sql', '2026-09-24-bombe-anzeige.sql', 'spiel-fragen.sql']) await db.exec(fs.readFileSync(ROOT + 'supabase/' + f, 'utf8'));
+  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', '2026-09-23-karten-v2.sql', '2026-09-24-bombe-anzeige.sql', '2026-09-24-karten-feinschliff.sql', 'spiel-fragen.sql']) await db.exec(fs.readFileSync(ROOT + 'supabase/' + f, 'utf8'));
   await db.exec(`insert into auth.users(id) values('${A}'),('${B}');
     insert into profile(id,spitzname,klasse_id,farbe) select '${A}','Anna',id,'aew' from klassen; insert into profile(id,spitzname,klasse_id,farbe) select '${B}','Ben',id,'wbl' from klassen;`);
   (await db.query(`select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proretset`)).rows.forEach(r => setFn.add(r.proname));
@@ -99,7 +99,9 @@ const klick = (w, el) => { if (!el) throw new Error('Element fehlt'); el.dispatc
 const geh = (w, h) => { w.location.hash = h; };
 // Schnappschuss des DOM für Screenshots (SNAP=Ordner)
 const snap = (w, name) => { if (!process.env.SNAP) return; const h = w.document.documentElement.outerHTML.replace('<head>', '<head><base href="http://localhost:5500/"><style>.overlay{display:none!important}</style>').replace(/<script[\s\S]*?<\/script>/g, ''); fs.writeFileSync(path.join(process.env.SNAP, name + '.html'), '<!doctype html>' + h); };
-const richtig = async id => (await db.query('select richtig from spiel_fragen where id = $1', [id])).rows[0].richtig;
+// Spielfrage (spiel_fragen) oder Rechenfrage aus dem Kampf (Lösung nur im Kampfzustand)
+const richtig = async id => { const r = (await db.query('select richtig from spiel_fragen where id = $1', [id])).rows[0]; if (r) return r.richtig;
+  return (await db.query("select (st->'frage'->>'richtig')::int r from kampf_zustand where st->'frage'->>'id' = $1", [id])).rows[0].r; };
 async function beantworte(w, rootSel, gut = true){
   const root = await bis(() => { const r = $(w, rootSel); return r && r.dataset.frage && !r.dataset.gesperrt && r.querySelector('.gopt:not([disabled])') ? r : null; }, 8000, 'Frage ' + rootSel);
   const r = await richtig(root.dataset.frage);
@@ -125,6 +127,8 @@ async function beantworte(w, rootSel, gut = true){
   await bis(() => $$(wa, '.deck-platz.voll').length === 20, 8000, 'Deck');
   ok($$(wa, '.sam-karte').length === 45, 'Sammlung zeigt alle 45 Karten');
   ok($$(wa, '.sam-karte.fehlt').length === 25, '25 noch nicht gesammelt, mit Herstellen-Knopf: ' + $$(wa, '.sam-fehlt-leiste [data-herstellen]').length);
+  ok($$(wa, '.sam-karte.fehlt .lwk.verdeckt').length === 25 && !$(wa, '.sam-karte.fehlt .lwk-name') && !$(wa, '.sam-karte.fehlt img'), 'Fehlende Karten verdeckt: kein Name, kein Bild, nur Seltenheit');
+  ok($$(wa, '.sam-karte:not(.fehlt) .lwk-juwel').length > 0 && $$(wa, '.sam-karte:not(.fehlt) .lwk-band').length > 0, 'Karten zeigen Seltenheits-Juwel und Typ-Band');
   snap(wa, 'sammlung'); ok(!!$(wa, '.kurve') && /Legendäre spätestens in 15/.test($(wa, '.sam-leiste').textContent), 'Fokus-Kurve und Pity-Anzeige');
   klick(wa, $(wa, '#oeffnen'));
   klick(wa, await bis(() => $(wa, '.bo-pack[data-f="its1"]')));
@@ -150,11 +154,13 @@ async function beantworte(w, rootSel, gut = true){
   console.log('\n== Karten-Kampf gegen Gegner 1');
   geh(wa, '#/games/karten');
   await bis(() => $(wa, '.kk-tut'), 8000, 'Anleitung beim ersten Mal');
-  for (let i = 0; i < 5; i++) klick(wa, $(wa, '.kk-tut [data-a="weiter"]'));
-  ok(!$(wa, '.kk-tut') && wa.localStorage.getItem('lernwerk.kk2.tutorial') === '1', 'Anleitung mit 5 Schritten durchgeklickt');
+  let seiten = 0; while ($(wa, '.kk-tut') && seiten < 10){ seiten++; klick(wa, $(wa, '.kk-tut [data-a="weiter"]')); }
+  ok(!$(wa, '.kk-tut') && wa.localStorage.getItem('lernwerk.kk2.tutorial') === '1' && seiten === 6, 'Anleitung mit ' + seiten + ' Seiten durchgeklickt (mit Karten-Anatomie)');
   await bis(() => $(wa, '[data-stufe="1"]'), 8000, 'Lobby'); snap(wa, 'lobby'); klick(wa, $(wa, '[data-stufe="1"]'));
   await bis(() => $(wa, '#kk'), 8000, 'Spielfeld');
-  ok($$(wa, '.kk-reihe .kk-platz').length === 8 && $$(wa, '.kk-hk').length === 4, 'Spielfeld: 2×4 Plätze, 4 Handkarten');
+  ok($$(wa, '.kk-reihe .kk-platz').length === 8 && $$(wa, '.kk-hk').length === 4 && !!$(wa, '#kkDetail'), 'Spielfeld: 2×4 Plätze, 4 Handkarten, Detailbereich');
+  await bis(() => $(wa, '.kk-mitte .kk-frage .gfrage'), 8000, 'Frage-Leiste'); snap(wa, 'kampf-frage');
+  ok(!!$(wa, '.kk-frage .kk-uhr') && !$(wa, '.kk-frage-box').closest('.overlay'), 'Zugfrage als Leiste im Brett mit Timer');
   const xpVor = wa.LW.stand().xp;
   let zuege = 0, angriffe = 0, gelegt = 0;
   while (!$(wa, '.kk-ende') && zuege < 40){

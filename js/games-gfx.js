@@ -103,6 +103,11 @@ const SCHLUESSEL = {
   schild: ['Schild', 'Der erste Treffer macht keinen Schaden.', '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.6"/><circle cx="12" cy="12" r="4" fill="currentColor"/>'],
   lebensraub: ['Lebensraub', 'Verursachter Schaden heilt den eigenen Helden.', '<path d="M12 21s-7.5-4.6-9.5-9.3C1.1 8.3 3.2 4.5 7 4.5c2.1 0 3.6 1.2 5 3 1.4-1.8 2.9-3 5-3 3.8 0 5.9 3.8 4.5 7.2C19.5 16.4 12 21 12 21z" fill="currentColor"/>'],
   gift: ['Gift', 'Vernichtet jedes Monster, das es trifft.', '<path d="M12 2c3 5 7 9 7 13a7 7 0 0 1-14 0c0-4 4-8 7-13z" fill="currentColor"/>'],
+  // Effekt-Marken (keine Schlüsselwörter, aber gleich dargestellt): zeigen auf einen Blick, dass die Karte etwas auslöst
+  ausspielen: ['Beim Ausspielen', 'Wirkt einmal, sobald die Karte gespielt wird.', '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M10 7.5 16.5 12 10 16.5z" fill="currentColor"/>'],
+  erleuchtet: ['Erleuchtet', 'Wirkt nach jeder richtig beantworteten Zugfrage.', '<path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" fill="currentColor"/><path d="M9 20h6M10 22.5h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'],
+  zauber: ['Zauber', 'Wirkt sofort und kommt danach auf den Ablagestapel.', '<path d="M11 1.5 13.2 8 19.5 10.2 13.2 12.4 11 19 8.8 12.4 2.5 10.2 8.8 8z" fill="currentColor"/><path d="M19 15l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z" fill="currentColor"/>'],
+  falle: ['Falle', 'Liegt verdeckt und schnappt zu, wenn der Gegner das Auslöse-Ereignis macht.', '<path d="M2.5 15h19M4 15l2-6 2 6 2-6 2 6 2-6 2 6 2-6 2 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M4 18.5h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>'],
 };
 const kwIco = (kw, cls = '') => SCHLUESSEL[kw] ? `<svg viewBox="0 0 24 24" class="kw-ico ${cls}" aria-hidden="true">${SCHLUESSEL[kw][2]}</svg>` : '';
 

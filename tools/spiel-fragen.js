@@ -1,5 +1,5 @@
 /* Erzeugt supabase/spiel-fragen.sql aus fragen.js: die Lösungen der Spielfragen für den Server.
-   Spielfragen = Multiple Choice mit genau einer richtigen Antwort.
+   Spielfragen = Multiple Choice mit genau einer richtigen Antwort, dazu die Spiel-Varianten (D.varianten).
    Aufruf nach jeder Änderung an fragen.js:  node tools/spiel-fragen.js
    Danach die erzeugte Datei im Supabase SQL Editor ausführen. */
 const fs = require('fs'), path = require('path');
@@ -7,7 +7,7 @@ global.window = {};
 require(path.join(__dirname, '..', 'fragen.js'));
 const D = window.LERNWERK_DATEN;
 const fachVon = t => (D.themen.find(x => x.id === t) || {}).fach;
-const fragen = D.einheiten.filter(e => e.typ === 'M' && !e.mehrfach && e.optionen.filter(o => o[1]).length === 1);
+const fragen = D.einheiten.concat(D.varianten || []).filter(e => e.typ === 'M' && !e.mehrfach && e.optionen.filter(o => o[1]).length === 1);
 const q = s => "'" + String(s).replace(/'/g, "''") + "'";
 const zeilen = fragen.map(e => `  (${q(e.id)}, ${q(fachVon(e.thema))}, ${e.punkte || 2}, ${e.optionen.length}, ${e.optionen.findIndex(o => o[1])})`);
 const sql = `-- Automatisch erzeugt von tools/spiel-fragen.js – nicht von Hand ändern.
