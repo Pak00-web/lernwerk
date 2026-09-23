@@ -67,7 +67,9 @@ const SYM = {
 
 /* ---------- Lernwerk Legends: Kartenbilder ---------- */
 // Vorhandene Monster-Bilder (von Gemini erzeugt) in img/karten/: Karten-ID → Dateiname. Fehlt ein Eintrag, zeigt die Karte eine Silhouette.
-const BILDER = {};
+const BILDER = {
+  'wbl-stechuhr': 'wbl-stechuhr.jpg', 'its-drache': 'its-drache.jpg', 'aew-kaefer': 'aew-kaefer.jpg',
+};
 // Silhouetten je Kreaturtyp (100×75), flach in der Fachfarbe
 const SIL = {
   drache: c => `<path d="M22 58c6-10 14-14 24-14l10-10-4-9 9 5 6-6v10l8 4-9 3c2 8-2 15-10 19 8 2 16 0 22-6-2 9-12 15-24 14-10 0-18-4-22-7z" fill="${c}"/><path d="M46 44 30 18l-2 16-10-8 4 16-8-2 14 12z" fill="${c}" opacity=".8"/><path d="M58 38l14-22 2 14 10-6-4 14 8 0-14 8z" fill="${c}" opacity=".65"/><circle cx="64" cy="31" r="1.6" fill="#0B1026"/>`,
