@@ -26,7 +26,7 @@ async function viewLobby(){
   const an = matches.filter(m => m.status === 'angefragt' && m.spieler_b === me && frisch(m));
   const von = matches.filter(m => m.status === 'angefragt' && m.spieler_a === me && frisch(m));
   const laufend = matches.filter(m => m.status === 'laeuft' && m.runde_ende && Date.now() - Date.parse(m.runde_ende) < 110000);
-  const gName = m => { const g = nm[m.spieler_a === me ? m.spieler_b : m.spieler_a]; return g ? g.spitzname : 'Unbekannt'; };
+  const gName = m => { if (m.ki) return m.ki.name; const g = nm[m.spieler_a === me ? m.spieler_b : m.spieler_a]; return g ? g.spitzname : 'Unbekannt'; };
   const sortiert = liste.slice().sort((a, b) => b.rang_punkte - a.rang_punkte || b.siege - a.siege || a.spitzname.localeCompare(b.spitzname));
   el.innerHTML = `
   <div class="ar-oben">
@@ -41,12 +41,15 @@ async function viewLobby(){
       <button class="btn primary gross" id="suchen">${G.ico.schwert}Gegner suchen</button>
       <button class="btn" id="fordern">Mitschüler herausfordern</button>
       <p class="tiny muted">Sieg: +25 RP (+5 je Serie, bis +40), 60 XP, 40 Coins · Niederlage: −15 RP, 20 XP</p>
+      <h3 class="ki-titel">${G.ico.bot} Gegen die KI üben</h3>
+      <div class="ki-wahl">${KI.map(([id, n, t]) => `<button class="btn" data-ki="${id}"><b>${n}</b><small>${t}</small></button>`).join('')}</div>
+      <p class="tiny muted">Ohne Rangpunkte · halbe XP und Coins</p>
     </div>
   </div>
   ${an.length || von.length || laufend.length ? `<section class="section"><div class="section-head"><h2>Offene Duelle</h2></div><div class="stack">
     ${an.map(m => `<div class="panel drow dran"><span class="ava" style="background:var(--${(nm[m.spieler_a] || {}).farbe || 'aew'})">${esc(gName(m)[0].toUpperCase())}</span><div><b>${esc(gName(m))}</b><div class="small muted">fordert dich heraus</div></div><span></span><div class="row"><button class="btn primary" data-annehmen="${m.id}">Annehmen</button><button class="btn ghost" data-ablehnen="${m.id}">Ablehnen</button></div></div>`).join('')}
     ${von.map(m => `<div class="panel drow"><span class="ava" style="background:var(--${(nm[m.spieler_b] || {}).farbe || 'aew'})">${esc(gName(m)[0].toUpperCase())}</span><div><b>${esc(gName(m))}</b><div class="small muted">Warte auf Antwort …</div></div><span></span><button class="btn ghost" data-ablehnen="${m.id}">Zurückziehen</button></div>`).join('')}
-    ${laufend.map(m => `<div class="panel drow dran"><span class="ava" style="background:var(--aew)">${esc(gName(m)[0].toUpperCase())}</span><div><b>${esc(gName(m))}</b><div class="small muted">Läuft · Runde ${m.runde} / ${m.runden}</div></div><span></span><button class="btn primary" data-oeffnen="${m.id}">Weiterspielen</button></div>`).join('')}
+    ${laufend.map(m => `<div class="panel drow dran">${m.ki ? kiAva() : `<span class="ava" style="background:var(--aew)">${esc(gName(m)[0].toUpperCase())}</span>`}<div><b>${esc(gName(m))}</b><div class="small muted">Läuft · Runde ${m.runde} / ${m.runden}</div></div><span></span><button class="btn primary" data-oeffnen="${m.id}">Weiterspielen</button></div>`).join('')}
   </div></section>` : ''}
   <section class="section"><div class="section-head"><h2>Arena-Rangliste</h2><span class="muted small">deine Klasse</span></div>
     <div class="rliste">${sortiert.map((x, i) => `<div class="panel rrow ar-rrow ${x.id === me ? 'du' : ''}" style="--k:${i}"><span class="platz p${i + 1}">${i + 1}</span>${GM.rangBadge(x.rang_punkte, 34)}<div class="rname"><b>${esc(x.spitzname)}${x.id === me ? ' <span class="tag">du</span>' : ''}</b><span class="tiny muted">${GM.rang(x.rang_punkte).name} · ${x.siege} S · ${x.niederlagen} N${x.serie > 1 ? ` · ${x.serie}er-Serie` : ''}</span></div><span class="rxp mono">${x.rang_punkte} RP</span></div>`).join('') || '<p class="muted">Noch niemand in der Klasse.</p>'}</div></section>
@@ -56,14 +59,24 @@ async function viewLobby(){
   el.querySelectorAll('[data-oeffnen]').forEach(b => b.onclick = () => L.go('#/games/arena/' + b.dataset.oeffnen));
   el.querySelectorAll('[data-ablehnen]').forEach(b => b.onclick = async () => { try { await GM.rpc('arena_ablehnen', {p_id: b.dataset.ablehnen}); } catch(e){} viewLobby(); });
   $('#suchen').onclick = suchen;
+  el.querySelectorAll('[data-ki]').forEach(b => b.onclick = () => gegenKi(b.dataset.ki, b));
   $('#fordern').onclick = () => fordern(liste.filter(x => x.id !== me));
   // Einladungen live, solange die Lobby offen ist
   GM.aufEreignis('arena', (row, p) => { if (row.spieler_b === me && row.status === 'angefragt' && p.eventType === 'INSERT') viewLobby(); });
 }
 
+/* ---------- KI-Gegner ---------- */
+const KI = [['leicht', 'Leicht', 'Lern-Bot Lumi'], ['mittel', 'Mittel', 'Quiz-Bot Quirin'], ['schwer', 'Schwer', 'Prüfer-Bot Primus']];
+const kiAva = (klasse = '') => `<span class="ava ki ${klasse}">${G.ico.bot}</span>`;
+async function gegenKi(staerke, knopf){
+  if (knopf) knopf.disabled = true;
+  try { const m = await GM.rpc('arena_gegen_ki', {p_staerke: staerke}); window.FX && FX.ton('combo'); L.go('#/games/arena/' + m.id); }
+  catch(e){ L.toast(GM.fehlerText(e)); if (knopf) knopf.disabled = false; }
+}
+
 function warteFenster(titel, text, abbrechen){
   const w = document.createElement('div'); w.className = 'overlay';
-  w.innerHTML = `<div class="overlay-box pop-in ar-warte"><div class="ar-radar"><i></i><i></i><i></i>${G.ico.schwert}</div><h2>${titel}</h2><p class="muted">${text}</p><button class="btn ghost" data-zu>Abbrechen</button></div>`;
+  w.innerHTML = `<div class="overlay-box pop-in ar-warte"><div class="ar-radar"><i></i><i></i><i></i>${G.ico.schwert}</div><h2>${titel}</h2><p class="muted">${text}</p><div class="ar-warte-ki" hidden><p class="small muted">Gerade sucht niemand sonst. Lieber gegen die KI?</p><button class="btn primary" data-ki-statt>${G.ico.bot}Gegen die KI spielen</button></div><button class="btn ghost" data-zu>Abbrechen</button></div>`;
   document.body.appendChild(w);
   w.querySelector('[data-zu]').onclick = () => { w.remove(); abbrechen(); };
   return w;
@@ -74,6 +87,9 @@ function suchen(){
   const w = warteFenster('Suche Gegner …', 'Sobald jemand aus deiner Klasse auch sucht, geht es los.', async () => { stop(); try { await GM.rpc('arena_suche_abbrechen'); } catch(e){} });
   GM.beimVerlassen(() => { if (aktiv){ stop(); w.remove(); GM.rpc('arena_suche_abbrechen').catch(() => {}); } });
   const gefunden = id => { if (!aktiv) return; stop(); w.remove(); window.FX && FX.ton('combo'); L.go('#/games/arena/' + id); };
+  // Nach 20 s ohne Gegner: KI anbieten
+  const kiT = setTimeout(() => { const k = w.querySelector('.ar-warte-ki'); if (aktiv && k) k.hidden = false; }, 20000);
+  w.querySelector('[data-ki-statt]').onclick = async () => { stop(); clearTimeout(kiT); w.remove(); try { await GM.rpc('arena_suche_abbrechen'); } catch(e){} gegenKi('mittel'); };
   GM.aufEreignis('arena', row => { if (row.status === 'laeuft' && (row.spieler_a === GM.ich() || row.spieler_b === GM.ich())) gefunden(row.id); });
   const runde = async () => {
     if (!aktiv) return;
@@ -132,14 +148,15 @@ async function viewMatch(id, annehmen){
   GM.aufEreignis('arena', row => { if (row.id === id) holen(); });
 }
 const seiten = A => ({du: A.ich, er: A.ich === 'a' ? 'b' : 'a'});
-const nameVon = (A, s) => { const u = s === 'a' ? A.spieler_a : A.spieler_b; return (A.namen[u] || {}).n || 'Gegner'; };
+const istKi = (A, s) => !!A.ki && s === 'b';
+const nameVon = (A, s) => { if (istKi(A, s)) return A.ki.name; const u = s === 'a' ? A.spieler_a : A.spieler_b; return (A.namen[u] || {}).n || 'Gegner'; };
 const farbeVon = (A, s) => { const u = s === 'a' ? A.spieler_a : A.spieler_b; return (A.namen[u] || {}).f || 'aew'; };
 const rpVon = (A, s) => (A.rang || {})[s === 'a' ? A.spieler_a : A.spieler_b] || 0;
 function zeichne(M){
   const A = M.A, app = L.app(), s = seiten(A);
   if (A.status === 'fertig' || A.status === 'abgebrochen') return ende(M);
-  const sp = (w, klasse) => `<div class="ar-sp ${klasse}"><span class="ava" style="background:var(--${farbeVon(A, w)})">${esc(nameVon(A, w)[0].toUpperCase())}</span>
-    <div class="ar-sp-info"><b>${klasse === 'du' ? 'Du' : esc(nameVon(A, w))} ${GM.rangBadge(rpVon(A, w), 22)}</b>${GM.hpBar(A['hp_' + w], HP, {id: 'arHp' + klasse})}<span class="ar-sp-status" id="arSt${klasse}"></span></div></div>`;
+  const sp = (w, klasse) => `<div class="ar-sp ${klasse}">${istKi(A, w) ? kiAva() : `<span class="ava" style="background:var(--${farbeVon(A, w)})">${esc(nameVon(A, w)[0].toUpperCase())}</span>`}
+    <div class="ar-sp-info"><b>${klasse === 'du' ? 'Du' : esc(nameVon(A, w))} ${istKi(A, w) ? `<span class="ki-tag">KI · ${esc(A.ki.staerke)}</span>` : GM.rangBadge(rpVon(A, w), 22)}</b>${GM.hpBar(A['hp_' + w], HP, {id: 'arHp' + klasse})}<span class="ar-sp-status" id="arSt${klasse}"></span></div></div>`;
   app.innerHTML = `<div class="ar" id="ar">
     <div class="kk-leiste"><button class="btn ghost" id="arRaus">${L.ICON.back}<span>Arena</span></button><span class="kk-titel">RUNDE <b id="arRunde">${A.runde}</b> / ${A.runden}</span><span></span></div>
     <div class="ar-kampf">${sp(s.du, 'du')}<div class="ar-vs">VS</div>${sp(s.er, 'er')}</div>
@@ -224,6 +241,12 @@ async function ende(M){
     extra: `<div class="ar-verlauf">${A.verlauf.map(v => `<span class="${(v[s.du] || {}).ok ? 'ok' : 'bad'}" title="Runde ${v.runde}">${(v[s.du] || {}).ok ? L.ICON.ok : L.ICON.x}</span>`).join('')}</div><div id="arRangNeu"></div>`,
     knoepfe: `<button class="btn primary" id="revanche">${G.ico.schwert}Revanche</button><button class="btn" data-ziel="#/games/arena">Zur Arena</button>`})}</div>`;
   GM.zieleBinden(app); GM.ergebnisAn(app, erg);
+  if (A.ki){
+    $('#revanche').innerHTML = `${G.ico.bot}Nochmal gegen die KI`;
+    $('#revanche').onclick = () => gegenKi(A.ki.staerke, $('#revanche'));
+    await GM.nachSpiel(`Wissens-Arena gegen ${A.ki.name} (KI): ${erg === 'sieg' ? 'gewonnen' : erg === 'remis' ? 'unentschieden' : 'verloren'}`);
+    return GM.belohnungEinsetzen(app, 'arena');
+  }
   $('#revanche').onclick = async () => { try { const m = await GM.rpc('arena_herausfordern', {p_gegner: s.er === 'a' ? A.spieler_a : A.spieler_b}); L.toast('Revanche angefragt!'); L.go('#/games/arena/' + m.id); } catch(e){ L.toast(GM.fehlerText(e)); } };
   const altRang = GM.rang(rpNeu - rp).id;
   await GM.nachSpiel(`Wissens-Arena gegen ${nameVon(A, s.er)}: ${erg === 'sieg' ? 'gewonnen' : erg === 'remis' ? 'unentschieden' : 'verloren'} (${rp >= 0 ? '+' : ''}${rp} RP)`);

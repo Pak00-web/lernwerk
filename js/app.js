@@ -69,7 +69,8 @@ window.LW = {
   uebernehmen(r){ S = ergaenze(JSON.parse(JSON.stringify(r))); try{localStorage.setItem(LSK, JSON.stringify(S));}catch(e){} header(); window.LW.neuZeichnen(); },
   // Neu zeichnen, weil sich Daten geändert haben (Sync, Duell-Ereignis): ohne Einflug-Animationen und ohne Scrollen
   // Laufende Spiele unter #/games/… nicht unterbrechen – nur, solange dort noch „Lädt …“/„Konto nötig“ steht
-  neuZeichnen: () => { if (session || exam) return; if (spielOffen === (location.hash || '') && spielOffen.startsWith('#/games/') && !app.querySelector('.g-laedt, .g-leer')) return; route(true); },
+  // (#/uebung ohne session = Zwischen-/Ergebnisseite eines Duells – ebenfalls nicht überschreiben)
+  neuZeichnen: () => { if (session || exam || location.hash === '#/uebung') return; if (spielOffen === (location.hash || '') && spielOffen.startsWith('#/games/') && !app.querySelector('.g-laedt, .g-leer')) return; route(true); },
   zuruecksetzen(){ S = neu(); save(); route(); },
 };
 

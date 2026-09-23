@@ -499,3 +499,15 @@ body.ohne-scroll{overflow:hidden}
   .bq-bombe svg.bombe-svg{width:120px;height:120px}
   .beloh{min-width:78px;padding:10px}
 }
+
+/* ---------- KI-Gegner ---------- */
+.ava.ki{background:#2A3470;color:#9CC4FF;border:1.5px solid #4B5AA8}
+.ava.ki .gi{width:70%;height:70%}
+.ki-tag{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:900;letter-spacing:.06em;padding:2px 8px;border-radius:6px;background:#2A3470;color:#9CC4FF}
+.ki-tag .gi{width:13px;height:13px}
+.ki-wahl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ki-wahl .btn{flex-direction:column;gap:2px;padding:10px 8px;min-height:0}
+.ki-wahl .btn small{font-size:11.5px;font-weight:700;color:var(--ink-3)}
+.bq-ki-leiste{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bq-ki-leiste .muted{flex:1;min-width:140px}
+.ki-titel{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:16px}

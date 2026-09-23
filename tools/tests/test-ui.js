@@ -17,7 +17,7 @@ async function dbStart(){
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.uid', true), '')::uuid $$; create publication supabase_realtime;
     grant usage on schema public, auth to anon, authenticated; grant execute on function auth.uid() to anon, authenticated;
     alter default privileges in schema public grant all on tables to anon, authenticated; alter default privileges in schema public grant execute on functions to anon, authenticated;`);
-  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', 'spiel-fragen.sql']) await db.exec(fs.readFileSync(ROOT + 'supabase/' + f, 'utf8'));
+  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', 'spiel-fragen.sql']) await db.exec(fs.readFileSync(ROOT + 'supabase/' + f, 'utf8'));
   await db.exec(`insert into auth.users(id) values('${A}'),('${B}');
     insert into profile(id,spitzname,klasse_id,farbe) select '${A}','Anna',id,'aew' from klassen; insert into profile(id,spitzname,klasse_id,farbe) select '${B}','Ben',id,'wbl' from klassen;`);
   (await db.query(`select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proretset`)).rows.forEach(r => setFn.add(r.proname));
@@ -252,6 +252,58 @@ async function beantworte(w, rootSel, gut = true){
   geh(wa, '#/games/arena');
   await bis(() => $(wa, '.ar-rang'), 8000, 'Lobby');
   ok(/Siege/.test($(wa, '.ar-stats').textContent) && $(wa, '.ar-stats li b').textContent === '1', 'Rang-Statistik: 1 Sieg');
+
+  console.log('\n== Arena gegen KI');
+  klick(wa, await bis(() => $(wa, '[data-ki="leicht"]'), 8000, 'KI-Knopf'));
+  await bis(() => $(wa, '#ar .ava.ki'), 8000, 'KI-Match');
+  ok(/Lern-Bot Lumi/.test($(wa, '#ar').textContent) && !!$(wa, '#ar .ki-tag'), 'KI-Gegner mit Namen und KI-Kennzeichen');
+  await db.query("update arena_geheim set ki_plan = (select jsonb_agg(jsonb_build_object('ms', 50, 'ok', false)) from generate_series(1, 5)) where match_id = (select id from arena_matches where ki is not null order by erstellt desc limit 1)");
+  for (let rd = 1; rd <= 5; rd++){
+    await bis(() => $(wa, '.g-ergebnis') || (() => { const r = $(wa, '#arFrage .gfrage'); return r && !r.classList.contains('verdeckt') && $(wa, '#arRunde').textContent == rd; })(), 15000, 'KI-Runde ' + rd);
+    if ($(wa, '.g-ergebnis')) break;
+    await beantworte(wa, '#arFrage .gfrage', true);
+  }
+  await bis(() => $(wa, '.g-ergebnis'), 20000, 'KI-Arena-Ende');
+  ok(/SIEG/.test($(wa, '.ge-titel').textContent) && !$(wa, '.beloh.rp'), 'Sieg gegen die KI, keine Rangpunkte-Zeile');
+
+  console.log('\n== Bomben-Quiz mit KI');
+  geh(wa, '#/games/bombe');
+  klick(wa, await bis(() => $(wa, '#kiRaum'), 8000, 'KI-Raum-Knopf'));
+  await bis(() => $$(wa, '.bq-liste li').length === 3, 8000, 'Lobby mit 2 Bots');
+  ok($$(wa, '.bq-liste .ki-tag').length === 2, 'Lobby: du + 2 KI-Mitspieler');
+  klick(wa, $(wa, '#kiPlus')); await bis(() => $$(wa, '.bq-liste li').length === 4, 6000, 'Bot dazu');
+  klick(wa, $(wa, '#kiMinus')); await bis(() => $$(wa, '.bq-liste li').length === 3, 6000, 'Bot weg');
+  klick(wa, $(wa, '#start'));
+  await bis(() => $(wa, '#bq'), 8000, 'Spiel läuft');
+  const tempo = setInterval(() => db.query("update bomben_geheim set bot_bis = least(bot_bis, now()), explodiert_um = least(explodiert_um, now() + interval '2 seconds')").catch(() => {}), 400);
+  const t0 = Date.now();
+  while (!$(wa, '.g-ergebnis') && Date.now() - t0 < 90000){
+    const r = $(wa, '#bqFrage .gfrage');
+    if (r && $(wa, '#bq.bei-mir') && r.querySelector('.gopt:not([disabled])') && !r.dataset.gesperrt) await beantworte(wa, '#bqFrage .gfrage', true).catch(() => {});
+    await warte(200);
+  }
+  clearInterval(tempo);
+  ok(!!$(wa, '.g-ergebnis'), 'Bomben-Quiz mit KI endet mit Ergebnis (' + Math.round((Date.now() - t0) / 1000) + ' s)');
+
+  console.log('\n== Quizduell gegen KI');
+  geh(wa, '#/duell');
+  klick(wa, await bis(() => $(wa, '#app [data-ki="mittel"]'), 8000, 'KI-Duell-Knopf'));
+  for (let rd = 0; rd < 3; rd++){
+    const f = await bis(() => $(wa, '#app [data-f]') || $(wa, '#q'), 8000, 'Fachwahl/Frage ' + (rd + 1));
+    if (f.dataset && f.dataset.f) klick(wa, f);
+    const t1 = Date.now();
+    while (!$(wa, '#w') && Date.now() - t1 < 30000){
+      const opt = $(wa, '#q .opt:not([disabled])'), inp = $(wa, '#rin:not([disabled])'), chk = $(wa, '#check:not([disabled])');
+      if (opt && !$(wa, '#q .opt.sel')) klick(wa, opt);
+      else if (inp){ inp.value = '0'; if (chk) klick(wa, chk); }
+      else if (chk) klick(wa, chk);
+      await warte(150);
+    }
+    ok(!!$(wa, '#w') && /Lern-Bot|Quiz-Bot|Prüfer-Bot/.test($(wa, '#app').textContent), 'KI-Duell Runde ' + (rd + 1) + ' ausgewertet');
+    klick(wa, $(wa, '#w'));
+  }
+  await bis(() => $(wa, '#nochmal'), 6000, 'KI-Duell-Ende');
+  ok(/zählen nicht für die Rangliste/.test($(wa, '#app').textContent), 'KI-Duell-Ergebnis ohne Rangliste');
 
   console.log('\n== Hub nach den Spielen');
   geh(wa, '#/games');

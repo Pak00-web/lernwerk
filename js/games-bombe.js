@@ -13,9 +13,10 @@ function viewStart(){
   <div class="bq-start">
     <div class="panel bq-intro"><div class="bq-art">${G.ART.bombe()}</div>
       <ol class="bq-regeln"><li><b>Wer die Bombe hat, bekommt eine Frage.</b></li><li><b>Richtig:</b> Die Bombe geht an den nächsten Spieler.</li><li><b>Falsch:</b> Die Bombe bleibt bei dir – und du bist 2 Sekunden gesperrt.</li><li>Irgendwann (20–45 s) knallt es. Wer sie dann hat, verliert ein Leben. Nach 2 Leben ist man raus.</li></ol>
-      <p class="small muted">2–6 Spieler aus deiner Klasse, jeder am eigenen Gerät. Sieg: 40 XP + 30 Coins, dabei sein: 15 XP + 10 Coins.</p></div>
+      <p class="small muted">2–6 Spieler aus deiner Klasse, jeder am eigenen Gerät – oder mit KI-Mitspielern. Sieg: 40 XP + 30 Coins, dabei sein: 15 XP + 10 Coins (mit KI im Raum die Hälfte).</p></div>
     <div class="bq-aktionen">
       <div class="panel bq-kasten"><h3>Neuen Raum öffnen</h3><p class="small muted">Du bekommst einen Code, den du deiner Klasse sagst.</p><button class="btn primary gross" id="neu">${G.ico.flamme}Raum erstellen</button></div>
+      <div class="panel bq-kasten"><h3>Allein gegen die KI</h3><p class="small muted">Sofort spielen mit zwei KI-Mitspielern. In der Lobby kannst du weitere hinzufügen.</p><button class="btn gross" id="kiRaum">${G.ico.bot}Mit KI spielen</button></div>
       <form class="panel bq-kasten" id="beitreten"><h3>Einem Raum beitreten</h3><label class="small muted" for="code">Raumcode</label>
         <input class="inp bq-code-inp mono" id="code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" required>
         <button class="btn primary" type="submit">Beitreten ${L.ICON.pfeil}</button></form>
@@ -24,6 +25,9 @@ function viewStart(){
   GM.zieleBinden(app);
   $('#code').oninput = e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); };
   $('#neu').onclick = async () => { $('#neu').disabled = true; try { const r = await GM.rpc('bombe_erstellen'); L.go('#/games/bombe/' + r.id); } catch(e){ L.toast(GM.fehlerText(e)); $('#neu').disabled = false; } };
+  $('#kiRaum').onclick = async () => { $('#kiRaum').disabled = true;
+    try { let r = await GM.rpc('bombe_erstellen'); r = await GM.rpc('bombe_bot_hinzu', {p_raum: r.id}); r = await GM.rpc('bombe_bot_hinzu', {p_raum: r.id}); L.go('#/games/bombe/' + r.id); }
+    catch(e){ L.toast(GM.fehlerText(e)); $('#kiRaum').disabled = false; } };
   $('#beitreten').onsubmit = async ev => { ev.preventDefault(); const b = ev.target.querySelector('button'); b.disabled = true;
     try { const r = await GM.rpc('bombe_beitreten', {p_code: $('#code').value}); L.go('#/games/bombe/' + r.id); } catch(e){ L.toast(GM.fehlerText(e)); b.disabled = false; window.FX && FX.wackeln(ev.target); } };
 }
@@ -50,7 +54,8 @@ async function viewRaum(id){
 }
 const name = (R, u) => (R.namen[u] || {}).n || 'Jemand';
 const farbe = (R, u) => (R.namen[u] || {}).f || 'aew';
-const ava = (R, u) => `<span class="ava" style="background:var(--${farbe(R, u)})">${esc(name(R, u)[0].toUpperCase())}</span>`;
+const istBot = (R, u) => !!(R.namen[u] || {}).ki;
+const ava = (R, u) => istBot(R, u) ? `<span class="ava ki">${G.ico.bot}</span>` : `<span class="ava" style="background:var(--${farbe(R, u)})">${esc(name(R, u)[0].toUpperCase())}</span>`;
 
 function zeichne(B){
   const R = B.R, app = L.app(), me = GM.ich();
@@ -150,11 +155,15 @@ function lobby(B){
   app.innerHTML = GM.zurueck('#/games/bombe', 'Bomben-Quiz') + `<div class="bq-lobby" id="bqLobby">
     <div class="panel bq-code-kasten"><div class="eyebrow">Raumcode</div><div class="bq-code mono">${esc(R.code)}</div><p class="small muted">Sag den Code deiner Klasse. Sie treten unter Games → Bomben-Quiz bei.</p></div>
     <div class="panel bq-kasten"><h3>Spieler (${R.spieler.length} / 6)</h3>
-      <ul class="bq-liste">${R.spieler.map((u, i) => `<li style="--k:${i}">${ava(R, u)}<b>${esc(name(R, u))}</b>${u === R.host ? '<span class="tag">Gastgeber</span>' : ''}${u === GM.ich() ? '<span class="tag">du</span>' : ''}</li>`).join('')}</ul>
-      ${host ? `<button class="btn primary gross" id="start" ${R.spieler.length < 2 ? 'disabled' : ''}>${L.ICON.play}Spiel starten</button>${R.spieler.length < 2 ? '<p class="small muted">Warte auf mindestens einen Mitspieler …</p>' : ''}` : `<p class="muted"><span class="g-spinner klein"></span> Warte, bis ${esc(name(R, R.host))} startet …</p>`}
+      <ul class="bq-liste">${R.spieler.map((u, i) => `<li style="--k:${i}">${ava(R, u)}<b>${esc(name(R, u))}</b>${istBot(R, u) ? '<span class="ki-tag">KI</span>' : ''}${u === R.host ? '<span class="tag">Gastgeber</span>' : ''}${u === GM.ich() ? '<span class="tag">du</span>' : ''}</li>`).join('')}</ul>
+      ${host ? `<div class="bq-ki-leiste"><span class="small muted">KI-Mitspieler: ${(R.bots || []).length}</span><button class="btn klein" id="kiPlus" ${R.spieler.length >= 6 ? 'disabled' : ''}>${G.ico.bot}+ KI</button><button class="btn klein ghost" id="kiMinus" ${(R.bots || []).length ? '' : 'disabled'}>− KI</button></div>
+        <button class="btn primary gross" id="start" ${R.spieler.length < 2 ? 'disabled' : ''}>${L.ICON.play}Spiel starten</button>${R.spieler.length < 2 ? '<p class="small muted">Warte auf Mitspieler oder füge KI-Mitspieler hinzu …</p>' : ''}` : `<p class="muted"><span class="g-spinner klein"></span> Warte, bis ${esc(name(R, R.host))} startet …</p>`}
       <button class="btn ghost" id="bqRaus">Raum verlassen</button></div></div>`;
   GM.zieleBinden(app);
   $('#bqRaus').onclick = () => verlassen(B);
+  const kiAendern = fn => async ev => { ev.target.closest('button').disabled = true; try { B.R = await GM.rpc(fn, {p_raum: B.id}); } catch(e){ L.toast(GM.fehlerText(e)); } lobby(B); };
+  const kp = $('#kiPlus'); if (kp) kp.onclick = kiAendern('bombe_bot_hinzu');
+  const km = $('#kiMinus'); if (km) km.onclick = kiAendern('bombe_bot_weg');
   const s = $('#start'); if (s) s.onclick = async () => { s.disabled = true; try { const neu = await GM.rpc('bombe_starten', {p_raum: B.id}); GM.serverZeit(neu.jetzt); B.R = neu; zeichne(B); } catch(e){ L.toast(GM.fehlerText(e)); s.disabled = false; } };
 }
 async function ergebnis(B){

@@ -167,7 +167,7 @@ function abschliessen(d){
 
 /* ---------- Ansichten ---------- */
 const name = id => (namen[id] && namen[id].spitzname) || 'Unbekannt';
-const ava = id => `<span class="ava" style="background:var(--${(namen[id]||{}).farbe||'ink-3'})">${L.esc(name(id)[0].toUpperCase())}</span>`;
+const ava = id => id === KI_ID && window.GGFX ? `<span class="ava ki">${GGFX.ico.bot}</span>` : `<span class="ava" style="background:var(--${(namen[id]||{}).farbe||'ink-3'})">${L.esc(name(id)[0].toUpperCase())}</span>`;
 function vs(d){ const p = punkte(d); return `<div class="vs"><div>${ava(ich())}<b>Du</b></div><span class="mono">${p.ich} : ${p.er}</span><div>${ava(gegner(d))}<b>${L.esc(name(gegner(d)))}</b></div></div>`; }
 function rundenTabelle(d){
   return `<div class="rtab">${Array.from({length:RUNDEN}, (_, i) => { const r = d.runden[i]; const f = r && L.fachOf(r.fach);
@@ -176,7 +176,8 @@ function rundenTabelle(d){
 }
 async function viewListe(){
   const app = L.app();
-  if (!sync() || !sync().angemeldet()){ app.innerHTML = `<div class="konto-box panel"><h2>Quizduell</h2><p class="muted">Für Duelle brauchst du ein Konto.</p><button class="btn primary" id="k">Anmelden</button></div>`; $('#k').onclick = () => L.go('#/konto'); return; }
+  if (!sync() || !sync().angemeldet()){ app.innerHTML = `<div class="konto-box panel"><h2>Quizduell</h2><p class="muted">Für Duelle gegen deine Klasse brauchst du ein Konto.</p><button class="btn primary" id="k">Anmelden</button>
+    <h3 class="ki-titel">${window.GGFX ? GGFX.ico.bot : ''} Oder gegen die KI üben</h3>${kiKnoepfe()}</div>`; $('#k').onclick = () => L.go('#/konto'); kiBinden(app); return; }
   app.innerHTML = `<p class="muted" style="margin-top:30px">Lädt …</p>`;
   await laden();
   const dran = duelle.filter(d => d.status==='laeuft' && d.am_zug===ich());
@@ -191,9 +192,11 @@ async function viewListe(){
   ${warten.length ? `<section class="section"><div class="section-head"><h2>Warten auf Gegner</h2></div><div class="stack">${warten.map(karte).join('')}</div></section>` : ''}
   ${fertig.length ? `<section class="section"><div class="section-head"><h2>Beendet</h2></div><div class="stack">${fertig.map(karte).join('')}</div></section>` : ''}
   ${!duelle.length ? '<p class="muted" style="margin-top:24px">Noch keine Duelle. Fordere jemanden heraus!</p>' : ''}
+  <section class="section"><div class="section-head"><h2>${window.GGFX ? GGFX.ico.bot : ''} Gegen die KI üben</h2><span class="muted small">sofort spielbar · halbe XP · ohne Rangliste</span></div>${kiKnoepfe()}</section>
   <section class="section"><div class="section-head"><h2>Duell-Rangliste</h2><button class="btn ghost" id="alleRang">${L.ICON.trophy}Ganze Rangliste</button></div><div class="rliste" id="duellRang"><p class="muted">Lädt …</p></div></section>`;
   $('#bk').onclick = () => L.go('#/');
   $('#neu').onclick = () => gegnerWaehlen();
+  kiBinden(app);
   $('#alleRang').onclick = () => { sessionStorage.setItem('lernwerk.rangTab', 'duell'); L.go('#/rangliste'); };
   sync().duellRangliste().then(r => { const el = $('#duellRang'); if (el) el.innerHTML = sync().duellListe(r, ich(), 5); });
   app.querySelectorAll('[data-spiel]').forEach(b => b.onclick = () => { b.disabled = true; zug(b.dataset.spiel); });
@@ -213,6 +216,66 @@ async function gegnerWaehlen(){
   $('#such').oninput = e => zeichne(e.target.value); zeichne('');
   $('#bk').onclick = () => L.go('#/duell');
 }
+/* ---------- Gegen die KI: läuft nur im Browser, zählt nicht für Rangliste und gewonnene Duelle, halbe XP ---------- */
+const KI_ID = 'ki', KI_STUFEN = [['leicht', 'Lern-Bot Lumi', .5], ['mittel', 'Quiz-Bot Quirin', .7], ['schwer', 'Prüfer-Bot Primus', .87]];
+const kiKnoepfe = () => `<div class="ki-wahl">${KI_STUFEN.map(([id, n]) => `<button class="btn" data-ki="${id}"><b>${id[0].toUpperCase() + id.slice(1)}</b><small>${n}</small></button>`).join('')}</div>`;
+const kiBinden = root => root.querySelectorAll('[data-ki]').forEach(b => b.onclick = () => kiStarten(b.dataset.ki));
+function kiStarten(stufe){
+  const [id, n, q] = KI_STUFEN.find(s => s[0] === stufe) || KI_STUFEN[1];
+  namen[KI_ID] = {spitzname: n, farbe: 'ink-3'};
+  kiRunde({ki: {stufe: id, q}, spieler_a: ich(), spieler_b: KI_ID, runden: [], status: 'laeuft'});
+}
+function kiRunde(d){
+  const idx = d.runden.length;
+  if (idx >= RUNDEN) return kiEnde(d);
+  const spielen = fach => {
+    const r = {fach, von: idx === 1 ? KI_ID : ich(), fragen: fragenFuer(fach), a: [], b: null};
+    r.b = r.fragen.map(() => Math.random() < d.ki.q);   // KI antwortet mit ihrer Trefferquote
+    d.runden.push(r);
+    const f = L.fachOf(fach);
+    L.spielen(zuItems(r.fragen), `KI-Duell · Runde ${idx + 1} · ${f ? f.name : ''}`, (i, ok) => { r.a[i] = !!ok; }, () => kiZwischen(d, idx));
+  };
+  const fs = L.D.faecher.filter(f => !f.bald);
+  if (idx === 1) return spielen(L.shuffle(fs)[0].id);   // Runde 2 wählt die KI
+  const app = L.app(), angebot = L.shuffle(fs).slice(0, 3);
+  app.innerHTML = `<div class="session"><button class="btn ghost back" id="bk">${L.ICON.back}Duelle</button>
+    <div class="duell-kopf">${vs(d)}</div>
+    <div class="eyebrow" style="margin-top:18px">Runde ${idx + 1} von ${RUNDEN}</div><h2>Wähle ein Fach</h2>
+    <div class="fachwahl">${angebot.map((f, k) => `<button class="mode fwahl" data-f="${f.id}" style="--sc:var(--${f.farbe});--k:${k}"><h3 style="color:var(--${f.farbe})">${f.name}</h3><p class="small muted">${L.esc(f.lang)}</p></button>`).join('')}</div></div>`;
+  $('#bk').onclick = () => { if (confirm('KI-Duell abbrechen?')) L.go('#/duell'); };
+  app.querySelectorAll('[data-f]').forEach(b => b.onclick = () => spielen(b.dataset.f));
+}
+function kiZwischen(d, idx){
+  const r = d.runden[idx], app = L.app(), f = L.fachOf(r.fach);
+  app.innerHTML = `<div class="session"><div class="panel end pop">
+    <div class="eyebrow">Runde ${idx + 1} · ${f ? f.name : ''}${idx === 1 ? ' · von der KI gewählt' : ''}</div>
+    <div class="duell-kopf">${vs(d)}</div>
+    ${rundenTabelle(d)}
+    <p class="muted">Du: ${summe(r.a)} von ${r.fragen.length} · ${L.esc(name(KI_ID))}: ${summe(r.b)} von ${r.fragen.length}</p>
+    <div class="row" style="justify-content:center"><button class="btn primary" id="w">${idx + 1 < RUNDEN ? 'Nächste Runde' : 'Ergebnis'}</button></div>
+  </div></div>`;
+  if (summe(r.a) === r.fragen.length) window.FX && FX.konfetti(100);
+  $('#w').onclick = () => kiRunde(d);
+}
+function kiEnde(d){
+  d.status = 'fertig';
+  const app = L.app(), p = punkte(d), sieg = p.ich > p.er, remis = p.ich === p.er;
+  const xp = Math.round(SPIEL_XP / 2) + (sieg ? Math.round(SIEG_XP / 2) : 0);
+  L.addXP(xp);
+  L.logEintrag(sieg ? 'duell' : 'verloren', `KI-Duell gegen ${name(KI_ID)}: ${p.ich}:${p.er}`);
+  app.innerHTML = `<div class="session"><div class="panel end pop">
+    <div class="duell-kopf">${vs(d)}</div>
+    <div class="big mono">${p.ich} : ${p.er}</div>
+    <h2>${sieg ? 'Gewonnen!' : remis ? 'Unentschieden' : 'Knapp verloren'}</h2>
+    <p class="muted">+${xp} XP · KI-Duelle zählen nicht für die Rangliste</p>
+    ${rundenTabelle(d)}
+    <div class="row" style="justify-content:center"><button class="btn primary" id="nochmal">Nochmal gegen die KI</button><button class="btn" id="l">Zu den Duellen</button></div>
+  </div></div>`;
+  if (sieg) window.FX && (FX.ton('level'), FX.konfetti(200));
+  $('#l').onclick = () => L.go('#/duell');
+  $('#nochmal').onclick = () => kiStarten(d.ki.stufe);
+}
+
 function neuesDuell(gegnerId){
   const p = sync().profil();
   if (!namen[ich()]) namen[ich()] = p;
