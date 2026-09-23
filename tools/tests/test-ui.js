@@ -110,8 +110,8 @@ async function beantworte(w, rootSel, gut = true){
   await dbStart();
   console.log('\n== Start & Hub');
   const wa = await fenster(A, '#/games');
-  await bis(() => $$(wa, '.gcard').length === 4, 8000, 'Hub');
-  ok(true, 'Hub zeigt 4 Game-Cards');
+  await bis(() => $$(wa, '.gcard').length === 5, 8000, 'Hub');
+  ok(true, 'Hub zeigt 5 Game-Cards (inkl. Quizduell)');
   ok(!!$(wa, '#side [data-nav="#/games"]') && !!$(wa, '#tabbar [data-nav="#/games"]'), 'Menüpunkt „Games“ in Seitenleiste und Tab-Leiste');
   ok(!!$(wa, '#side [data-nav="#/rangliste"]') && !$(wa, '#tabbar [data-nav="#/rangliste"]'), 'Rangliste bleibt in der Seitenleiste, auf dem Handy unter „Mehr“');
   ok($$(wa, '.gf-kachel').length === 6, 'Fortschritt: 6 Kacheln (Level, XP, Coins, Serie, Rang, Booster)');

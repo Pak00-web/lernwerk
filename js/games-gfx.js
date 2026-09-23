@@ -142,27 +142,24 @@ function rangAbzeichen(id, gr=56){
     <path d="M0-30 26-15v30L0 30-26 15v-30z" fill="url(#${g})" stroke="${d}" stroke-width="2"/><path d="M0-24 21-12v24L0 24-21 12v-24z" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.4"/>${innen}</svg>`;
 }
 
-/* ---------- Spiel-Artworks für den Hub ---------- */
+/* ---------- Spiel-Artworks für den Hub: flach, klare Formen, eine Farbe je Spiel ---------- */
+const raster = c => `<g fill="${c}" opacity=".16">${Array.from({length:60}, (_, i) => `<circle cx="${12 + (i%12)*27}" cy="${14 + Math.floor(i/12)*30}" r="1.6"/>`).join('')}</g>`;
 const ART = {
-  karten: () => { const g = nid('ak'); return `<svg viewBox="0 0 320 150" class="spiel-art" aria-hidden="true"><defs><radialGradient id="${g}" cx=".5" cy=".6" r=".7"><stop offset="0" stop-color="#7B5CFF" stop-opacity=".55"/><stop offset="1" stop-color="#7B5CFF" stop-opacity="0"/></radialGradient></defs>
-    <rect width="320" height="150" fill="url(#${g})"/>
-    ${[[-16,'#3F9BFF',118],[0,'#8B5CFF',160],[16,'#F2C94C',202]].map(([r,c,x],i)=>`<g class="ak-karte" style="--i:${i}" transform="translate(${x} 80) rotate(${r})"><rect x="-30" y="-44" width="60" height="86" rx="7" fill="#121A38" stroke="${c}" stroke-width="2.4"/><rect x="-24" y="-30" width="48" height="36" rx="4" fill="${c}" opacity=".22"/><path d="M-12-12a12 12 0 0 1 24 0" fill="none" stroke="${c}" stroke-width="2"/><circle cy="-18" r="5" fill="none" stroke="${c}" stroke-width="2"/><text x="-20" y="-35" style="font:800 7px var(--f-display);fill:${c}">${'★'.repeat(i+2)}</text><rect x="-22" y="14" width="18" height="8" rx="3" fill="${c}" opacity=".35"/><rect x="4" y="14" width="18" height="8" rx="3" fill="${c}" opacity=".35"/></g>`).join('')}
-    ${[[60,30],[262,40],[250,118],[74,112]].map(([x,y],i)=>`<path class="glitzer" style="--i:${i}" d="M${x} ${y-6}v12M${x-6} ${y}h12" stroke="#FFE066" stroke-width="2" stroke-linecap="round"/>`).join('')}</svg>`; },
-  bombe: () => { const g = nid('ab'); return `<svg viewBox="0 0 320 150" class="spiel-art" aria-hidden="true"><defs><radialGradient id="${g}" cx=".5" cy=".55" r=".6"><stop offset="0" stop-color="#FF6B4A" stop-opacity=".5"/><stop offset="1" stop-color="#FF6B4A" stop-opacity="0"/></radialGradient></defs>
-    <rect width="320" height="150" fill="url(#${g})"/>${[44,62,80].map((r,i)=>`<circle class="ab-ring" style="--i:${i}" cx="156" cy="84" r="${r}" fill="none" stroke="#FF8A5C" stroke-opacity=".35" stroke-width="2"/>`).join('')}
-    <g transform="translate(96 22)">${bombe(120).replace(/^<svg[^>]*>|<\/svg>$/g, '')}</g>
-    <text x="252" y="56" text-anchor="middle" class="ab-tick" style="font:800 22px var(--f-mono);fill:#FFE066">0:17</text></svg>`; },
-  millionaer: () => { const g = nid('am'); return `<svg viewBox="0 0 320 150" class="spiel-art" aria-hidden="true"><defs><linearGradient id="${g}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#F2C94C" stop-opacity="0"/><stop offset="1" stop-color="#F2C94C" stop-opacity=".45"/></linearGradient></defs>
-    <rect width="320" height="150" fill="url(#${g})" opacity=".6"/>
-    ${[0,1,2,3,4,5].map(i=>`<rect class="am-stufe" style="--i:${i}" x="${70 + i*30}" y="${126 - i*16}" width="${28}" height="${10 + i*16}" rx="4" fill="${i===5?'#F2C94C':'#2A3470'}" stroke="${i===5?'#FFE066':'#4B5AA8'}" stroke-width="1.5"/>`).join('')}
-    <g class="am-muenze" transform="translate(234 30)">${muenze(44).replace(/^<svg[^>]*>|<\/svg>$/g, '').replace(/^/, '<g transform="scale(1.83) translate(-12 -12)">') + '</g>'}</g>
-    <text x="74" y="40" style="font:800 13px var(--f-mono);fill:#FFE066">300 XP</text></svg>`; },
-  arena: () => { const g = nid('aa'); return `<svg viewBox="0 0 320 150" class="spiel-art" aria-hidden="true"><defs><radialGradient id="${g}" cx=".5" cy=".55" r=".6"><stop offset="0" stop-color="#3F9BFF" stop-opacity=".5"/><stop offset="1" stop-color="#3F9BFF" stop-opacity="0"/></radialGradient></defs>
-    <rect width="320" height="150" fill="url(#${g})"/>
-    <g class="aa-l"><path d="M76 42 110 52v24c0 20-14 32-34 38-20-6-34-18-34-38V52z" fill="#173E7A" stroke="#3F9BFF" stroke-width="2.4"/><rect x="48" y="22" width="56" height="7" rx="3.5" fill="#121A38"/><rect x="48" y="22" width="44" height="7" rx="3.5" fill="#35D6A0"/></g>
-    <g class="aa-r"><path d="M244 42 278 52v24c0 20-14 32-34 38-20-6-34-18-34-38V52z" fill="#3B2A8C" stroke="#8B7BFF" stroke-width="2.4"/><rect x="216" y="22" width="56" height="7" rx="3.5" fill="#121A38"/><rect x="216" y="22" width="28" height="7" rx="3.5" fill="#FF6B7A"/></g>
-    <g class="aa-schwerter" stroke-linecap="round"><path d="M132 118 188 50" stroke="#DDE4EC" stroke-width="5"/><path d="M188 118 132 50" stroke="#DDE4EC" stroke-width="5"/><path d="M128 106l16 14M192 106l-16 14" stroke="#F2C94C" stroke-width="5"/></g>
-    <path class="aa-funke" d="M160 72v-14M160 98v12M146 84h-12M174 84h12" stroke="#FFE066" stroke-width="3" stroke-linecap="round"/></svg>`; },
+  karten: () => `<svg viewBox="0 0 320 150" class="spiel-art" aria-hidden="true">${raster('#B9A6FF')}
+    ${[[-12,'#3F9BFF',112],[0,'#8B5CFF',160],[12,'#F2C94C',208]].map(([r,c,x],i)=>`<g class="ak-karte" transform="translate(${x} 82) rotate(${r})"><rect x="-32" y="-46" width="64" height="90" rx="6" fill="#0E1433" stroke="${c}" stroke-width="3"/><rect x="-25" y="-38" width="50" height="40" rx="3" fill="${c}"/><path d="M-25 -2 l12 -14 9 9 8 -12 21 17z" fill="#0E1433" opacity=".35"/><rect x="-25" y="8" width="34" height="4" rx="2" fill="#fff" opacity=".8"/><rect x="-25" y="16" width="44" height="3" rx="1.5" fill="#fff" opacity=".35"/><circle cx="-20" cy="34" r="6" fill="#FF6B7A"/><circle cx="20" cy="34" r="6" fill="#35D6A0"/></g>`).join('')}</svg>`,
+  bombe: () => `<svg viewBox="0 0 320 150" class="spiel-art" aria-hidden="true">${raster('#FFB199')}
+    <g transform="translate(100 18)">${bombe(120).replace(/^<svg[^>]*>|<\/svg>$/g, '')}</g>
+    <rect x="214" y="36" width="72" height="34" rx="8" fill="#0E1433"/><text x="250" y="60" text-anchor="middle" class="ab-tick" style="font:800 20px var(--f-mono);fill:#FF6B4A">0:17</text></svg>`,
+  millionaer: () => `<svg viewBox="0 0 320 150" class="spiel-art" aria-hidden="true">${raster('#FFE08A')}
+    ${[0,1,2,3,4,5].map(i=>`<rect x="${66 + i*32}" y="${128 - (i+1)*17}" width="28" height="${(i+1)*17}" rx="3" fill="${i===5?'#F2C94C':'#0E1433'}" ${i===5?'':'stroke="#F2C94C" stroke-opacity=".45" stroke-width="1.5"'}/>`).join('')}
+    <text x="68" y="36" style="font:800 14px var(--f-mono);fill:#F2C94C">300 XP</text></svg>`,
+  arena: () => `<svg viewBox="0 0 320 150" class="spiel-art" aria-hidden="true">${raster('#9CCBFF')}
+    <g class="aa-l"><path d="M84 38 118 48v24c0 20-14 32-34 38-20-6-34-18-34-38V48z" fill="#3F9BFF"/><path d="M84 52v44" stroke="#0E1433" stroke-width="4" stroke-linecap="round" opacity=".35"/></g>
+    <g class="aa-r"><path d="M236 38 270 48v24c0 20-14 32-34 38-20-6-34-18-34-38V48z" fill="#8B7BFF"/><path d="M222 74h28" stroke="#0E1433" stroke-width="4" stroke-linecap="round" opacity=".35"/></g>
+    <text x="160" y="86" text-anchor="middle" style="font:900 30px var(--f-display);fill:#fff">VS</text></svg>`,
+  duell: () => `<svg viewBox="0 0 320 150" class="spiel-art" aria-hidden="true">${raster('#8FF0CF')}
+    <g><rect x="52" y="30" width="112" height="62" rx="14" fill="#35D6A0"/><path d="M78 92l-6 18 22-18z" fill="#35D6A0"/><text x="108" y="72" text-anchor="middle" style="font:900 34px var(--f-display);fill:#0E1433">?</text></g>
+    <g><rect x="156" y="58" width="112" height="62" rx="14" fill="#0E1433" stroke="#35D6A0" stroke-width="3"/><path d="M242 120l6 16-22-16z" fill="#0E1433" stroke="#35D6A0" stroke-width="3" stroke-linejoin="round"/><text x="212" y="100" text-anchor="middle" style="font:900 30px var(--f-display);fill:#35D6A0">3 : 2</text></g></svg>`,
 };
 
 window.GGFX = {FACH, kartenBild, portrait, ico, muenze, booster, bombe, rangAbzeichen, ART};

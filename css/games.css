@@ -16,45 +16,43 @@
 .coins{display:inline-flex;align-items:center;gap:6px;font-weight:800}
 .muenze-svg{flex:none;vertical-align:-4px}
 
-/* ---------- Game-Hub ---------- */
-.gcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:6px}
+/* ---------- Game-Hub: flache Kacheln, Karten-Kampf groß ---------- */
+.gcards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:6px}
 .gcards.vorschau{margin-top:22px;opacity:.75;pointer-events:none}
-.gcard{position:relative;border-radius:20px;overflow:hidden;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;display:flex;flex-direction:column;transition:transform .2s cubic-bezier(.2,.8,.2,1),border-color .2s,box-shadow .2s;animation:auftritt .5s both;animation-delay:calc(var(--k,0)*70ms)}
-.gcard:nth-child(2){--k:1}.gcard:nth-child(3){--k:2}.gcard:nth-child(4){--k:3}
-.gcard:hover,.gcard:focus-visible{transform:translateY(-4px);border-color:var(--gc);box-shadow:0 18px 40px color-mix(in srgb,var(--gc) 22%,transparent),var(--shadow)}
-.g-lila{--gc:#8B5CFF;--gc2:#2A1C6E}.g-rot{--gc:#FF6B4A;--gc2:#5A1E14}.g-gold{--gc:#F2C94C;--gc2:#4A3A10}.g-blau{--gc:#3F9BFF;--gc2:#123A6E}
-.gcard-art{position:relative;aspect-ratio:320/150;background:linear-gradient(135deg,var(--gc2),#0B1026 80%);border-bottom:1px solid color-mix(in srgb,var(--gc) 35%,transparent)}
+.gcard{position:relative;border-radius:16px;overflow:hidden;background:var(--surface);border:2px solid var(--line);cursor:pointer;display:flex;flex-direction:column;transition:border-color .15s,background .15s;animation:auftritt .4s both;animation-delay:calc(var(--k,0)*50ms)}
+.gcard:nth-child(2){--k:1}.gcard:nth-child(3){--k:2}.gcard:nth-child(4){--k:3}.gcard:nth-child(5){--k:4}
+.gcard:hover,.gcard:focus-visible{border-color:var(--gc);outline:none}
+.gcard:hover .gcard-pfeil{background:var(--gc);color:#0E1433;transform:translateX(3px)}
+.g-lila{--gc:#8B5CFF;--gc2:#241A5E}.g-rot{--gc:#FF6B4A;--gc2:#4E1C14}.g-gold{--gc:#F2C94C;--gc2:#3F3210}.g-blau{--gc:#3F9BFF;--gc2:#10325E}.g-gruen{--gc:#35D6A0;--gc2:#0D4136}
+.gcard-art{position:relative;aspect-ratio:320/150;background:var(--gc2)}
 .spiel-art{width:100%;height:100%;display:block}
-.gcard-hinweis{position:absolute;top:12px;right:12px;background:var(--mark);color:var(--mark-ink);font-weight:900;font-size:12.5px;padding:4px 10px;border-radius:999px;animation:puls2 1.6s ease-in-out infinite}
-@keyframes puls2{50%{transform:scale(1.06)}}
-.gcard-body{padding:16px 18px 18px;display:grid;gap:10px;flex:1}
-.gcard-body h3{font-size:22px;font-weight:900;letter-spacing:-.01em}
-.gcard-body p{color:var(--ink-2);font-size:15px}
-.gcard-chips{display:flex;gap:8px;flex-wrap:wrap}
-.gcard-chips span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;padding:5px 10px;border-radius:999px;background:var(--surface-2);color:var(--ink-2)}
-.gcard-chips .gi{width:14px;height:14px;color:var(--gc)}
-.gcard-fuss{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;flex-wrap:wrap}
-.gcard-stat{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:var(--ink-2)}
-.gcard-stat .gi{color:var(--gold)}
+.gcard-hinweis{position:absolute;top:10px;right:10px;background:var(--mark);color:var(--mark-ink);font-weight:900;font-size:12.5px;padding:4px 10px;border-radius:8px}
+.gcard-body{padding:14px 16px 16px;display:grid;gap:8px;flex:1;align-content:start}
+.gcard-titel{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.gcard-body h3{font-size:19px;font-weight:900;letter-spacing:-.01em}
+.gcard-body p{color:var(--ink-2);font-size:14.5px;line-height:1.4}
+.gcard-pfeil{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:none;background:var(--surface-2);color:var(--ink-2);transition:background .15s,color .15s,transform .15s}
+.gcard-pfeil svg{width:17px;height:17px}
+.gcard-fuss{display:flex;align-items:center;justify-content:space-between;gap:6px 12px;margin-top:auto;padding-top:10px;border-top:1px solid var(--line);flex-wrap:wrap}
+.gcard-modus,.gcard-stat{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:var(--ink-3)}
+.gcard-modus .gi{width:15px;height:15px;color:var(--gc)}
+.gcard-stat{color:var(--ink-2)}.gcard-stat .gi{color:var(--gold)}
+/* erste Kachel (Karten-Kampf) als breites Banner */
+.gcards>.gcard:first-child{grid-column:1/-1;flex-direction:row}
+.gcards>.gcard:first-child .gcard-art{flex:0 0 50%;aspect-ratio:auto;height:230px}
+.gcards>.gcard:first-child .gcard-body{padding:24px 26px;align-content:center}
+.gcards>.gcard:first-child h3{font-size:26px}
+.gcards>.gcard:first-child p{font-size:16px}
+@media (max-width:1180px){.gcards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.gcards{grid-template-columns:1fr}.gcards>.gcard:first-child{flex-direction:column}.gcards>.gcard:first-child .gcard-art{flex:none;aspect-ratio:320/150;min-height:0}.gcards>.gcard:first-child .gcard-body{padding:14px 16px 16px}.gcards>.gcard:first-child h3{font-size:21px}}
 .klein-btn{min-height:40px;padding:8px 16px}
-/* Hub-Artworks: leichte Bewegung */
-.ak-karte{transition:transform .35s cubic-bezier(.2,1.4,.4,1)}
-.gcard:hover .ak-karte{transform-box:fill-box}
-.gcard:hover .ak-karte:nth-of-type(1){translate:-8px -4px}.gcard:hover .ak-karte:nth-of-type(3){translate:8px -4px}.gcard:hover .ak-karte:nth-of-type(2){translate:0 -8px}
-.glitzer{animation:glitzer 2.4s ease-in-out infinite;animation-delay:calc(var(--i)*.6s);transform-box:fill-box;transform-origin:center}
-@keyframes glitzer{0%,100%{opacity:.2;transform:scale(.6)}50%{opacity:1;transform:scale(1.1)}}
-.ab-ring{animation:ring 2.4s ease-out infinite;animation-delay:calc(var(--i)*.5s);transform-box:fill-box;transform-origin:center;opacity:0}
-@keyframes ring{0%{opacity:.8;transform:scale(.7)}100%{opacity:0;transform:scale(1.25)}}
+/* Hub-Artworks: Bewegung nur beim Zeigen */
+.ak-karte{transition:transform .3s cubic-bezier(.2,1.3,.4,1);transform-box:fill-box;transform-origin:center bottom}
+.gcard:hover .ak-karte:nth-of-type(1){translate:-6px -3px}.gcard:hover .ak-karte:nth-of-type(3){translate:6px -3px}.gcard:hover .ak-karte:nth-of-type(2){translate:0 -6px}
 .funke{animation:funke2 .35s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
 @keyframes funke2{from{transform:scale(.8) rotate(0)}to{transform:scale(1.15) rotate(20deg)}}
-.am-stufe{transform-box:fill-box;transform-origin:bottom;animation:stufe 2.8s ease-in-out infinite;animation-delay:calc(var(--i)*.12s)}
-@keyframes stufe{0%,70%,100%{transform:scaleY(1)}35%{transform:scaleY(1.06)}}
-.am-muenze{animation:schweben2 2.4s ease-in-out infinite}
-@keyframes schweben2{50%{transform:translate(234px,24px)}}
-.aa-funke{opacity:0;transition:opacity .2s}
-.gcard:hover .aa-funke{opacity:1;animation:funke2 .3s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
-.aa-l,.aa-r{transition:transform .35s cubic-bezier(.2,1.4,.4,1)}
-.gcard:hover .aa-l{transform:translateX(10px)}.gcard:hover .aa-r{transform:translateX(-10px)}
+.aa-l,.aa-r{transition:transform .3s cubic-bezier(.2,1.3,.4,1)}
+.gcard:hover .aa-l{transform:translateX(8px)}.gcard:hover .aa-r{transform:translateX(-8px)}
 /* Fortschritt */
 .g-fortschritt{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
 .gf-kachel{display:flex;align-items:center;gap:14px;padding:14px 16px;text-align:left;font:inherit;color:inherit;min-width:0}

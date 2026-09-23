@@ -138,7 +138,7 @@ function hpSetzen(el, hp){
 function schadenZahl(el, n, heil){
   if (!el || !n) return; const r = el.getBoundingClientRect(), z = document.createElement('div');
   z.className = 'schaden-zahl' + (heil ? ' heil' : ''); z.textContent = (heil ? '+' : '−') + n;
-  z.style.left = (r.left + r.width / 2) + 'px'; z.style.top = (r.top + window.scrollY) + 'px';
+  const zm = L.zoom(); z.style.left = (r.left + r.width / 2) / zm + 'px'; z.style.top = (r.top + window.scrollY) / zm + 'px';
   document.body.appendChild(z); setTimeout(() => z.remove(), 1100);
 }
 const coins = n => `<span class="coins">${G.muenze(18)}<b>${(n || 0).toLocaleString('de-DE')}</b></span>`;
@@ -266,7 +266,8 @@ const SPIELE = [
   {id: 'karten', titel: 'Karten-Kampf', text: 'Baue dein Deck. Beantworte Fragen. Besiege deinen Gegner.', modus: 'Gegen Computer oder Klasse', beloh: 'bis 80 XP · Booster', farbe: 'lila', ico: 'deck'},
   {id: 'bombe', titel: 'Bomben-Quiz', text: 'Beantworte die Frage, bevor die Bombe explodiert.', modus: 'Party · 2–6 Spieler', beloh: 'bis 40 XP · Coins', farbe: 'rot', ico: 'flamme'},
   {id: 'millionaer', titel: 'Quiz-Millionär', text: 'Wie weit kommst du auf der Wissensleiter?', modus: 'Einzelspieler · 9 Stufen', beloh: 'bis 300 XP · Titel', farbe: 'gold', ico: 'xp'},
-  {id: 'arena', titel: 'Wissens-Arena', text: 'Duell gegen andere Lernende. Wissen entscheidet.', modus: 'Live-Duell · 5 Runden', beloh: 'Rangpunkte · bis 60 XP', farbe: 'blau', ico: 'schwert'},
+  {id: 'arena', titel: 'Wissens-Arena', text: 'Live gegen andere Lernende. Wissen und Tempo entscheiden.', modus: 'Live-Duell · 5 Runden', beloh: 'Rangpunkte · bis 60 XP', farbe: 'blau', ico: 'schwert'},
+  {id: 'duell', titel: 'Quizduell', text: 'Drei Runden, abwechselnd – spiel, wann du Zeit hast.', modus: 'Gegen Klasse · 3 Runden', beloh: 'XP · Rangliste', farbe: 'gruen', ico: 'pokal', ziel: '#/duell'},
 ];
 function spielStat(id){
   if (!konto) return '';
@@ -275,15 +276,16 @@ function spielStat(id){
   if (id === 'bombe') return `${G.ico.pokal}<span>${(s.bombe || {}).gewonnen || 0} Siege</span>`;
   if (id === 'millionaer') return `${G.ico.pokal}<span>Bestwert: Stufe ${(s.mio || {}).beste || 0} / 9</span>`;
   if (id === 'arena'){ const r = rang(konto.rang_punkte); return `${rangBadge(konto.rang_punkte, 22)}<span>${r.name} · ${konto.rang_punkte} RP</span>`; }
+  if (id === 'duell') return `${G.ico.pokal}<span>${L.stand().stat.duelleGewonnen || 0} Duelle gewonnen</span>`;
 }
 function spielKarte(s, stat){
-  const hinweis = konto && s.id === 'karten' && konto.kampf_offen ? `<span class="gcard-hinweis">${konto.kampf_offen} × du bist dran</span>`
-    : konto && s.id === 'arena' && konto.arena_anfragen ? `<span class="gcard-hinweis">${konto.arena_anfragen} Herausforderung</span>` : '';
-  return `<article class="gcard g-${s.farbe}" data-spiel="${s.id}" tabindex="0" role="link" aria-label="${s.titel} spielen">
-    <div class="gcard-art">${G.ART[s.id]()}${hinweis}</div>
-    <div class="gcard-body"><h3>${s.titel}</h3><p>${s.text}</p>
-      <div class="gcard-chips"><span>${G.ico[s.ico]}${s.modus}</span><span>${G.ico.pokal}${s.beloh}</span></div>
-      <div class="gcard-fuss"><span class="gcard-stat">${stat || ''}</span><span class="btn primary klein-btn">Spielen ${L.ICON.pfeil}</span></div>
+  const duellDran = s.id === 'duell' && window.LW_DUELL ? window.LW_DUELL.offen() : 0;
+  const hinweis = konto && s.id === 'karten' && konto.kampf_offen ? `${konto.kampf_offen} × du bist dran`
+    : konto && s.id === 'arena' && konto.arena_anfragen ? `${konto.arena_anfragen} Herausforderung` : duellDran ? `${duellDran} × du bist dran` : '';
+  return `<article class="gcard g-${s.farbe}" data-spiel="${s.id}" data-ziel-spiel="${s.ziel || '#/games/' + s.id}" tabindex="0" role="link" aria-label="${s.titel} spielen">
+    <div class="gcard-art">${G.ART[s.id]()}${hinweis ? `<span class="gcard-hinweis">${hinweis}</span>` : ''}</div>
+    <div class="gcard-body"><div class="gcard-titel"><h3>${s.titel}</h3><span class="gcard-pfeil">${L.ICON.pfeil}</span></div><p>${s.text}</p>
+      <div class="gcard-fuss"><span class="gcard-modus">${G.ico[s.ico]}${s.modus}</span>${stat ? `<span class="gcard-stat">${stat}</span>` : ''}</div>
     </div></article>`;
 }
 async function viewHub(){
@@ -316,7 +318,7 @@ async function viewHub(){
         return `<tr><td><b>${NAMEN[x.spiel] || esc(x.spiel)}</b>${x.details && x.details.gegner ? `<small>gegen ${esc(x.details.gegner)}</small>` : ''}</td><td><span class="erg ${e[1]}">${e[0]}${st}</span></td><td class="mono">+${x.xp}</td><td class="mono">+${x.coins}</td><td class="muted small">${new Date(x.erstellt).toLocaleDateString('de-DE', {day: '2-digit', month: '2-digit'})} · ${new Date(x.erstellt).toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}</td></tr>`; }).join('')}
     </tbody></table></div>` : `<div class="panel g-leer klein"><p class="muted">Noch keine Spiele – such dir oben eins aus!</p></div>`}
   </section>`;
-  hub.querySelectorAll('[data-spiel]').forEach(c => { c.onclick = () => L.go('#/games/' + c.dataset.spiel); c.onkeydown = ev => { if (ev.key === 'Enter') c.click(); }; });
+  hub.querySelectorAll('[data-spiel]').forEach(c => { c.onclick = () => L.go(c.dataset.zielSpiel); c.onkeydown = ev => { if (ev.key === 'Enter') c.click(); }; });
   zieleBinden(hub);
   hub.querySelectorAll('[data-zahl]').forEach(b => window.FX && FX.hochzaehlen(b, +b.dataset.zahl, 900));
 }

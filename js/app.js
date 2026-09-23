@@ -66,10 +66,15 @@ function save(){
 // Schnittstelle für konto.js: Stand vom Server übernehmen
 window.LW = {
   stand: () => S,
-  uebernehmen(r){ S = ergaenze(JSON.parse(JSON.stringify(r))); try{localStorage.setItem(LSK, JSON.stringify(S));}catch(e){} if (!session && !exam) route(); else header(); },
-  neuZeichnen: () => { if (!session && !exam) route(); },
+  uebernehmen(r){ S = ergaenze(JSON.parse(JSON.stringify(r))); try{localStorage.setItem(LSK, JSON.stringify(S));}catch(e){} header(); window.LW.neuZeichnen(); },
+  // Neu zeichnen, weil sich Daten geändert haben (Sync, Duell-Ereignis): ohne Einflug-Animationen und ohne Scrollen
+  // Laufende Spiele unter #/games/… nicht unterbrechen – nur, solange dort noch „Lädt …“/„Konto nötig“ steht
+  neuZeichnen: () => { if (session || exam) return; if (spielOffen === (location.hash || '') && spielOffen.startsWith('#/games/') && !app.querySelector('.g-laedt, .g-leer')) return; route(true); },
   zuruecksetzen(){ S = neu(); save(); route(); },
 };
+
+// Seitenzoom (html{zoom}): Bildschirmkoordinaten für position:fixed/absolute durch ihn teilen
+const zoom = () => parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
 
 /* ---------------- Fortschritt ---------------- */
 const INTERVALL = [0, 0, 1, 3, 7, 16]; // Tage je Leitner-Fach 1..5
@@ -85,7 +90,7 @@ function addXP(n, el){
   const lvlVor = level().n;
   S.xp += n; const k = dayKey(); S.days[k] = (S.days[k]||0) + 1; S.xpTag = S.xpTag || {}; S.xpTag[k] = (S.xpTag[k]||0) + n;
   save(); header();
-  if (el && n>0){ const r = el.getBoundingClientRect(); const f = document.createElement('div'); f.className='xpfly'; f.textContent='+'+n+' XP'; f.style.left=(r.left+r.width/2-30)+'px'; f.style.top=(r.top-10)+'px'; document.body.appendChild(f); setTimeout(()=>f.remove(),900); }
+  if (el && n>0){ const r = el.getBoundingClientRect(); const f = document.createElement('div'); f.className='xpfly'; f.textContent='+'+n+' XP'; const z=zoom(); f.style.left=((r.left+r.width/2)/z-30)+'px'; f.style.top=(r.top/z-10)+'px'; document.body.appendChild(f); setTimeout(()=>f.remove(),900); }
   if (level().n > lvlVor){ logEintrag('level', 'Level ' + level().n + ' erreicht!'); FX.ton('level'); konfetti(160); FX.fenster(`<div class="lvl-gross">${level().n}</div><div class="eyebrow">Level aufgestiegen</div><h2>Level ${level().n} erreicht!</h2><p class="muted">Bis Level ${level().n+1} brauchst du ${level().need} XP.</p>`); }
   if (S.days[k] === S.ziel) { logEintrag('ziel', 'Tagesziel geschafft (' + S.ziel + ' Antworten)'); toast('Tagesziel geschafft!'); konfetti(90); }
   abzeichenPruefen();
@@ -180,18 +185,23 @@ $('#themeBtn').onclick = () => thema(document.documentElement.dataset.theme === 
 try { thema(localStorage.getItem('lernwerk.theme') === 'light' ? 'light' : 'dark'); } catch(e){ document.documentElement.dataset.theme = 'dark'; }
 
 /* ---------------- Router ---------------- */
-let session = null, exam = null;
+let session = null, exam = null, spielOffen = null;
 function go(h){ if (location.hash === h) route(); else location.hash = h; }
-window.addEventListener('hashchange', route);
-function route(){
+window.addEventListener('hashchange', () => route());
+function route(still){
   const h = location.hash || '#/';
-  header(); window.scrollTo(0,0); railLeeren(); navAktiv(h); clearTimeout(heroT);
+  if (still !== true) still = false;
+  document.body.classList.toggle('ruhig', still);
+  const alteQuizkarte = still && (h === '#/' || h === '') ? $('#quizkarte') : null;
+  header(); if (!still) window.scrollTo(0,0); railLeeren(); navAktiv(h); if (!alteQuizkarte) clearTimeout(heroT);
+  quizkarteBehalten = alteQuizkarte;
   const SEITEN = {'#/faecher':viewFaecher, '#/lernen':viewLernen, '#/karteikarten':viewKarteikarten, '#/lernpfad':viewLernpfad, '#/fortschritt':viewFortschritt, '#/einstellungen':viewEinstellungen, '#/mehr':viewMehr};
   if (SEITEN[h]){ session = null; exam = null; stopTimer(); return SEITEN[h](); }
   if (h.startsWith('#/fach/')) return viewFach(h.split('/')[2]);
   if (h === '#/klausur') return viewKlausurSetup();
   if (h === '#/abzeichen') return viewAbzeichen();
-  if (window.LW_ROUTEN){ for (const [p, f] of Object.entries(window.LW_ROUTEN)) if (h.startsWith(p)) { session = null; exam = null; stopTimer(); return f(h); } }
+  if (window.LW_ROUTEN){ for (const [p, f] of Object.entries(window.LW_ROUTEN)) if (h.startsWith(p)) { session = null; exam = null; stopTimer(); spielOffen = h; return f(h); } }
+  spielOffen = null;
   if (h === '#/uebung' && session) return renderSession();
   if (h === '#/pruefung' && exam) return renderExam();
   session = null; exam = null; stopTimer();
@@ -200,14 +210,15 @@ function route(){
 
 /* ---------------- Hülle: Navigation, rechte Spalte ---------------- */
 const NAV = [
-  ['#/', 'start', 'Startseite'], ['#/faecher', 'faecher', 'Fächer'], ['#/games', 'gamepadnav', 'Games'], ['#/duell', 'duelle', 'Quiz-Duelle'], ['#/rangliste', 'rang', 'Rangliste'],
-  null,
+  ['#/', 'start', 'Startseite'], ['#/faecher', 'faecher', 'Fächer'],
+  'Spielen', ['#/games', 'gamepadnav', 'Games'], ['#/duell', 'duelle', 'Quiz-Duelle'], ['#/rangliste', 'rang', 'Rangliste'],
+  'Mein Lernen',
   ['#/karteikarten', 'karten', 'Karteikarten'], ['#/lernpfad', 'pfad', 'Lernpfad'], ['#/fortschritt', 'fortschritt', 'Fortschritt'], ['#/einstellungen', 'einst', 'Einstellungen'],
 ];
 const TABS = [['#/', 'start', 'Start'], ['#/faecher', 'faecher', 'Fächer'], ['#/games', 'gamepadnav', 'Games'], ['#/duell', 'duelle', 'Duelle'], ['#/mehr', 'mehr', 'Mehr']];
 function huelle(){
   const nav = $('#side'); if (!nav || !window.GFX) return;
-  nav.innerHTML = NAV.map(n => n ? `<a class="nav" href="${n[0]}" data-nav="${n[0]}">${GFX.nav[n[1]]}<span>${n[2]}</span></a>` : '<div class="nav-gruppe">Mein Lernen</div>').join('')
+  nav.innerHTML = NAV.map(n => typeof n === 'string' ? `<div class="nav-gruppe">${n}</div>` : `<a class="nav" href="${n[0]}" data-nav="${n[0]}">${GFX.nav[n[1]]}<span>${n[2]}</span></a>`).join('')
     + `<div class="nav-fuss">${GFX.nav.rakete}<span>Lernen. Spielen.<br>Besser werden.</span></div>`;
   $('#tabbar').innerHTML = TABS.map(n => `<a class="tab" href="${n[0]}" data-nav="${n[0]}">${GFX.nav[n[1]]}<span>${n[2]}</span></a>`).join('');
 }
@@ -225,7 +236,7 @@ function logEintrag(art, text){ S.log = S.log || []; S.log.unshift({t: Date.now(
 const vorZeit = t => { const m = Math.round((Date.now()-t)/60000); if (m < 1) return 'gerade eben'; if (m < 60) return 'vor ' + m + ' Min.'; const h = Math.round(m/60); if (h < 24) return 'vor ' + h + (h===1?' Stunde':' Stunden'); const d = Math.round(h/24); return 'vor ' + d + (d===1?' Tag':' Tagen'); };
 
 /* ---------------- Startseite ---------------- */
-let heroT = null;
+let heroT = null, quizkarteBehalten = null;
 function viewHome(){
   const alle = D.einheiten, faellig = alle.filter(e=>isDue(e.id)).length, heute = S.days[dayKey()]||0;
   const eingeloggt = window.LW_SYNC && window.LW_SYNC.angemeldet();
@@ -292,8 +303,9 @@ function viewHome(){
   $('#soGehts').onclick = () => FX.fenster(`<div class="eyebrow">So funktioniert’s</div><h2>In 4 Schritten zum Lern-Champion</h2><ol class="so-liste">${SCHRITTE.map(s=>`<li><b>${s[2]}</b><span>${s[3]}</span></li>`).join('')}</ol>`);
   $('#ctaDuell').onclick = () => go('#/duell');
   app.querySelectorAll('[data-ziel]').forEach(b => b.onclick = () => go(b.dataset.ziel));
-  document.querySelectorAll('#rail [data-zahl]').forEach(b => FX.hochzaehlen(b, +b.dataset.zahl, 900));
-  heroQuiz();
+  if (!document.body.classList.contains('ruhig')) document.querySelectorAll('#rail [data-zahl]').forEach(b => FX.hochzaehlen(b, +b.dataset.zahl, 900));
+  const alt = quizkarteBehalten; quizkarteBehalten = null;
+  if (alt) $('#quizkarte').replaceWith(alt); else heroQuiz();
   if (eingeloggt && window.LW_SYNC.rangliste) window.LW_SYNC.rangliste().then(d => { const k = $('#rangKasten'); if (!k) return; k.innerHTML = rangKasten(d); rangKastenAn(d); heroGegner(d); });
   else rangKastenAn(null);
 }
@@ -428,7 +440,7 @@ function viewEinstellungen(){
   app.querySelectorAll('[data-ziel]').forEach(b => b.onclick = () => go(b.dataset.ziel));
 }
 function viewMehr(){
-  app.innerHTML = seitenKopf('Menü', 'Mehr') + `<div class="mehr-liste">${NAV.filter(n=>n && !TABS.some(t=>t[0]===n[0])).concat([['#/lernen','gamepadnav','Üben & Spielen'],['#/abzeichen','pokalnav','Abzeichen'],['#/konto','einst','Konto']]).map(n=>`<a class="panel mehr-eintrag" href="${n[0]}">${GFX.nav[n[1]]}<span>${n[2]}</span>${ICON.pfeil}</a>`).join('')}</div>`;
+  app.innerHTML = seitenKopf('Menü', 'Mehr') + `<div class="mehr-liste">${NAV.filter(n=>Array.isArray(n) && !TABS.some(t=>t[0]===n[0])).concat([['#/lernen','gamepadnav','Üben & Spielen'],['#/abzeichen','pokalnav','Abzeichen'],['#/konto','einst','Konto']]).map(n=>`<a class="panel mehr-eintrag" href="${n[0]}">${GFX.nav[n[1]]}<span>${n[2]}</span>${ICON.pfeil}</a>`).join('')}</div>`;
 }
 function abzStreifen(){
   const da = FX.ABZ.filter(a=>S.abz[a.id]).sort((a,b)=>S.abz[b.id]-S.abz[a.id]);
@@ -779,13 +791,19 @@ function finishExam(){
 /* ---------------- Schnittstelle für konto.js / duell.js ---------------- */
 Object.assign(window.LW, {
   logEintrag, D, ICON, esc, md, toast, go, route, header, save, addXP, level, streak, dayKey, fachOf, themaOf, rechenIn, aufgabe, shuffle, abzeichenPruefen,
-  app: () => app, seitenKopf, vorZeit, konfetti,
+  app: () => app, seitenKopf, vorZeit, konfetti, zoom,
   // Antwort aus einem Spiel: zählt für Karteikasten, Statistik und Abzeichen (XP bucht der Server)
   antwortVerbuchen(id, ok){ if (!D.einheiten.some(e => e.id === id)) return; rateItem(id, ok, false); if (ok) S.stat.richtig++; save(); abzeichenPruefen(); },
   // Feste Fragenfolge spielen (Duell): items = [{kind:'M', e} | {kind:'R', r}]
   spielen(items, titel, beiAntwort, beiEnde){ items.forEach(it=>{ if (it.e) delete it.e._order; }); session = {titel, modus:'duell', items, i:0, richtig:0, xp:0, combo:0, cfg:{}, beiAntwort, beiEnde}; go('#/uebung'); },
 });
 if (window.GFX){ $('#logo').innerHTML = GFX.logo(); huelle(); } FX.hintergrund();
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
-route();
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  // Neue Version sofort übernehmen: nach einem Update des Service Workers einmal neu laden
+  const hatteSW = !!navigator.serviceWorker.controller; let neuGeladen = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hatteSW && !neuGeladen){ neuGeladen = true; location.reload(); } });
+  navigator.serviceWorker.register('sw.js', {updateViaCache: 'none'}).then(r => r.update()).catch(()=>{});
+}
+// erst routen, wenn alle Skripte (Konto, Duell, Games) ihre Seiten eingetragen haben
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => route()); else route();
 })();
