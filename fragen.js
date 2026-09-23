@@ -39,7 +39,7 @@
 
   K('w1', 'wbl-dual', 'Was versteht man unter dem dualen System?', 'Ausbildung an **zwei Lernorten**: im **Betrieb** (Praxis: Fertigkeiten, Kenntnisse) und in der **Berufsschule** (Theorie, Lern- und Arbeitstechniken, Allgemeinbildung). Evtl. ergänzt durch überbetriebliche Ausbildungsstätten.', B156 + ' Aufg. 1a');
   K('w2', 'wbl-dual', 'Welche Aufgaben haben Berufsschule, Betrieb und überbetriebliche Ausbildungsstätte?', '**Schule:** Theorie, Lern- und Arbeitstechniken, Allgemeinbildung\n**Betrieb:** Praxis\n**Überbetrieblich:** das, was der Betrieb nicht abdecken kann', B156 + ' Aufg. 1b', 3);
-  K('w3', 'wbl-dual', 'Unterschied zwischen dualer und vollzeitschulischer Ausbildung?', '**Dual:** Schule + Betrieb.\n**Vollzeitschulisch:** überwiegend in der Schule + Praktika (z. B. Pflege, Erzieher, Assistentenberufe). Ziele reichen von Berufsvorbereitung bis zum höheren Schulabschluss.', B156 + ' Aufg. 2');
+  K('w3', 'wbl-dual', 'Was ist der Unterschied zwischen einer dualen und einer vollzeitschulischen Ausbildung?', '**Dual:** Schule + Betrieb.\n**Vollzeitschulisch:** überwiegend in der Schule + Praktika (z. B. Pflege, Erzieher, Assistentenberufe). Ziele reichen von Berufsvorbereitung bis zum höheren Schulabschluss.', B156 + ' Aufg. 2');
   K('w4', 'wbl-dual', 'Nenne zwei Vorteile und zwei Nachteile des dualen Systems.', '**Vorteile:** praxisbezogen, spart dem Staat Geld (rein schulisch teurer), abwechslungsreicher.\n**Nachteile:** Ausbildungsplätze hängen von der **Wirtschaftslage** statt vom **Bedarf** ab, unterschiedliche **Qualität**, **Abstimmung** Betrieb–Schule schwierig.', KL5 + ' Aufg. 2', 4);
   M('w5', 'wbl-dual', 'Wer ist der **Ausbildende**?', [
     ['Der Betrieb bzw. das Unternehmen – der Vertragspartner', true, 'Richtig: Der Ausbildende schließt den Vertrag mit dem Azubi.'],
@@ -50,17 +50,17 @@
   M('w6', 'wbl-dual', 'Was muss ein **Ausbilder** mitbringen?', [
     ['Fachliche und persönliche Eignung (Ausbildereignung)', true, 'Genau das prüft auch die Kammer.'],
     ['Einen Meistertitel in jedem Fall', false, 'Nicht zwingend – verlangt ist die Eignung.'],
-    ['Mindestens 10 Jahre Berufserfahrung', false, 'Steht so nicht in den Unterlagen.'],
+    ['Mindestens 10 Jahre Berufserfahrung', false, 'Verlangt ist die Eignung – keine feste Anzahl an Jahren.'],
     ['Mitgliedschaft im Betriebsrat', false, 'Hat mit der Ausbilderrolle nichts zu tun.'],
   ], 'WBL · Beteiligte im Ausbildungsverhältnis (Buch S. 152–156)');
   K('w7', 'wbl-dual', 'Welches Zeugnis bekommt man vom Betrieb/Kammer und welches von der Berufsschule?', 'Betrieb/Kammer: Abschlussprüfung vor der Kammer → **Facharbeiterbrief / Kammerzeugnis**.\nBerufsschule: Zeugnisnoten → **Abschlusszeugnis der Berufsschule**.\nDazu kommt das **Zeugnis des Betriebs**.', KL5 + ' Aufg. 1');
-  K('w8', 'wbl-dual', 'Was ist die JAV und wann gibt es sie?', '**Jugend- und Auszubildendenvertretung.** Nur in Betrieben **mit Betriebsrat** und mindestens **5** Jugendlichen/Azubis unter 25. Amtszeit **2 Jahre**.', 'WBL · Beteiligte (Buch S. 152–156)');
+  K('w8', 'wbl-dual', 'Was ist die JAV und in welchen Betrieben gibt es sie?', '**Jugend- und Auszubildendenvertretung.** Nur in Betrieben **mit Betriebsrat** und mindestens **5** Jugendlichen/Azubis unter 25. Amtszeit **2 Jahre**.', 'WBL · Beteiligte (Buch S. 152–156)');
 
   K('w10', 'wbl-vertrag', 'Wer unterschreibt den Ausbildungsvertrag und welche Form gilt?', '**Ausbildender und Auszubildender**, bei Minderjährigen zusätzlich der **gesetzliche Vertreter**. Der Vertrag muss **vor Beginn schriftlich** niedergelegt werden (§ 11 BBiG).', AB68 + ' Aufg. 2', 3);
   K('w11', 'wbl-vertrag', 'Nenne fünf Mindestangaben im Ausbildungsvertrag (§ 11 BBiG).', 'Ausbildungsberuf und Ziel · sachliche/zeitliche Gliederung · Beginn und Dauer · Maßnahmen außerhalb des Betriebs · tägliche Arbeitszeit · **Probezeit** · Vergütung · Urlaub · Kündigungsvoraussetzungen · Hinweis auf Tarifverträge · Form des Ausbildungsnachweises', AB68 + ' Aufg. 1', 5);
   K('w12', 'wbl-vertrag', 'Was prüft die Kammer (IHK) beim Ausbildungsvertrag?', 'Ob der Vertrag zur **Ausbildungsordnung** passt, die **Eignung der Ausbildungsstätte** und die **Eignung des Ausbilders**. Dann Eintrag ins **Verzeichnis der Berufsausbildungsverhältnisse**.', 'WBL · Beteiligte (Buch S. 152–156)', 3);
   K('w13', 'wbl-vertrag', 'Nenne drei weitere Aufgaben der Kammer.', 'Überwacht die Ausbildung · bildet **Prüfungsausschüsse** · organisiert Prüfungen und erlässt Prüfungsvorschriften · entscheidet über Verkürzung/Verlängerung · Fortbildungen · **Ansprechpartner bei Problemen**', 'WBL · Beteiligte (Buch S. 152–156)', 3);
-  M('w14', 'wbl-vertrag', 'Welche Reihenfolge der Ausbildungsvorgaben stimmt (oben = höchste)?', [
+  M('w14', 'wbl-vertrag', 'Welche Vorschriften gelten für die Ausbildung – in welcher Rangfolge? (links = wichtigste)', [
     ['BBiG → Ausbildungsordnung → Ausbildungsrahmenplan → betrieblicher Ausbildungsplan', true, 'Das Gesetz steht oben, der Plan des Betriebs unten.'],
     ['Ausbildungsordnung → BBiG → betrieblicher Plan → Rahmenplan', false, 'Das BBiG ist das Gesetz und steht ganz oben.'],
     ['Betrieblicher Plan → Rahmenplan → Ausbildungsordnung → BBiG', false, 'Genau umgekehrt.'],
@@ -75,22 +75,22 @@
   ], 'WBL · Beteiligte (Buch S. 152–156)');
   K('w17', 'wbl-vertrag', 'Wer überwacht die Einhaltung der Ausbildungsordnung?', 'Die **zuständige Stelle**, z. B. **IHK** (Fachinformatiker) oder HWK.', AB68 + ' Aufg. 6', 1);
   K('w18', 'wbl-vertrag', 'Was gehört in den Ausbildungsnachweis (Berichtsheft)?', 'Wöchentlich: betriebliche Tätigkeiten (mit Bezug zur Nr. im Rahmenplan) + Stunden, Unterweisungen/Schulungen, Berufsschulthemen, Unterschriften Azubi + Ausbilder. Darf **während der Arbeitszeit** geführt werden; der Betrieb muss es **überwachen**.', 'WBL · Muster Ausbildungsnachweis (BIBB)', 3);
-  K('w19', 'wbl-vertrag', 'Welche Zeitpunkte beenden ein Ausbildungsverhältnis?', 'Bestandene **Abschlussprüfung** · **Kündigung** · **Ablauf der Ausbildungszeit**', 'WBL · Beteiligte (Buch S. 152–156)', 3);
+  K('w19', 'wbl-vertrag', 'Wodurch endet eine Ausbildung?', 'Bestandene **Abschlussprüfung** · **Kündigung** · **Ablauf der Ausbildungszeit**', 'WBL · Beteiligte (Buch S. 152–156)', 3);
   K('w20', 'wbl-vertrag', 'Was passiert, wenn man die Abschlussprüfung nicht besteht?', 'Sie kann **bis zu zweimal wiederholt** werden. Auf Verlangen verlängert sich die Ausbildung bis zur nächsten Wiederholungsprüfung (höchstens **1 Jahr**).', B156 + ' Aufg. 8');
 
-  K('w30', 'wbl-pflichten', 'Nenne die Pflichten des Auszubildenden (§ 13 BBiG).', '**Lern**pflicht · **Sorgfalts**pflicht · **Gehorsams**pflicht · **Schul**pflicht (Berufsschule, Prüfungen) · **Nachweis**pflicht (Berichtsheft) · **Schweige**pflicht · **Wettbewerbsverbot**', B160 + ' Aufg. 3', 4);
-  K('w31', 'wbl-pflichten', 'Nenne die Pflichten des Ausbildenden (§§ 14–17 BBiG).', '**Ausbildungs**pflicht (Ausbilder stellen, Mittel kostenlos) · **Fürsorge**pflicht (nur ausbildungsdienliche Arbeiten) · **Vergütungs**pflicht · **Freistellungs**pflicht (Berufsschule, Prüfungen) · **Zeugnis**pflicht', B160 + ' Aufg. 3', 4);
+  K('w30', 'wbl-pflichten', 'Welche Pflichten hast du als Azubi? (§ 13 BBiG)', '**Lern**pflicht · **Sorgfalts**pflicht · **Gehorsams**pflicht · **Schul**pflicht (Berufsschule, Prüfungen) · **Nachweis**pflicht (Berichtsheft) · **Schweige**pflicht · **Wettbewerbsverbot**', B160 + ' Aufg. 3', 4);
+  K('w31', 'wbl-pflichten', 'Welche Pflichten hat der Ausbildungsbetrieb? (§§ 14–17 BBiG)', '**Ausbildungs**pflicht (Ausbilder stellen, Mittel kostenlos) · **Fürsorge**pflicht (nur ausbildungsdienliche Arbeiten) · **Vergütungs**pflicht · **Freistellungs**pflicht (Berufsschule, Prüfungen) · **Zeugnis**pflicht', B160 + ' Aufg. 3', 4);
   K('w32', 'wbl-pflichten', 'Was ist das Wettbewerbsverbot?', 'Azubis dürfen dem Ausbildungsbetrieb **keine Konkurrenz** machen, z. B. durch **Schwarzarbeit**. Folge: Schadenersatz oder Kündigung.', B160 + ' Aufg. 4');
   M('w33', 'wbl-pflichten', 'Klaras Chef sagt: „Die Berufsschule ist unnötig, du bleibst im Betrieb." Welche Pflicht verletzt er?', [
     ['Freistellungspflicht', true, 'Der Betrieb muss für Berufsschule und Prüfungen freistellen.'],
     ['Vergütungspflicht', false, 'Es geht nicht ums Geld.'],
-    ['Zeugnispflicht', false, 'Passt nicht zur Situation.'],
+    ['Zeugnispflicht', false, 'Um das Zeugnis geht es hier nicht.'],
     ['Gehorsamspflicht', false, 'Das ist eine Pflicht des Azubis.'],
   ], AB68 + ' Aufg. 7 (Klara Korte)');
   M('w34', 'wbl-pflichten', 'Klara soll im Haushalt der Chefin putzen. Welche Pflicht wird verletzt?', [
     ['Fürsorgepflicht – nur ausbildungsdienliche Arbeiten', true, 'Private Arbeiten gehören nicht zur Ausbildung.'],
-    ['Schweigepflicht', false, 'Passt nicht.'],
-    ['Wettbewerbsverbot', false, 'Das betrifft den Azubi.'],
+    ['Schweigepflicht', false, 'Hier wird kein Geheimnis verraten.'],
+    ['Wettbewerbsverbot', false, 'Das Wettbewerbsverbot ist eine Pflicht des Azubis.'],
     ['Lernpflicht', false, 'Das ist eine Pflicht des Azubis.'],
   ], AB68 + ' Aufg. 7 (Klara Korte)');
   M('w35', 'wbl-pflichten', 'Klara erzählt Freunden von Umsatz und Schulden des Betriebs. Welche Pflicht verletzt sie?', [
@@ -107,7 +107,7 @@
   ], B160 + ' Aufg. 2', 3, { mehrfach: true });
   K('w37', 'wbl-pflichten', 'Wozu dient die Probezeit?', 'Der **Betrieb** prüft, ob der Azubi geeignet ist (Leistung, Verhalten). Der **Azubi** prüft, ob Beruf und Betrieb zu ihm passen.', 'WBL · Arbeitsblatt S. 7 (Schaubild 5)');
   M('w38', 'wbl-pflichten', 'Wie kann der **Betrieb** nach der Probezeit kündigen?', [
-    ['Nur fristlos aus wichtigem Grund, schriftlich mit Grund', true, 'Eine ordentliche Kündigung gibt es für den Betrieb nicht.'],
+    ['Nur fristlos aus einem wichtigen Grund – schriftlich und mit Begründung', true, 'Eine ordentliche Kündigung gibt es für den Betrieb nicht.'],
     ['Mit 4 Wochen Frist ohne Grund', false, 'Das gibt es nur für den Azubi bei Berufsaufgabe/-wechsel.'],
     ['Jederzeit mündlich', false, 'Immer schriftlich.'],
     ['Gar nicht', false, 'Aus wichtigem Grund (z. B. Diebstahl) schon.'],
@@ -141,13 +141,13 @@
     ['8 Stunden am Tag, 6 Tage die Woche', false, 'Nur 5 Tage.'],
   ], JQ + ' Zusammenfassung');
   M('w51', 'wbl-jarbschg', 'Karin (16) arbeitet 7 Stunden. Wie lang muss die Pause sein?', [
-    ['60 Minuten', true, 'Bei mehr als 6 Stunden 60 min, Blöcke mind. 15 min.'],
+    ['60 Minuten', true, 'Bei mehr als 6 Stunden Arbeit: 60 Minuten Pause, in Blöcken von mindestens 15 Minuten.'],
     ['30 Minuten', false, '30 min gelten bei 4,5–6 Stunden.'],
     ['45 Minuten', false, 'Die Regel für Erwachsene – nicht für Jugendliche.'],
     ['25 Minuten reichen, wenn sie früher gehen darf', false, 'Verstoß (Karin Aufg. 2).'],
   ], JQ + ' Aufg. 2');
   M('w52', 'wbl-jarbschg', 'Nach 4 Stunden Unterricht fällt der Rest aus. Muss Karin (16) noch in den Betrieb?', [
-    ['Ja – erst bei mehr als 5 Unterrichtsstunden ist der Tag erledigt', true, 'Einmal pro Woche gilt ein Schultag mit > 5 Stunden als Arbeitstag.'],
+    ['Ja – erst bei mehr als 5 Unterrichtsstunden ist der Tag erledigt', true, 'Einmal pro Woche zählt ein Schultag mit mehr als 5 Unterrichtsstunden als ganzer Arbeitstag.'],
     ['Nein – jeder Schultag ist komplett frei', false, 'Nur bei mehr als 5 Unterrichtsstunden.'],
     ['Nur wenn der Chef anruft', false, 'Sie muss zurück in den Betrieb.'],
   ], JQ + ' Aufg. 3');
@@ -157,12 +157,12 @@
     ['In Ordnung', false, '24 ist zu wenig.'],
     ['Ihm stehen 30 Werktage zu', false, '30 gelten nur unter 16.'],
   ], B160 + ' Aufg. 5b');
-  M('w55', 'wbl-jarbschg', 'Karin arbeitet 7–20 Uhr mit Pause 12–17 Uhr. Ist ihre Beschwerde berechtigt?', [
-    ['Ja – die Schichtzeit beträgt 13 Stunden, erlaubt sind 10', true, 'Schichtzeit = Arbeit + Pausen, max. 10 h.'],
+  M('w55', 'wbl-jarbschg', 'Karin (16) ist von 7 bis 20 Uhr im Betrieb, mit Pause von 12 bis 17 Uhr. Sie beschwert sich. Hat sie recht?', [
+    ['Ja – die Schichtzeit beträgt 13 Stunden, erlaubt sind 10', true, 'Schichtzeit = Arbeitszeit + Pausen. Für Jugendliche höchstens 10 Stunden.'],
     ['Nein – sie arbeitet ja nur 8 Stunden', false, 'Die Schichtzeit ist das Problem.'],
     ['Nein – Jugendliche dürfen bis 20 Uhr arbeiten', false, 'Uhrzeit ok, Schichtzeit nicht.'],
   ], JQ + ' Aufg. 4');
-  K('w56', 'wbl-jarbschg', 'Was ist für Jugendliche verboten (§§ 22, 23)?', '**Gefährliche Arbeiten**, **Akkordarbeit** und Arbeiten über der Leistungsfähigkeit.', JQ + ' Aufg. 6');
+  K('w56', 'wbl-jarbschg', 'Welche Arbeiten sind für Jugendliche verboten? (§§ 22, 23 JArbSchG)', '**Gefährliche Arbeiten**, **Akkordarbeit** und Arbeiten über der Leistungsfähigkeit.', JQ + ' Aufg. 6');
   K('w57', 'wbl-jarbschg', 'Welche ärztlichen Untersuchungen schreibt das JArbSchG vor?', '**Erstuntersuchung** höchstens 14 Monate vor Beginn (ohne sie keine Beschäftigung!) und **Nachuntersuchung** im ersten Jahr.', JQ + ' Aufg. 7');
   K('w58', 'wbl-jarbschg', 'Freizeit, Uhrzeit, Wochenende – was gilt für Jugendliche?', 'Mind. **12 h** Freizeit zwischen zwei Arbeitstagen · Arbeit nur **6–20 Uhr** · Samstag nur in Branchen mit Samstagsarbeit + freier Ersatztag · Sonntag fast nur Gastronomie/Gesundheit', 'WBL · Buch S. 157–160', 3);
   M('w59', 'wbl-jarbschg', 'Miro (17) soll wegen eines Großauftrags an Berufsschultagen im Betrieb arbeiten. Was stimmt?', [
@@ -172,7 +172,7 @@
   ], 'WBL · Buch S. 157 (Ausgangssituation Miro)');
   K('w60', 'wbl-jarbschg', 'Wer überwacht das Jugendarbeitsschutzgesetz, und für wen gilt es?', 'Gilt für Jugendliche **unter 18** (unter 15 = Kind → Kinderarbeit verboten). Überwachung: **Gewerbeaufsichtsamt** / Arbeitsschutzbehörde.', JQ + ' Zusammenfassung');
 
-  K('w70', 'wbl-schutz', 'Unterschied technischer und sozialer Arbeitsschutz?', '**Technisch:** sichere Maschinen, Geräte und Arbeitsräume (UVV, Arbeitsstättenverordnung, Produktsicherheitsgesetz).\n**Sozial:** schützt bestimmte Personengruppen und regelt Arbeitszeiten (JArbSchG, ArbZG, MuSchG, SGB IX).', 'WBL · Arbeitsblatt S. 18', 4);
+  K('w70', 'wbl-schutz', 'Was ist der Unterschied zwischen technischem und sozialem Arbeitsschutz?', '**Technisch:** sichere Maschinen, Geräte und Arbeitsräume (UVV, Arbeitsstättenverordnung, Produktsicherheitsgesetz).\n**Sozial:** schützt bestimmte Personengruppen und regelt Arbeitszeiten (JArbSchG, ArbZG, MuSchG, SGB IX).', 'WBL · Arbeitsblatt S. 18', 4);
   M('w71', 'wbl-schutz', 'Wer erlässt die Unfallverhütungsvorschriften (UVV)?', [
     ['Die Berufsgenossenschaften', true, 'Träger der gesetzlichen Unfallversicherung.'],
     ['Die IHK', false, 'Die IHK ist für die Ausbildung zuständig.'],
@@ -186,7 +186,7 @@
     ['Produktsicherheitsgesetz', false, 'Technischer Arbeitsschutz (sichere Geräte).'],
     ['Arbeitsstättenverordnung', false, 'Technischer Arbeitsschutz (Räume, Licht, Lärm).'],
   ], 'WBL · Arbeitsblatt S. 18', 3, { mehrfach: true });
-  K('w73', 'wbl-schutz', 'Arbeitszeitgesetz: tägliche Arbeitszeit und Ruhezeit bei Erwachsenen?', 'Max. **8 h/Tag** (bis **10 h**, wenn der Durchschnitt über 6 Monate 8 h bleibt). **11 h Ruhezeit** zwischen zwei Arbeitstagen.', 'WBL · Arbeitsblatt S. 18');
+  K('w73', 'wbl-schutz', 'Wie lange dürfen Erwachsene am Tag arbeiten und wie viel Ruhezeit brauchen sie? (Arbeitszeitgesetz)', 'Max. **8 h/Tag** (bis **10 h**, wenn der Durchschnitt über 6 Monate 8 h bleibt). **11 h Ruhezeit** zwischen zwei Arbeitstagen.', 'WBL · Arbeitsblatt S. 18');
   K('w74', 'wbl-schutz', 'Nenne drei Regeln des Mutterschutzgesetzes.', 'Beschäftigungsverbot **6 Wochen vor** und **8 Wochen nach** der Geburt · besonderer **Kündigungsschutz** · keine schweren/gefährlichen Arbeiten, keine Nacht-, Sonntags- und Mehrarbeit · Mutterschaftsgeld', 'WBL · Arbeitsblatt S. 18', 3);
   K('w75', 'wbl-schutz', 'Wer überwacht den Arbeitsschutz?', 'Staatlich das **Gewerbeaufsichtsamt / Amt für Arbeitsschutz** und die **Berufsgenossenschaften**. Im Betrieb zusätzlich Betriebsrat, Sicherheitsbeauftragte, Betriebsarzt.', 'WBL · Arbeitsblatt S. 18');
   K('w76', 'wbl-schutz', 'Nenne Ursachen und Folgen von Arbeitsunfällen.', '**Ursachen:** ungenügende Schutzvorrichtungen, **menschliche** Fehler (Unachtsamkeit, Hektik, Alkohol), **technisches** Versagen.\n**Folgen:** Verletzter (Schmerzen, Verdienstausfall), Betrieb (Ausfall, höhere BG-Beiträge), Gesellschaft (Kosten für Behandlung, Reha, Renten).', 'WBL · Aufgabensammlung Klett S. 14', 4);
@@ -197,11 +197,11 @@
   ], 'WBL · Arbeitsblatt S. 18');
   K('w78', 'wbl-schutz', 'Was regelt der Schwerbehindertenschutz (SGB IX)?', 'Teilhabe fördern, **besonderer Kündigungsschutz**, **Zusatzurlaub (5 Tage)**, Freistellung von Mehrarbeit auf Verlangen.', 'WBL · Arbeitsblatt S. 18');
 
-  K('w90', 'wbl-arbeit', 'Unterschied Fortbildung und Umschulung?', '**Fortbildung** baut auf dem erlernten Beruf auf (Meister, Techniker, Fachwirt).\n**Umschulung** bereitet auf einen **anderen** Beruf vor (z. B. nach Unfall, wenn der Beruf wegfällt).', 'WBL · Arbeitsblatt S. 9');
+  K('w90', 'wbl-arbeit', 'Was ist der Unterschied zwischen Fortbildung und Umschulung?', '**Fortbildung** baut auf dem erlernten Beruf auf (Meister, Techniker, Fachwirt).\n**Umschulung** bereitet auf einen **anderen** Beruf vor (z. B. nach Unfall, wenn der Beruf wegfällt).', 'WBL · Arbeitsblatt S. 9');
   M('w91', 'wbl-arbeit', 'Was fördert das **BAföG**?', [
     ['Schulische Bildungsmaßnahmen', true, 'Bundesausbildungsförderungsgesetz.'],
     ['Berufliche Weiterbildung, Fortbildung und Umschulung', false, 'Das fördert das SGB.'],
-    ['Nur Studium im Ausland', false, 'Zu eng.'],
+    ['Nur Studium im Ausland', false, 'Das BAföG fördert allgemein schulische Bildung – nicht nur im Ausland.'],
   ], 'WBL · Arbeitsblatt S. 9');
   M('w92', 'wbl-arbeit', 'Was ist **job enrichment**?', [
     ['Aufgabenbereicherung – mehr Entscheidungsspielraum', true, 'Qualitativ mehr Verantwortung.'],
@@ -211,14 +211,14 @@
   M('w93', 'wbl-arbeit', 'Was ist **job rotation**?', [
     ['Häufiger Aufgabenwechsel bei eintönigen Arbeiten', true, 'Gegen Monotonie.'],
     ['Aufgabenbereicherung', false, 'Das ist job enrichment.'],
-    ['Schichtarbeit rund um die Uhr', false, 'Nein.'],
+    ['Schichtarbeit rund um die Uhr', false, 'Mit Schichtarbeit hat job rotation nichts zu tun.'],
   ], 'WBL · Arbeitsblatt S. 11 (Humanisierung)');
   M('w94', 'wbl-arbeit', '„Montag ist der leistungsstärkste Tag der Woche." Stimmt das?', [
     ['Nein – Montag ist Anlaufphase, das Hoch liegt Dienstag/Mittwoch', true, 'Wochenkurve: Anlauf, Hoch, Abfall zum Freitag.'],
     ['Ja – nach dem Wochenende ist man ausgeruht', false, 'Die Aussage im Arbeitsblatt ist falsch.'],
   ], 'WBL · Arbeitsblatt S. 10');
   K('w95', 'wbl-arbeit', 'Nenne je zwei Vor- und Nachteile der betrieblichen Arbeitsteilung.', '**Vorteile:** höhere Produktivität, Spezialisierung/Übung, gleichmäßige Qualität, geringere Kosten.\n**Nachteile:** Monotonie, einseitige Belastung, Abhängigkeit (fällt einer aus, stockt alles), kein Bezug zum Endprodukt.', 'WBL · Klett S. 8 (Wohnland AG)', 4);
-  K('w96', 'wbl-arbeit', 'Wohnland AG: Jeder braucht 8 h pro Tisch. Wie viele Tische schaffen 3 Leute mit Arbeitsteilung am Tag?', 'Jeder macht nur, was er am schnellsten kann (je 2 h): **6 h statt 24 h** Gesamtzeit je Tisch → bei 8 h Arbeitszeit **4 statt 3 Esstische** pro Tag.', 'WBL · Klett S. 8 (Wohnland AG)', 3);
+  K('w96', 'wbl-arbeit', 'Wohnland AG: Ohne Arbeitsteilung baut jeder der 3 Tischler einen Tisch in 8 Stunden. Wie viele Tische schaffen die drei am Tag mit Arbeitsteilung?', 'Jeder macht nur, was er am schnellsten kann (je 2 h): **6 h statt 24 h** Gesamtzeit je Tisch → bei 8 h Arbeitszeit **4 statt 3 Esstische** pro Tag.', 'WBL · Klett S. 8 (Wohnland AG)', 3);
   K('w97', 'wbl-arbeit', 'Nenne fünf Stressoren am Arbeitsplatz.', 'Zeitdruck · Lärm · Überforderung · Monotonie/Unterforderung · Konflikte/Mobbing · ständige Unterbrechungen · Schichtarbeit · unklare Anweisungen · Angst um den Arbeitsplatz', 'WBL · Arbeitsblatt S. 10', 5);
   K('w98', 'wbl-arbeit', 'Wodurch steigt die Leistungsbereitschaft?', 'Anerkennung und Lob · gerechte Bezahlung · gutes Betriebsklima · interessante Aufgaben · Aufstiegschancen · Mitbestimmung · gute Arbeitsbedingungen', 'WBL · Arbeitsblatt S. 10', 3);
   M('w99', 'wbl-arbeit', 'Welche Art von Arbeit macht ein **Fachinformatiker**?', [
@@ -228,7 +228,7 @@
   ], 'WBL · Klett S. 9 (Arten der Arbeit)', 1);
 
   K('w110', 'wbl-beruf', 'Nenne die vier Fachrichtungen des Fachinformatikers.', '**Anwendungsentwicklung**, **Systemintegration**, **Daten- und Prozessanalyse**, **Digitale Vernetzung** (die letzten beiden seit 2020 neu).', 'WBL · BIBB „Ausbildung gestalten: Fachinformatiker/-in"', 2);
-  M('w111', 'wbl-beruf', 'Wann ist Teil 1 der gestreckten Abschlussprüfung und wie viel zählt er?', [
+  M('w111', 'wbl-beruf', 'Die Abschlussprüfung hat zwei Teile („gestreckt"). Wann ist Teil 1 und wie viel zählt er?', [
     ['Im 4. Ausbildungshalbjahr, 90 min schriftlich, 20 %', true, 'Prüfungsbereich „Einrichten eines IT-gestützten Arbeitsplatzes".'],
     ['Am Ende der Ausbildung, 50 %', false, 'Das ist die Projektarbeit in Teil 2.'],
     ['Im 2. Halbjahr, zählt nicht in die Note', false, 'Bei der gestreckten Prüfung zählt Teil 1 mit.'],
@@ -244,29 +244,29 @@
 
   /* ================= ITS1 ================= */
   const DS = 'ITS1 · Arbeitsauftrag DSGVO und Umsetzung LF4', CIA = 'ITS1 · Arbeitsblatt 2a CIA-Dreieck';
-  K('i1', 'its-dsgvo', 'Unterschied Datenschutz und Datensicherheit?', '**Datenschutz** schützt **personenbezogene Daten** – Betroffene behalten die Kontrolle über ihre Daten.\n**Datensicherheit** schützt **alle Daten** vor Verlust, Diebstahl, Beschädigung und unbefugtem Zugriff (Vertraulichkeit, Integrität, Verfügbarkeit).', DS + ' Aufg. 1a/b', 4);
-  K('i2', 'its-dsgvo', 'Was besagt das Verbotsprinzip im Datenschutz?', 'Die Verarbeitung personenbezogener Daten ist **grundsätzlich verboten** – erlaubt nur mit **Einwilligung** oder einer **gesetzlichen Grundlage** („Verbot mit Erlaubnisvorbehalt").', DS + ' Aufg. 1c', 3);
-  M('i3', 'its-dsgvo', '„Die Speicherung der Daten ist zeitlich begrenzt." Welcher Grundsatz aus Art. 5 DSGVO?', [
-    ['Speicherbegrenzung', true, 'Nr. 6 in der Schulaufgabe.'],
+  K('i1', 'its-dsgvo', 'Was ist der Unterschied zwischen Datenschutz und Datensicherheit?', '**Datenschutz** schützt **personenbezogene Daten** – Betroffene behalten die Kontrolle über ihre Daten.\n**Datensicherheit** schützt **alle Daten** vor Verlust, Diebstahl, Beschädigung und unbefugtem Zugriff (Vertraulichkeit, Integrität, Verfügbarkeit).', DS + ' Aufg. 1a/b', 4);
+  K('i2', 'its-dsgvo', 'Was bedeutet das „Verbotsprinzip" im Datenschutz?', 'Die Verarbeitung personenbezogener Daten ist **grundsätzlich verboten** – erlaubt nur mit **Einwilligung** oder einer **gesetzlichen Grundlage** („Verbot mit Erlaubnisvorbehalt").', DS + ' Aufg. 1c', 3);
+  M('i3', 'its-dsgvo', '„Daten dürfen nur so lange gespeichert werden, wie sie gebraucht werden." Welcher Grundsatz der DSGVO (Art. 5) ist das?', [
+    ['Speicherbegrenzung', true, 'Die Speicherung ist zeitlich begrenzt.'],
     ['Datenminimierung', false, 'Datenminimierung = nur so viele Daten wie nötig.'],
     ['Zweckbindung', false, 'Zweckbindung = Zweck vorher festgelegt.'],
     ['Richtigkeit', false, 'Richtigkeit = Daten korrekt, Anspruch auf Korrektur.'],
   ], DS + ' Aufg. 1d (Art. 5)');
-  M('i4', 'its-dsgvo', '„Dem Zweck angemessen und auf das notwendige Maß beschränkt." Welcher Grundsatz?', [
+  M('i4', 'its-dsgvo', '„Es werden nur so viele Daten erhoben, wie für den Zweck nötig sind." Welcher Grundsatz der DSGVO ist das?', [
     ['Datenminimierung', true, 'Nur so viele Daten wie nötig.'],
     ['Transparenz', false, 'Transparenz = Betroffene umfassend informieren.'],
     ['Rechtmäßigkeit', false, 'Rechtmäßigkeit = Einwilligung/Rechtsgrundlage.'],
     ['Speicherbegrenzung', false, 'Das betrifft die Dauer.'],
   ], DS + ' Aufg. 1d (Art. 5)');
-  M('i5', 'its-dsgvo', '„Zwecke müssen bei der Erhebung festgelegt, eindeutig und legitim sein." Welcher Grundsatz?', [
-    ['Zweckbindung', true, 'Nr. 3.'],
-    ['Transparenz', false, 'Passt nicht.'],
+  M('i5', 'its-dsgvo', '„Schon beim Erheben muss feststehen, wofür die Daten genutzt werden." Welcher Grundsatz der DSGVO ist das?', [
+    ['Zweckbindung', true, 'Die Daten dürfen nur für den festgelegten Zweck genutzt werden.'],
+    ['Transparenz', false, 'Transparenz heißt: Betroffene werden verständlich informiert.'],
     ['Integrität und Vertraulichkeit', false, 'Das ist der Schutz durch TOM.'],
   ], DS + ' Aufg. 1d (Art. 5)');
-  M('i6', 'its-dsgvo', '„Schutz vor unbefugtem Zugriff durch technisch-organisatorische Maßnahmen." Welcher Grundsatz?', [
-    ['Integrität und Vertraulichkeit', true, 'Nr. 7.'],
-    ['Richtigkeit', false, 'Passt nicht.'],
-    ['Datenminimierung', false, 'Passt nicht.'],
+  M('i6', 'its-dsgvo', '„Daten werden mit technischen und organisatorischen Maßnahmen vor unbefugtem Zugriff geschützt." Welcher Grundsatz der DSGVO ist das?', [
+    ['Integrität und Vertraulichkeit', true, 'Daten bleiben geschützt und unverändert.'],
+    ['Richtigkeit', false, 'Richtigkeit heißt: Die Daten müssen stimmen.'],
+    ['Datenminimierung', false, 'Datenminimierung heißt: nur so viele Daten wie nötig.'],
   ], DS + ' Aufg. 1d (Art. 5)');
   K('i7', 'its-dsgvo', 'Nenne die sieben Grundsätze aus Art. 5 DSGVO.', 'Rechtmäßigkeit · Transparenz · Zweckbindung · Datenminimierung · Richtigkeit · Speicherbegrenzung · Integrität und Vertraulichkeit', DS + ' Aufg. 1d', 7);
   K('i8', 'its-dsgvo', 'Nenne drei Rechte der betroffenen Personen nach DSGVO.', 'Auskunft · Berichtigung · Löschung („Recht auf Vergessenwerden") · Einschränkung der Verarbeitung · Datenübertragbarkeit · Widerspruch', DS + ' Aufg. 1c (Rechte)', 3);
@@ -278,19 +278,19 @@
   ], DS + ' Aufg. 1e');
   M('i11', 'its-dsgvo', 'Wofür steht **KRITIS**?', [
     ['Kritische Infrastrukturen (z. B. Energie, Wasser, Gesundheit)', true, 'Besonders zu schützende Einrichtungen.'],
-    ['Kriterien für IT-Sicherheit', false, 'Nein.'],
-    ['Ein Verschlüsselungsverfahren', false, 'Nein.'],
+    ['Kriterien für IT-Sicherheit', false, 'KRITIS ist die Abkürzung für kritische Infrastrukturen.'],
+    ['Ein Verschlüsselungsverfahren', false, 'KRITIS ist kein Verfahren, sondern eine Gruppe besonders wichtiger Einrichtungen.'],
   ], DS + ' Aufg. 1e');
   M('i12', 'its-dsgvo', 'Was ist das **BDSG**?', [
     ['Bundesdatenschutzgesetz – ergänzt die DSGVO in Deutschland', true, 'Die DSGVO gilt EU-weit, das BDSG ergänzt national.'],
     ['Ersetzt die DSGVO in Deutschland', false, 'Es ergänzt, ersetzt nicht.'],
     ['Ein Standard des BSI', false, 'Nein, ein Gesetz.'],
   ], DS + ' Aufg. 1e');
-  K('i13', 'its-dsgvo', 'Unterschied Privacy by Design und Privacy by Default?', '**By Design:** Datenschutz schon bei der **Entwicklung** mitdenken.\n**By Default:** **Voreinstellungen** sind datenschutzfreundlich.', 'ITS1 · Themenübersicht LF4', 2);
+  K('i13', 'its-dsgvo', 'Was ist der Unterschied zwischen „Privacy by Design" und „Privacy by Default"?', '**By Design:** Datenschutz schon bei der **Entwicklung** mitdenken.\n**By Default:** **Voreinstellungen** sind datenschutzfreundlich.', 'ITS1 · Themenübersicht LF4', 2);
   K('i14', 'its-dsgvo', 'Nenne vier technisch-organisatorische Maßnahmen (TOM).', 'Verschlüsselung · Zugriffsrechte auf das Nötige beschränken · automatische Löschung · Backups · Zutrittskontrolle · 2-Faktor-Authentifizierung · Schulungen · Löschkonzept', DS + ' (eigene Lösung)', 4);
   K('i15', 'its-dsgvo', 'Sportverein: Welche Daten werden wofür erhoben?', 'Name, Geburtsdatum, Geschlecht, Kontoverbindung, Kontaktdaten, Beitrittsdatum – für die **Mitgliederverwaltung** und **Beitragszahlungen**.', DS + ' Frage 1 (Sportverein)', 2);
   K('i16', 'its-dsgvo', 'Sportverein: Nenne vier Gefahren für die Mitgliederdaten.', 'Unbefugter Zugriff · Diebstahl/Verlust von Geräten · Hacking · Schadsoftware · Phishing · Fehler von Mitarbeitern · schwache Passwörter · fehlende Updates · Feuer/Wasser · Missbrauch durch Berechtigte', 'ITS1 · DSGVO Arbeitsauftrag (Sportverein) Aufg. 1', 4);
-  K('i17', 'its-dsgvo', 'Warum können Schutzziele trotz Maßnahmen verletzt werden? Beispiel je Ziel.', 'Maßnahmen **senken das Risiko**, schließen es nie ganz aus.\n**Verfügbarkeit:** Cyberangriff, Hardwaredefekt · **Integrität:** unbefugte Änderung, menschlicher Fehler · **Vertraulichkeit:** Phishing, gestohlenes Passwort, falsch versendete Mail', 'ITS1 · DSGVO Arbeitsauftrag (Sportverein) Aufg. 3', 4);
+  K('i17', 'its-dsgvo', 'Warum kann trotz Schutzmaßnahmen etwas passieren? Nenne für jedes Schutzziel ein Beispiel.', 'Maßnahmen **senken das Risiko**, schließen es nie ganz aus.\n**Verfügbarkeit:** Cyberangriff, Hardwaredefekt · **Integrität:** unbefugte Änderung, menschlicher Fehler · **Vertraulichkeit:** Phishing, gestohlenes Passwort, falsch versendete Mail', 'ITS1 · DSGVO Arbeitsauftrag (Sportverein) Aufg. 3', 4);
   M('i18', 'its-dsgvo', 'Sind IP-Adressen personenbezogene Daten?', [
     ['Ja – die DSGVO sieht sie als „Online-Kennung", die eine Person identifizieren kann', true, 'Speicherung nur DSGVO-konform, z. B. kurz für IT-Sicherheit.'],
     ['Nein – sie gehören zu einem Gerät, nicht zu einer Person', false, 'Gerichte und DSGVO sagen: doch personenbezogen.'],
@@ -345,16 +345,16 @@
   ], CIA + ' (Einleitung)', 1);
 
   const AA = 'ITS1 · Arbeitsblatt 2a';
-  K('i50', 'its-mass', 'Unterschied organisatorische und technische Maßnahmen – je zwei Beispiele.', '**Organisatorisch** = Regeln für Menschen: Zugangskontrolle zu Serverräumen, Einweisung in Passwortrichtlinien, Konto erst nach Quittierung der Benutzerordnung, Notfallplan bei Ausfall des Admins.\n**Technisch** = Technik schützt: Dienste auf mehrere Server verteilen, unnötige Dienste abschalten, Telnet durch SSH ersetzen, Verschlüsselung/VPN, IDS, Firewall.', AA + ' · Arbeitsauftrag 1', 4);
+  K('i50', 'its-mass', 'Was ist der Unterschied zwischen organisatorischen und technischen Maßnahmen? Nenne je zwei Beispiele.', '**Organisatorisch** = Regeln für Menschen: Zugangskontrolle zu Serverräumen, Einweisung in Passwortrichtlinien, Konto erst nach Quittierung der Benutzerordnung, Notfallplan bei Ausfall des Admins.\n**Technisch** = Technik schützt: Dienste auf mehrere Server verteilen, unnötige Dienste abschalten, Telnet durch SSH ersetzen, Verschlüsselung/VPN, IDS, Firewall.', AA + ' · Arbeitsauftrag 1', 4);
   M('i51', 'its-mass', 'Warum soll **Telnet** durch **SSH** ersetzt werden?', [
     ['Telnet überträgt das Passwort im Klartext, SSH verschlüsselt', true, 'Bei Telnet kann mitgelesen werden.'],
-    ['SSH ist schneller', false, 'Nicht der Grund.'],
-    ['Telnet funktioniert nicht mit Switches', false, 'Nicht der Grund.'],
+    ['SSH ist schneller', false, 'Es geht nicht um Geschwindigkeit, sondern um Sicherheit.'],
+    ['Telnet funktioniert nicht mit Switches', false, 'Das stimmt nicht – das Problem ist die unverschlüsselte Übertragung.'],
   ], AA + ' · Arbeitsauftrag 1 (technisch Nr. 3)');
   M('i52', 'its-mass', 'Was macht ein **Intrusion Detection System (IDS)**?', [
-    ['Es spürt unautorisierte (erfolgte) Eingriffe auf', true, 'Spezielle Überwachungssoftware.'],
-    ['Es verschlüsselt Festplatten', false, 'Nein.'],
-    ['Es erstellt Backups', false, 'Nein.'],
+    ['Es erkennt unerlaubte Eingriffe ins System, die passiert sind', true, 'Eine spezielle Überwachungssoftware.'],
+    ['Es verschlüsselt Festplatten', false, 'Das wäre Verschlüsselung – eine andere Schutzmaßnahme.'],
+    ['Es erstellt Backups', false, 'Das wäre Datensicherung – eine andere Schutzmaßnahme.'],
   ], AA + ' · Arbeitsauftrag 1 (technisch Nr. 5)');
   M('i53', 'its-mass', 'Welche Beispiele sind **Fehlverhalten**, das zu Vertraulichkeitsverlust führt?', [
     ['Ausdrucke mit personenbezogenen Daten bleiben am Netzdrucker liegen', true, 'Jeder Vorbeikommende kann sie lesen.'],
@@ -362,20 +362,20 @@
     ['Festplatten werden zur Reparatur geschickt, ohne sie sicher zu löschen', true, 'Daten gelangen in fremde Hände.'],
     ['Regelmäßige Backups werden gemacht', false, 'Das ist eine Schutzmaßnahme.'],
   ], AA + ' · Fehlverhalten', 3, { mehrfach: true });
-  K('i54', 'its-mass', 'Was bedeutet Verlust der Datenbankintegrität/-konsistenz – und welche Konsequenzen hat er?', 'Die Daten sind **noch vorhanden**, aber in einem **fehlerhaften Zustand**.\nKonsequenzen: Aufgaben können nicht (vollständig) erledigt werden · Informationsgehalt wird verfälscht · **hoher Aufwand** zur Wiederherstellung · oft unklar, **welche** Daten verändert wurden → weitere wirtschaftliche Schäden.', AA + ' · Arbeitsauftrag 2', 4);
+  K('i54', 'its-mass', 'Was heißt es, wenn eine Datenbank ihre Integrität (Konsistenz) verliert – und welche Folgen hat das?', 'Die Daten sind **noch vorhanden**, aber in einem **fehlerhaften Zustand**.\nKonsequenzen: Aufgaben können nicht (vollständig) erledigt werden · Informationsgehalt wird verfälscht · **hoher Aufwand** zur Wiederherstellung · oft unklar, **welche** Daten verändert wurden → weitere wirtschaftliche Schäden.', AA + ' · Arbeitsauftrag 2', 4);
   M('i55', 'its-mass', 'Eine Datenbank-Datei liegt im Unix-Ordner **/tmp**. Über Nacht ist die Datenbank unbrauchbar. Warum?', [
     ['/tmp wird automatisch geleert – die Datei wurde gelöscht', true, '/tmp ist für kurzlebige Dateien.'],
-    ['/tmp ist schreibgeschützt', false, 'Nein.'],
+    ['/tmp ist schreibgeschützt', false, 'In /tmp darf man schreiben – das Problem ist das automatische Leeren.'],
     ['Ein Virus', false, 'Die Situation beschreibt die automatische Löschung.'],
   ], AA + ' · Arbeitsauftrag 2 (Situation 1)');
-  K('i56', 'its-mass', 'Wie kann unzureichendes Schlüsselmanagement die Verschlüsselung unterlaufen?', 'Schlüssel **unsicher erzeugt oder aufbewahrt** · **schwache/erratbare** Schlüssel · Schlüssel **nicht auf sicherem Weg** übermittelt (z. B. Schlüssel und Daten auf **derselben** Diskette).\nAuch der **Verlust** ist ein Problem: vergessen, Mitarbeiter hat die Firma verlassen, versehentlich gelöscht → Daten nicht mehr entschlüsselbar.', AA + ' · Arbeitsauftrag 3', 4);
-  M('i57', 'its-mass', 'Beim Triple-DES werden drei identische Teilschlüssel verwendet. Folge?', [
-    ['Es wirkt nur wie eine einfache DES-Verschlüsselung – der Sicherheitsgewinn geht verloren', true, 'Arbeitsauftrag 3, letzte Situation.'],
-    ['Dreifache Sicherheit', false, 'Gerade nicht.'],
+  K('i56', 'its-mass', 'Wie kann schlechter Umgang mit Schlüsseln eine Verschlüsselung nutzlos machen?', 'Schlüssel **unsicher erzeugt oder aufbewahrt** · **schwache/erratbare** Schlüssel · Schlüssel **nicht auf sicherem Weg** übermittelt (z. B. Schlüssel und Daten auf **derselben** Diskette).\nAuch der **Verlust** ist ein Problem: vergessen, Mitarbeiter hat die Firma verlassen, versehentlich gelöscht → Daten nicht mehr entschlüsselbar.', AA + ' · Arbeitsauftrag 3', 4);
+  M('i57', 'its-mass', 'Triple-DES verschlüsselt in drei Schritten. Was passiert, wenn alle drei Teilschlüssel gleich sind?', [
+    ['Es wirkt nur wie eine einfache DES-Verschlüsselung – der Sicherheitsgewinn geht verloren', true, 'Mit drei gleichen Schlüsseln bleibt nur die Sicherheit von einfachem DES.'],
+    ['Dreifache Sicherheit', false, 'Gerade nicht – gleiche Schlüssel bringen keinen Gewinn.'],
     ['Die Verschlüsselung funktioniert nicht mehr', false, 'Sie funktioniert, ist aber schwach.'],
   ], AA + ' · Arbeitsauftrag 3');
-  K('i58', 'its-mass', 'Event GmbH: Ergänze je eine Maßnahme – logisch (Software), organisatorisch, physikalisch (baulich).', '**Logisch:** Virenscanner – Schadsoftware wird nicht ausgeführt.\n**Organisatorisch:** Geschäftsprozess für Datensicherung – geklärt, wer sie wie durchführt.\n**Physikalisch:** Zutrittskontrolle mit Chipkarte – nur Berechtigte betreten Gebäude/Räume.\n(Weitere sinnvolle Lösungen möglich.)', AA + ' · Event GmbH a) (Lehrerlösung)', 6);
-  M('i59', 'its-mass', 'Welcher Aspekt ist „Backup-Server in einem anderen Brandabschnitt"?', [
+  K('i58', 'its-mass', 'Event GmbH: Nenne je eine Schutzmaßnahme – logisch (Software), organisatorisch (Regeln) und physikalisch (Gebäude).', '**Logisch:** Virenscanner – Schadsoftware wird nicht ausgeführt.\n**Organisatorisch:** Geschäftsprozess für Datensicherung – geklärt, wer sie wie durchführt.\n**Physikalisch:** Zutrittskontrolle mit Chipkarte – nur Berechtigte betreten Gebäude/Räume.\n(Weitere sinnvolle Lösungen möglich.)', AA + ' · Event GmbH a) (Lehrerlösung)', 6);
+  M('i59', 'its-mass', 'Der Backup-Server steht in einem anderen Brandabschnitt des Gebäudes. Welche Art von Maßnahme ist das?', [
     ['Physikalisch (bauliche Maßnahme)', true, 'Bei Brand sind die Daten woanders noch da.'],
     ['Logisch (Software)', false, 'Es geht um den Ort.'],
     ['Organisatorisch', false, 'Es ist eine bauliche Maßnahme.'],
@@ -408,29 +408,29 @@
   M('a2', 'aew-last', '„Die Daten werden in einer MySQL-Datenbank in der Tabelle Kunde gespeichert." Wohin gehört dieser Satz?', [
     ['Pflichtenheft – konkrete technische Umsetzung', true, 'Das WIE.'],
     ['Lastenheft – Anforderung des Kunden', false, 'Lastenheft wäre: „Das System muss Kundendaten dauerhaft speichern."'],
-    ['Glossar', false, 'Nein.'],
+    ['Glossar', false, 'Das Glossar erklärt nur Begriffe.'],
   ], LP);
   K('a3', 'aew-last', 'Nenne die sechs Gliederungspunkte eines Lastenhefts (nach Balzert).', '1. Visionen und Ziele\n2. Rahmenbedingungen\n3. Kontext und Überblick\n4. Funktionale Anforderungen\n5. Qualitätsanforderungen (nichtfunktional)\n6. Glossar', LP, 6);
-  K('a4', 'aew-last', 'Unterschied funktionale und nichtfunktionale Anforderung – mit Beispiel.', '**Funktional:** was das System können muss (Funktion, Verhalten, Daten) – „Kunde anlegen".\n**Nichtfunktional:** Qualität/Randbedingung (Leistung, Softwarequalität, rechtlich) – „Suchergebnis in 2 Sekunden", „leicht wartbar".', LP, 4);
+  K('a4', 'aew-last', 'Was ist der Unterschied zwischen funktionalen und nichtfunktionalen Anforderungen? Nenne je ein Beispiel.', '**Funktional:** was das System können muss (Funktion, Verhalten, Daten) – „Kunde anlegen".\n**Nichtfunktional:** Qualität/Randbedingung (Leistung, Softwarequalität, rechtlich) – „Suchergebnis in 2 Sekunden", „leicht wartbar".', LP, 4);
   M('a5', 'aew-last', 'Welche Anforderung ist **gut** formuliert?', [
     ['„Das System soll Suchergebnisse innerhalb von 2 Sekunden anzeigen."', true, 'Eindeutig und prüfbar.'],
     ['„Das System soll schnell sein."', false, 'Nicht prüfbar – was heißt schnell?'],
     ['„Das System soll irgendwie benutzerfreundlich sein."', false, 'Nicht eindeutig.'],
   ], LP);
   K('a6', 'aew-last', 'Welche Eigenschaften hat eine gute Anforderung?', '**eindeutig, verständlich, prüfbar, widerspruchsfrei, vollständig**', LP, 3);
-  K('a7', 'aew-last', 'Wozu vergibt man IDs (z. B. /LF10/) an Anforderungen?', 'Für **Traceability** (Nachvollziehbarkeit): Eine Anforderung lässt sich vom Lastenheft → Pflichtenheft → Programm → Test verfolgen.', LP, 2);
+  K('a7', 'aew-last', 'Warum bekommen Anforderungen Nummern wie /LF10/?', 'Für **Traceability** (Nachvollziehbarkeit): Eine Anforderung lässt sich vom Lastenheft → Pflichtenheft → Programm → Test verfolgen.', LP, 2);
   M('a8', 'aew-last', 'Was gehört unbedingt ins Pflichtenheft, wird aber oft vergessen?', [
     ['Testfälle und Abnahmekriterien', true, 'Das Pflichtenheft ist oft Vertragsgrundlage.'],
-    ['Das Firmenlogo', false, 'Nein.'],
-    ['Die Gehälter der Entwickler', false, 'Nein.'],
+    ['Das Firmenlogo', false, 'Das ist Gestaltung, keine Anforderung.'],
+    ['Die Gehälter der Entwickler', false, 'Gehälter gehören nicht ins Pflichtenheft.'],
   ], LP);
   M('a9', 'aew-last', 'Auf welcher Norm basieren Lasten- und Pflichtenheft?', [
-    ['DIN 69901-5', true, 'Projektmanagement-Begriffe.'],
+    ['DIN 69901-5', true, 'Die Norm legt Begriffe im Projektmanagement fest.'],
     ['ISO 27001', false, 'Das ist Informationssicherheit.'],
     ['DIN 5008', false, 'Das ist die Norm für Schreib- und Gestaltungsregeln (Briefe).'],
   ], LP, 1);
   K('a10', 'aew-last', 'IT-Recruiting: Wie heißt das Dokument, in dem die Anforderungen an das Projekt stehen, und was enthält es?', '**Lastenheft.** Es fasst die **wirtschaftlichen, technischen und organisatorischen Erwartungen** des Auftraggebers zusammen: funktionale und nichtfunktionale Anforderungen (Anforderungsspezifikation).', TB + ' Aufg. 1+2 (Lösung)', 3);
-  M('a11', 'aew-last', 'Beko-Lastenheft: „/LF7O/ Das System muss Datenexporte in CSV und Excel ermöglichen." Was ist das?', [
+  M('a11', 'aew-last', 'Im Lastenheft steht: „/LF70/ Das System muss Daten als CSV und Excel exportieren können." Was für eine Anforderung ist das?', [
     ['Eine funktionale Anforderung', true, 'LF = Lastenheft-Funktion.'],
     ['Eine Qualitätsanforderung', false, 'Es beschreibt eine Funktion.'],
     ['Eine Rahmenbedingung', false, 'Rahmenbedingungen sind /LR…/.'],
@@ -447,17 +447,17 @@
   M('a22', 'aew-uc', 'Was bedeutet **«include»** im Use-Case-Diagramm?', [
     ['Der Anwendungsfall wird **immer** mit ausgeführt', true, 'Pfeil zeigt auf den eingebundenen Fall (Daten einstellen → Einloggen).'],
     ['Er wird nur unter einer Bedingung ausgeführt', false, 'Das ist «extend».'],
-    ['Er gehört nicht zum System', false, 'Nein.'],
+    ['Er gehört nicht zum System', false, 'Mit der Systemgrenze hat «include» nichts zu tun.'],
   ], 'AEW · Muster Use-Case-Diagramm (Pizza)');
   M('a23', 'aew-uc', 'Was bedeutet **«extend»**?', [
     ['Erweitert einen Anwendungsfall nur unter einer Bedingung (condition)', true, 'z. B. Benutzerkonto erstellen {Kunde neu}.'],
     ['Wird immer ausgeführt', false, 'Das ist «include».'],
-    ['Verbindet zwei Akteure', false, 'Nein.'],
+    ['Verbindet zwei Akteure', false, '«extend» verbindet zwei Anwendungsfälle, keine Akteure.'],
   ], 'AEW · Muster Use-Case-Diagramm (Pizza)');
   M('a24', 'aew-uc', 'In welche Richtung zeigt der «extend»-Pfeil?', [
     ['Vom erweiternden Fall **zum erweiterten (Basis-)Fall**', true, 'z. B. Benutzerkonto erstellen → Einloggen.'],
     ['Vom Basisfall zum erweiternden Fall', false, 'Umgekehrt.'],
-    ['Zum Akteur', false, 'Nein.'],
+    ['Zum Akteur', false, 'Der Pfeil verbindet zwei Anwendungsfälle.'],
   ], 'AEW · Use-Case Kundendatenerfassung (Lösung)', 1);
   K('a25', 'aew-uc', 'Was gehört in ein Use-Case-Diagramm?', '**Systemgrenze** (Rechteck) · **Akteure** außerhalb (Strichmännchen) · **Anwendungsfälle** als Ellipsen · Assoziationen (Linien) · **«include»/«extend»**-Beziehungen, Bedingungen als condition-Notiz', 'AEW · Muster Use-Case-Diagramm', 3);
   M('a26', 'aew-uc', 'Darf ein Anwendungsfall mit zwei Akteuren verbunden sein?', [
@@ -465,7 +465,7 @@
     ['Nein, immer nur ein Akteur', false, 'UML erlaubt mehrere.'],
   ], 'AEW · Use-Case Kundendatenerfassung (Lösung)', 1);
   K('a27', 'aew-uc', 'IT-Recruiting: Welche Beziehung haben „Benutzerkonto erstellen" und „Einloggen"?', '**«extend»** mit der Bedingung **{Kunde neu}** – nur Neukunden erstellen ein Konto.', 'AEW · Use-Case Kundendatenerfassung (Lösung)', 2);
-  K('a28', 'aew-uc', 'Die sechs Schritte von Design Thinking?', 'Verstehen · Beobachten · Sichtweise definieren · Ideen finden · Prototypen entwickeln · Testen', LP, 3);
+  K('a28', 'aew-uc', 'Nenne die sechs Schritte von Design Thinking.', 'Verstehen · Beobachten · Sichtweise definieren · Ideen finden · Prototypen entwickeln · Testen', LP, 3);
 
   const DT = 'AEW · Leseprobe Datentypen und Datenstrukturen';
   M('a40', 'aew-typ', 'Wie viele Byte belegt ein Java-**int**?', [['4 Byte', true, 'Wertebereich ca. ±2,1 Milliarden.'], ['2 Byte', false, 'Das ist short (oder char).'], ['8 Byte', false, 'Das ist long (oder double).'], ['1 Byte', false, 'Das ist byte.']], DT + ' S. 101', 1);
@@ -473,26 +473,26 @@
   M('a42', 'aew-typ', 'Wie viele Byte belegt ein **char** in Java und was speichert er?', [['2 Byte, ein Unicode-Zeichen', true, 'Standardwert \\u0000.'], ['1 Byte, ein ASCII-Zeichen', false, 'In Java 2 Byte Unicode.'], ['4 Byte, einen Text', false, 'Text = String.']], DT + ' S. 101', 1);
   K('a43', 'aew-typ', 'Nenne die acht primitiven Datentypen in Java mit Byte-Größe.', 'boolean (undefiniert) · byte (1) · short (2) · int (4) · long (8) · float (4) · double (8) · char (2)', DT + ' S. 101', 4);
   M('a44', 'aew-typ', 'Wie kennzeichnet man einen **long**- bzw. **float**-Wert im Code?', [['long mit L, float mit f (z. B. 3123466000L, 0.234f)', true, 'Genau so im Buch.'], ['long mit l, float mit d', false, 'd wäre double.'], ['Gar nicht nötig', false, 'Ohne f ist 0.234 ein double.']], DT + ' S. 101', 1);
-  M('a45', 'aew-typ', 'Wann findet eine **implizite** Typumwandlung statt?', [['Automatisch von einem niederwertigen in einen höherwertigen Typ (z. B. byte → long)', true, 'Kein Informationsverlust.'], ['Automatisch von double nach int', false, 'Das braucht einen Cast (explizit).'], ['Nur mit dem Cast-Operator', false, 'Das ist explizit.']], DT + ' S. 102');
+  M('a45', 'aew-typ', 'Wann wandelt Java einen Typ **automatisch** um (implizite Typumwandlung)?', [['Automatisch von einem kleineren in einen größeren Typ (z. B. byte → long)', true, 'Kein Informationsverlust.'], ['Automatisch von double nach int', false, 'Das braucht einen Cast (explizit).'], ['Nur mit dem Cast-Operator', false, 'Das ist explizit.']], DT + ' S. 102');
   K('a46', 'aew-typ', 'Was passiert bei `int zahlI = 120; float zahlF = 30.8f; int summe = zahlI + (int) zahlF;`?', 'Expliziter Cast: Die **Nachkommastellen werden abgeschnitten** (30.8 → 30). Ergebnis **150**. Ohne Cast gäbe es den Fehler „possible lossy conversion from float to int".', DT + ' S. 103', 2);
-  M('a47', 'aew-typ', '`short s = (short) 32343423;` ergibt −31361. Warum?', [['Der Wert passt nicht in 16 Bit – die oberen Bits werden abgeschnitten', true, 'Expliziter Cast von höher- auf niederwertig kann Werte verfälschen.'], ['Weil short immer negativ ist', false, 'Nein.'], ['Rundungsfehler bei Kommazahlen', false, 'Es sind ganze Zahlen.']], DT + ' S. 103');
+  M('a47', 'aew-typ', '`short s = (short) 32343423;` ergibt −31361. Warum?', [['Der Wert passt nicht in 16 Bit – die oberen Bits werden abgeschnitten', true, 'Expliziter Cast von höher- auf niederwertig kann Werte verfälschen.'], ['Weil short immer negativ ist', false, 'short kann auch positiv sein (bis 32 767).'], ['Rundungsfehler bei Kommazahlen', false, 'Es sind ganze Zahlen.']], DT + ' S. 103');
   M('a48', 'aew-typ', 'Wofür nutzt man **Wrapper-Klassen** wie Integer?', [['Um primitive Werte als Objekte (Referenzdatentypen) zu verwenden – Autoboxing', true, 'int ↔ Integer automatisch.'], ['Um Texte zu speichern', false, 'Dafür gibt es String.'], ['Für Konstantenlisten', false, 'Dafür gibt es enum.']], DT + ' S. 103–104');
   M('a49', 'aew-typ', 'Welcher Datentyp passt für eine feste Auswahl wie die vier Jahreszeiten?', [['enum (Aufzählungstyp)', true, 'Eigener Datentyp mit festen Werten.'], ['String', false, 'Tippfehler möglich.'], ['int[]', false, 'Nicht aussagekräftig.']], DT + ' S. 104');
   M('a50', 'aew-typ', 'Welcher Java-Typ passt für eine **Postleitzahl** wie „01067"?', [['String – man rechnet nicht damit und die führende 0 bleibt erhalten', true, 'Als int würde aus 01067 → 1067.'], ['int', false, 'Führende 0 geht verloren.'], ['double', false, 'Keine Kommazahl.']], 'AEW · eigene Lösung Personal-/Kundendaten', 2);
   M('a51', 'aew-typ', 'Welcher Typ passt für „Bewerber spricht mehrere Fremdsprachen"?', [['Ein Array, z. B. String[] fremdsprachen', true, 'Mehrere Werte gleichen Typs.'], ['boolean', false, 'Nur ja/nein.'], ['char', false, 'Nur ein Zeichen.']], 'AEW · Entwurfsphase Aufg. 1+2', 1);
   K('a52', 'aew-typ', 'Regeln für Variablennamen in Java?', 'Beginnen mit einem **Kleinbuchstaben** und sollen **aussagekräftig** sein (z. B. anzahlImmobilienbesitzer).', DT + ' S. 101', 1);
-  M('a53', 'aew-typ', 'Standardwert (default) eines **boolean**?', [['false', true, 'Und Zahlen 0 bzw. 0.0.'], ['true', false, 'Nein.'], ['null', false, 'null gibt es nur bei Referenztypen.']], DT + ' S. 101', 1);
+  M('a53', 'aew-typ', 'Standardwert (default) eines **boolean**?', [['false', true, 'Und Zahlen 0 bzw. 0.0.'], ['true', false, 'Der Standardwert ist false.'], ['null', false, 'null gibt es nur bei Referenztypen.']], DT + ' S. 101', 1);
 
   const ZS = 'AEW · Aufgabe Verwalten von Daten in IT-Systemen';
   M('a60', 'aew-zahl', 'Welche Eigenschaften haben **Informationen**?', [
     ['Sie sind an einen Träger gebunden', true, 'z. B. Papier, Datei, Schall.'],
     ['Sie verursachen Kosten', true, 'Beschaffung, Speicherung.'],
-    ['Sie sind leicht übertragbar', true, ''],
+    ['Sie sind leicht übertragbar', true, 'z. B. durch Kopieren oder Weitersagen.'],
     ['Sie verbrauchen sich', false, 'Informationen nutzen sich nicht ab.'],
     ['Sie können nur digital übertragen werden', false, 'Auch analog (Sprache, Brief).'],
   ], ZS + ' Aufg. 1.1 Nr. 1', 3, { mehrfach: true });
   M('a61', 'aew-zahl', 'Welche Aussagen über **Daten** sind korrekt?', [
-    ['Daten sind eine wiederherstellbare Darstellung von Informationen', true, ''],
+    ['Daten sind eine wiederherstellbare Darstellung von Informationen', true, 'Aus Daten kann man die Information wieder gewinnen.'],
     ['Daten können durch Messung gewonnen werden', true, 'z. B. Sensorwerte.'],
     ['Daten können nicht direkt übertragen werden', false, 'Daten werden übertragen.'],
     ['Daten werden mithilfe von Informationen abgebildet', false, 'Umgekehrt: Informationen werden durch Daten abgebildet.'],
@@ -515,9 +515,9 @@
   K('a67', 'aew-zahl', 'Erkläre die Multiplikationsmethode (Dual → Dezimal).', 'Links beginnen: Zwischenergebnis **× 2 + nächstes Bit**, bis alle Bits verarbeitet sind. Beispiel 1000 1011: 1→2→4→8→17→34→69→**139**.', ZS + ' Aufg. 2.4', 2);
   M('a68', 'aew-zahl', 'Warum passen Hexadezimal und Dual so gut zusammen?', [['Ein Hex-Zeichen entspricht genau 4 Bit', true, 'Deshalb in 4er-Gruppen umrechnen.'], ['Beide haben die Basis 2', false, 'Hex hat Basis 16.'], ['Weil Hex nur Buchstaben hat', false, 'Nein, 0–9 und A–F.']], ZS + ' Aufg. 3');
   K('a69', 'aew-zahl', 'Wie bildet man das Zweierkomplement einer negativen Zahl?', '1. Betrag dual darstellen\n2. **Alle Bits umdrehen** (Einerkomplement)\n3. **+1** addieren\nBeispiel −15: 0000 1111 → 1111 0000 → **1111 0001**', ZS + ' Aufg. 5', 3);
-  M('a70', 'aew-zahl', 'Woran erkennt man eine negative Zahl im Zweierkomplement?', [['Das erste (höchste) Bit ist 1', true, 'Vorzeichenbit.'], ['Das letzte Bit ist 1', false, 'Das zeigt nur ungerade Zahlen.'], ['Sie enthält mehr Einsen als Nullen', false, 'Nein.']], ZS + ' Aufg. 5', 1);
+  M('a70', 'aew-zahl', 'Woran erkennt man eine negative Zahl im Zweierkomplement?', [['Das erste (höchste) Bit ist 1', true, 'Vorzeichenbit.'], ['Das letzte Bit ist 1', false, 'Das zeigt nur ungerade Zahlen.'], ['Sie enthält mehr Einsen als Nullen', false, 'Die Anzahl der Einsen sagt nichts über das Vorzeichen.']], ZS + ' Aufg. 5', 1);
   M('a71', 'aew-zahl', 'Welcher Zahlenbereich passt in 8 Bit Zweierkomplement?', [['−128 … +127', true, 'Wie Java-byte.'], ['0 … 255', false, 'Das ist ohne Vorzeichen.'], ['−127 … +128', false, 'Andersrum.']], ZS + ' Aufg. 5', 1);
-  M('a72', 'aew-zahl', 'Warum ist „1101 0000 als Buchstabe gemäß ASCII" nicht eindeutig?', [['1101 0000 = 208 liegt außerhalb von ASCII (0–127)', true, 'Die Bedeutung hängt von der Zeichentabelle ab.'], ['Weil ASCII nur Zahlen kennt', false, 'Nein.'], ['Weil es 9 Bit sind', false, 'Es sind 8 Bit.']], ZS + ' Aufg. 1.1 Nr. 6c', 1);
+  M('a72', 'aew-zahl', 'Warum kann man „1101 0000" nicht eindeutig als ASCII-Zeichen lesen?', [['1101 0000 = 208 liegt außerhalb von ASCII (0–127)', true, 'Die Bedeutung hängt von der Zeichentabelle ab.'], ['Weil ASCII nur Zahlen kennt', false, 'ASCII enthält Buchstaben, Ziffern und Zeichen.'], ['Weil es 9 Bit sind', false, 'Es sind 8 Bit.']], ZS + ' Aufg. 1.1 Nr. 6c', 1);
 
   window.LERNWERK_DATEN = F;
 })();
