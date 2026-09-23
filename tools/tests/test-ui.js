@@ -17,7 +17,7 @@ async function dbStart(){
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.uid', true), '')::uuid $$; create publication supabase_realtime;
     grant usage on schema public, auth to anon, authenticated; grant execute on function auth.uid() to anon, authenticated;
     alter default privileges in schema public grant all on tables to anon, authenticated; alter default privileges in schema public grant execute on functions to anon, authenticated;`);
-  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', 'spiel-fragen.sql']) await db.exec(fs.readFileSync(ROOT + 'supabase/' + f, 'utf8'));
+  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', '2026-09-23-karten-v2.sql', 'spiel-fragen.sql']) await db.exec(fs.readFileSync(ROOT + 'supabase/' + f, 'utf8'));
   await db.exec(`insert into auth.users(id) values('${A}'),('${B}');
     insert into profile(id,spitzname,klasse_id,farbe) select '${A}','Anna',id,'aew' from klassen; insert into profile(id,spitzname,klasse_id,farbe) select '${B}','Ben',id,'wbl' from klassen;`);
   (await db.query(`select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proretset`)).rows.forEach(r => setFn.add(r.proname));
@@ -97,6 +97,8 @@ const $ = (w, s) => w.document.querySelector(s);
 const $$ = (w, s) => [...w.document.querySelectorAll(s)];
 const klick = (w, el) => { if (!el) throw new Error('Element fehlt'); el.dispatchEvent(new w.MouseEvent('click', {bubbles: true})); };
 const geh = (w, h) => { w.location.hash = h; };
+// Schnappschuss des DOM für Screenshots (SNAP=Ordner)
+const snap = (w, name) => { if (!process.env.SNAP) return; const h = w.document.documentElement.outerHTML.replace('<head>', '<head><base href="http://localhost:5500/"><style>.overlay{display:none!important}</style>').replace(/<script[\s\S]*?<\/script>/g, ''); fs.writeFileSync(path.join(process.env.SNAP, name + '.html'), '<!doctype html>' + h); };
 const richtig = async id => (await db.query('select richtig from spiel_fragen where id = $1', [id])).rows[0].richtig;
 async function beantworte(w, rootSel, gut = true){
   const root = await bis(() => { const r = $(w, rootSel); return r && r.dataset.frage && !r.dataset.gesperrt && r.querySelector('.gopt:not([disabled])') ? r : null; }, 8000, 'Frage ' + rootSel);
@@ -120,61 +122,75 @@ async function beantworte(w, rootSel, gut = true){
 
   console.log('\n== Sammlung & Booster');
   geh(wa, '#/games/sammlung');
-  await bis(() => $$(wa, '.deck-platz.voll').length === 10, 8000, 'Deck');
-  ok($$(wa, '.sam-karte').length === 40, 'Sammlung zeigt alle 40 Karten (10 besessen)');
-  ok($$(wa, '.sam-karte.fehlt').length === 30, '30 noch nicht gesammelt (verdeckt)');
+  await bis(() => $$(wa, '.deck-platz.voll').length === 20, 8000, 'Deck');
+  ok($$(wa, '.sam-karte').length === 45, 'Sammlung zeigt alle 45 Karten');
+  ok($$(wa, '.sam-karte.fehlt').length === 25, '25 noch nicht gesammelt, mit Herstellen-Knopf: ' + $$(wa, '.sam-fehlt-leiste [data-herstellen]').length);
+  snap(wa, 'sammlung'); ok(!!$(wa, '.kurve') && /Legendäre spätestens in 15/.test($(wa, '.sam-leiste').textContent), 'Fokus-Kurve und Pity-Anzeige');
   klick(wa, $(wa, '#oeffnen'));
   klick(wa, await bis(() => $(wa, '.bo-pack[data-f="its1"]')));
   klick(wa, await bis(() => $(wa, '#boGross'), 8000, 'Booster groß'));
   await bis(() => $$(wa, '.bo-karte').length === 5, 3000, 'Karten ausgeteilt');
   ok(true, 'Booster aufgerissen: 5 Karten verdeckt');
   klick(wa, $(wa, '#alle'));
-  await bis(() => $$(wa, '.bo-karte.offen').length === 5, 4000, 'aufgedeckt');
+  await bis(() => $$(wa, '.bo-karte.offen').length === 5, 6000, 'aufgedeckt'); await warte(900); snap(wa, 'booster');
+  ok(!$(wa, '#weiter').hidden && /Nächsten Booster/.test($(wa, '#weiter').textContent), 'Weitere Booster direkt öffnen');
   klick(wa, $(wa, '#fertig'));
-  await bis(() => !$(wa, '.bo-overlay') && $$(wa, '.sam-karte:not(.fehlt)').length > 10, 4000, 'Sammlung gewachsen');
+  await bis(() => !$(wa, '.bo-overlay') && $$(wa, '.sam-karte:not(.fehlt)').length > 20, 4000, 'Sammlung gewachsen');
   ok(true, 'Nach dem Öffnen: ' + $$(wa, '.sam-karte:not(.fehlt)').length + ' verschiedene Karten');
   // Deck ändern: eine Karte raus, andere rein, speichern
   klick(wa, $(wa, '[data-raus="0"]'));
-  const rein = await bis(() => $$(wa, '.sam-karte[data-rein]:not([aria-disabled])').find(b => !$$(wa, '.deck-platz.voll .lwk').some(k => k.dataset.karte === b.dataset.rein)));
+  const rein = await bis(() => $$(wa, '.sam-rein[data-rein]:not([aria-disabled])').find(b => !$$(wa, '.deck-platz.voll .lwk').some(k => k.dataset.karte === b.dataset.rein)));
   const neueKarte = rein.dataset.rein;
   klick(wa, rein);
   klick(wa, $(wa, '#speichern'));
-  await bis(async () => true);
   await bis(() => $(wa, '#speichern') && $(wa, '#speichern').disabled, 4000, 'gespeichert');
   const deck = (await db.query('select karten from decks where user_id = $1', [A])).rows[0].karten;
-  ok(deck.includes(neueKarte), 'Deck serverseitig gespeichert mit ' + neueKarte);
+  ok(deck.includes(neueKarte) && deck.length === 20, 'Deck serverseitig gespeichert mit ' + neueKarte);
 
-  console.log('\n== Karten-Kampf gegen Stufe 1');
+  console.log('\n== Karten-Kampf gegen Gegner 1');
   geh(wa, '#/games/karten');
-  klick(wa, await bis(() => $(wa, '[data-stufe="1"]'), 8000, 'Lobby'));
+  await bis(() => $(wa, '.kk-tut'), 8000, 'Anleitung beim ersten Mal');
+  for (let i = 0; i < 5; i++) klick(wa, $(wa, '.kk-tut [data-a="weiter"]'));
+  ok(!$(wa, '.kk-tut') && wa.localStorage.getItem('lernwerk.kk2.tutorial') === '1', 'Anleitung mit 5 Schritten durchgeklickt');
+  await bis(() => $(wa, '[data-stufe="1"]'), 8000, 'Lobby'); snap(wa, 'lobby'); klick(wa, $(wa, '[data-stufe="1"]'));
   await bis(() => $(wa, '#kk'), 8000, 'Spielfeld');
-  ok($$(wa, '.kk-feld .kk-lane').length === 6 && $$(wa, '.kk-hk').length === 4, 'Spielfeld: 2×3 Felder, 4 Handkarten');
+  ok($$(wa, '.kk-reihe .kk-platz').length === 8 && $$(wa, '.kk-hk').length === 4, 'Spielfeld: 2×4 Plätze, 4 Handkarten');
   const xpVor = wa.LW.stand().xp;
-  let zuege = 0;
+  let zuege = 0, angriffe = 0, gelegt = 0;
   while (!$(wa, '.kk-ende') && zuege < 40){
     zuege++;
-    await bis(() => $(wa, '.kk-frage .gfrage') || $(wa, '.kk-ende') || ($(wa, '#kkEnde') && !$(wa, '#kkEnde').disabled), 15000, 'Zugbeginn');
+    await bis(() => $(wa, '.kk-frage .gfrage') || $(wa, '.kk-ende') || ($(wa, '#kkEnde') && !$(wa, '#kkEnde').disabled), 20000, 'Zugbeginn');
     if ($(wa, '.kk-ende')) break;
     if ($(wa, '.kk-frage .gfrage')){
-      await beantworte(wa, '.kk-frage .gfrage', zuege % 3 !== 0);
+      await beantworte(wa, '.kk-frage .gfrage', zuege % 4 !== 0);
       const w2 = await bis(() => $(wa, '#kkWeiter'), 5000, 'Weiter'); klick(wa, w2);
-      await bis(() => !$(wa, '.kk-frage') && $(wa, '#kkEnde') && !$(wa, '#kkEnde').disabled, 5000, 'Spielphase');
+      await bis(() => !$(wa, '.kk-frage') && $(wa, '#kkEnde') && !$(wa, '#kkEnde').disabled, 8000, 'Spielphase');
     }
-    // Karten legen, solange es geht
-    for (let i = 0; i < 4; i++){
+    // Karten spielen, solange es geht (Ziel wählen, falls nötig)
+    for (let i = 0; i < 6; i++){
       const hk = $(wa, '.kk-hk.spielbar'); if (!hk) break;
       klick(wa, hk);
-      const ziel = await bis(() => $(wa, '.kk-feld.du .kk-lane.ziel') || (!$(wa, '.kk-hk.gewaehlt') ? 'direkt' : null), 3000, 'Ziel');
-      if (ziel !== 'direkt') klick(wa, ziel);
-      await bis(() => !$(wa, '.kk-hk.gewaehlt'), 5000, 'gelegt');
-      await warte(80);
+      const was = await bis(() => $(wa, '#kkSpielen') || $(wa, '.kk-platz.ziel') || $(wa, '.kk-held.ziel') || (!$(wa, '.kk-hk.gewaehlt') ? 'direkt' : null), 3000, 'Ziel');
+      if (was !== 'direkt') klick(wa, was);
+      await bis(() => !$(wa, '.kk-hk.gewaehlt') && !$(wa, '.kk-vorschau') && $(wa, '#kkEnde') && !$(wa, '#kkEnde').disabled || $(wa, '.kk-ende'), 8000, 'gespielt');
+      gelegt++; await warte(60);
+      if ($(wa, '.kk-ende')) break;
+    }
+    // mit allen bereiten Monstern angreifen
+    for (let i = 0; i < 4 && !$(wa, '.kk-ende'); i++){
+      const u = $(wa, '.kk-reihe.du .einheit.bereit'); if (!u) break;
+      klick(wa, u.closest('.kk-platz'));
+      const ziel = await bis(() => $(wa, '.kk-held.gegner.ziel') || $(wa, '.kk-reihe.gegner .kk-platz.ziel'), 3000, 'Angriffsziel');
+      klick(wa, ziel); angriffe++;
+      await bis(() => !$(wa, '.kk-platz.gewaehlt') && $(wa, '#kkEnde') && !$(wa, '#kkEnde').disabled || $(wa, '.kk-ende'), 8000, 'Angriff');
     }
     if ($(wa, '.kk-ende')) break;
+    if (zuege === 3){ snap(wa, 'kampf'); const hk = $(wa, '.kk-hk'); if (hk){ klick(wa, hk); await warte(100); snap(wa, 'kampf-vorschau'); klick(wa, hk); } }
     klick(wa, $(wa, '#kkEnde'));
-    await bis(() => $(wa, '.kk-frage .gfrage') || $(wa, '.kk-ende'), 20000, 'Gegnerzug abgespielt');
+    await bis(() => $(wa, '.kk-frage .gfrage') || $(wa, '.kk-ende'), 30000, 'Gegnerzug abgespielt');
   }
   const ende = $(wa, '.kk-ende');
-  ok(!!ende, `Kampf beendet nach ${zuege} Zügen: ${ende && ende.querySelector('.ge-titel').textContent}`);
+  ok(!!ende, `Kampf beendet nach ${zuege} Zügen (${gelegt} Karten gespielt, ${angriffe} Angriffe): ${ende && ende.querySelector('.ge-titel').textContent}`);
   await bis(() => wa.LW.stand().xp > xpVor, 5000, 'XP gebucht');
   ok(true, `Spiel-XP im Lernstand gebucht: ${xpVor} → ${wa.LW.stand().xp}`);
   ok(Object.keys(wa.LW.stand().box).length > 0, 'Spielfragen zählen für den Karteikasten (' + Object.keys(wa.LW.stand().box).length + ' Einträge)');

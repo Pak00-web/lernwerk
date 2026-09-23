@@ -65,8 +65,47 @@ const SYM = {
   akteur:     c => `<circle cx="12" cy="5" r="2.8" ${st(H)}/><path d="M12 7.8v7.5M6.5 11h11M12 15.3l-4 6M12 15.3l4 6" ${st(H)}/><ellipse cx="19" cy="4" rx="3" ry="1.7" ${A(c)}/>`,
 };
 
-/* ---------- Karten-Artwork ---------- */
+/* ---------- Lernwerk Legends: Kartenbilder ---------- */
+// Vorhandene Monster-Bilder (von Gemini erzeugt) in img/karten/: Karten-ID → Dateiname. Fehlt ein Eintrag, zeigt die Karte eine Silhouette.
+const BILDER = {};
+// Silhouetten je Kreaturtyp (100×75), flach in der Fachfarbe
+const SIL = {
+  drache: c => `<path d="M22 58c6-10 14-14 24-14l10-10-4-9 9 5 6-6v10l8 4-9 3c2 8-2 15-10 19 8 2 16 0 22-6-2 9-12 15-24 14-10 0-18-4-22-7z" fill="${c}"/><path d="M46 44 30 18l-2 16-10-8 4 16-8-2 14 12z" fill="${c}" opacity=".8"/><path d="M58 38l14-22 2 14 10-6-4 14 8 0-14 8z" fill="${c}" opacity=".65"/><circle cx="64" cy="31" r="1.6" fill="#0B1026"/>`,
+  golem: c => `<rect x="36" y="20" width="28" height="22" rx="4" fill="${c}"/><rect x="41" y="10" width="18" height="13" rx="3" fill="${c}"/><rect x="24" y="22" width="11" height="26" rx="4" fill="${c}" opacity=".85"/><rect x="65" y="22" width="11" height="26" rx="4" fill="${c}" opacity=".85"/><rect x="38" y="43" width="10" height="20" rx="3" fill="${c}"/><rect x="52" y="43" width="10" height="20" rx="3" fill="${c}"/><rect x="45" y="15" width="3" height="3" fill="#0B1026"/><rect x="52" y="15" width="3" height="3" fill="#0B1026"/><path d="M44 28h12M44 33h12" stroke="#0B1026" stroke-width="1.4" opacity=".4"/>`,
+  geist: c => `<path d="M32 62V34a18 18 0 0 1 36 0v28l-6-5-6 5-6-5-6 5-6-5z" fill="${c}"/><path d="M32 40c-8 2-12 8-14 12M68 40c8 2 12 8 14 12" stroke="${c}" stroke-width="4" stroke-linecap="round" opacity=".7"/><ellipse cx="44" cy="34" rx="3" ry="4" fill="#0B1026"/><ellipse cx="56" cy="34" rx="3" ry="4" fill="#0B1026"/>`,
+  kaefer: c => `<ellipse cx="50" cy="42" rx="17" ry="20" fill="${c}"/><circle cx="50" cy="20" r="8" fill="${c}"/><path d="M50 24v37" stroke="#0B1026" stroke-width="1.6" opacity=".45"/><path d="M34 34l-12-6M33 44H19M34 53l-12 7M66 34l12-6M67 44h14M66 53l12 7M46 13l-6-8M54 13l6-8" stroke="${c}" stroke-width="3" stroke-linecap="round"/><circle cx="46.5" cy="19" r="1.6" fill="#0B1026"/><circle cx="53.5" cy="19" r="1.6" fill="#0B1026"/>`,
+  bestie: c => `<path d="M20 44c0-8 8-13 20-13h18l8-10 3 7 5-4-1 10c6 3 8 8 8 13l-7 1-4-4H64l-2 20h-7l-1-14H40l-2 14h-7l-1-16c-5-1-10-2-10-4z" fill="${c}"/><path d="M20 42c-6-2-9-7-8-12 3 4 6 6 10 6" fill="${c}" opacity=".8"/><circle cx="70" cy="33" r="1.6" fill="#0B1026"/>`,
+  humanoid: c => `<path d="M50 10c8 0 13 6 13 13s-5 13-13 13-13-6-13-13 5-13 13-13z" fill="${c}"/><path d="M38 12c4-6 20-6 24 0l-3 6c-4-4-14-4-18 0z" fill="${c}" opacity=".7"/><path d="M28 66c0-18 10-28 22-28s22 10 22 28z" fill="${c}"/><path d="M72 40l8-14M80 26l4 3" stroke="${c}" stroke-width="3.4" stroke-linecap="round"/><circle cx="45" cy="23" r="1.8" fill="#0B1026"/><circle cx="55" cy="23" r="1.8" fill="#0B1026"/>`,
+  schlange: c => `<path d="M24 62c14 0 18-10 12-18s-2-18 12-18 16 10 10 18-4 18 10 18" fill="none" stroke="${c}" stroke-width="9" stroke-linecap="round"/><path d="M40 20c4-8 16-8 18 0 1 5-4 8-10 8s-9-3-8-8z" fill="${c}"/><path d="M50 28l-2 6M52 28l2 6" stroke="#FF6B7A" stroke-width="1.4"/><circle cx="46" cy="20" r="1.6" fill="#0B1026"/><circle cx="53" cy="20" r="1.6" fill="#0B1026"/>`,
+  vogel: c => `<path d="M50 28c7 0 11 5 11 12 0 9-5 17-11 17s-11-8-11-17c0-7 4-12 11-12z" fill="${c}"/><path d="M40 38C28 30 18 30 10 34c10 2 16 8 22 14 3 0 6-2 8-4zM60 38c12-8 22-8 30-4-10 2-16 8-22 14-3 0-6-2-8-4z" fill="${c}" opacity=".8"/><circle cx="50" cy="24" r="8" fill="${c}"/><path d="M50 27l-3 5h6z" fill="#FFC93C"/><circle cx="46.5" cy="22" r="1.8" fill="#0B1026"/><circle cx="53.5" cy="22" r="1.8" fill="#0B1026"/><path d="M45 57l-3 8M55 57l3 8" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`,
+  krake: c => `<path d="M50 10c12 0 20 9 20 20 0 8-4 13-10 15H40c-6-2-10-7-10-15 0-11 8-20 20-20z" fill="${c}"/>${[26,36,46,54,64,74].map((x,i)=>`<path d="M${40 + i*4} 44c${(x-50)*.4} 6 ${(x-50)*.9} 10 ${(x-50)*.9 + (i%2?4:-4)} 22" fill="none" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/>`).join('')}<circle cx="43" cy="30" r="3" fill="#0B1026"/><circle cx="57" cy="30" r="3" fill="#0B1026"/>`,
+  schleim: c => `<path d="M22 62c0-14 8-30 28-30s28 16 28 30z" fill="${c}"/><path d="M36 34c2-8 8-12 14-12" stroke="${c}" stroke-width="6" stroke-linecap="round"/><circle cx="42" cy="46" r="4" fill="#0B1026"/><circle cx="58" cy="46" r="4" fill="#0B1026"/><path d="M44 55c4 3 8 3 12 0" stroke="#0B1026" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="30" cy="58" r="3" fill="#fff" opacity=".25"/>`,
+  zauber: c => `<circle cx="50" cy="36" r="24" fill="none" stroke="${c}" stroke-width="2.5" opacity=".6"/><circle cx="50" cy="36" r="16" fill="none" stroke="${c}" stroke-width="1.6" stroke-dasharray="3 3"/><path d="M50 14l4 16 16 6-16 6-4 16-4-16-16-6 16-6z" fill="${c}"/><path d="M30 64h40" stroke="${c}" stroke-width="3" stroke-linecap="round" opacity=".6"/>`,
+  falle: c => `<path d="M50 10 72 18v18c0 14-9 22-22 27-13-5-22-13-22-27V18z" fill="${c}"/><path d="M50 22v18" stroke="#0B1026" stroke-width="5" stroke-linecap="round"/><circle cx="50" cy="48" r="3" fill="#0B1026"/>`,
+};
+function silhouette(k){
+  const f = FACH[k.fach] || FACH.aew, g = nid('sg'), s = SIL[k.art] || SIL.bestie;
+  return `<svg viewBox="0 0 100 75" class="lwk-sil" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><radialGradient id="${g}" cx=".5" cy=".45" r=".65"><stop offset="0" stop-color="${f.farbe}" stop-opacity=".38"/><stop offset="1" stop-color="${f.dunkel}"/></radialGradient></defs>
+    <rect width="100" height="75" fill="${f.dunkel}"/><rect width="100" height="75" fill="url(#${g})"/>${MUSTER[k.fach] || ''}<ellipse cx="50" cy="66" rx="30" ry="4" fill="#000" opacity=".35"/>${s(f.farbe)}</svg>`;
+}
+// Bild der Karte: echtes Bild, wenn vorhanden, sonst Silhouette
 function kartenBild(k){
+  const datei = BILDER[k.bild || k.id];
+  return datei ? `<img class="lwk-img" src="img/karten/${datei}" alt="" loading="lazy" decoding="async">` : silhouette(k);
+}
+// Schlüsselwörter: Name, Erklärung, Symbol
+const SCHLUESSEL = {
+  waechter: ['Wächter', 'Muss zuerst angegriffen werden.', '<path d="M12 2.5 20 5.5v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10v-6z" fill="currentColor"/>'],
+  ansturm: ['Ansturm', 'Kann sofort angreifen.', '<path d="M13 2 4 14h7l-1 8 9-12h-7z" fill="currentColor"/>'],
+  tarnung: ['Tarnung', 'Nicht angreifbar, bis es selbst angreift.', '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M4 20 20 4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'],
+  schild: ['Schild', 'Der erste Treffer macht keinen Schaden.', '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.6"/><circle cx="12" cy="12" r="4" fill="currentColor"/>'],
+  lebensraub: ['Lebensraub', 'Verursachter Schaden heilt den eigenen Helden.', '<path d="M12 21s-7.5-4.6-9.5-9.3C1.1 8.3 3.2 4.5 7 4.5c2.1 0 3.6 1.2 5 3 1.4-1.8 2.9-3 5-3 3.8 0 5.9 3.8 4.5 7.2C19.5 16.4 12 21 12 21z" fill="currentColor"/>'],
+  gift: ['Gift', 'Vernichtet jedes Monster, das es trifft.', '<path d="M12 2c3 5 7 9 7 13a7 7 0 0 1-14 0c0-4 4-8 7-13z" fill="currentColor"/>'],
+};
+const kwIco = (kw, cls = '') => SCHLUESSEL[kw] ? `<svg viewBox="0 0 24 24" class="kw-ico ${cls}" aria-hidden="true">${SCHLUESSEL[kw][2]}</svg>` : '';
+
+/* ---------- Karten-Artwork (alte Karten, für Hub-Vorschau) ---------- */
+function kartenBildAlt(k){
   const f = FACH[k.fach] || FACH.aew, s = SYM[k.bild] || SYM.bit, g = nid('kg');
   return `<svg viewBox="0 0 100 80" class="lwk-art" aria-hidden="true"><defs><radialGradient id="${g}" cx=".5" cy=".42" r=".7"><stop offset="0" stop-color="${f.farbe}" stop-opacity=".45"/><stop offset="1" stop-color="${f.dunkel}" stop-opacity="1"/></radialGradient></defs>
     <rect width="100" height="80" fill="${f.dunkel}"/><rect width="100" height="80" fill="url(#${g})"/>${MUSTER[k.fach] || ''}
@@ -79,12 +118,16 @@ const PORTRAIT_X = [
   c => `<path d="M8.4 7.4c.6-3 6.6-3 7.2 0" ${A(c)}/><path d="M15.5 6.5c1.5.5 2 2 1.6 3.5" ${A(c)}/>`, // Kollegin: Zopf
   c => `<path d="M12 14.5l-1.3 2.2 1.3 4.3 1.3-4.3z" ${A(c)}/>`,                             // Ausbilder: Krawatte
   c => `<circle cx="10.4" cy="8.2" r="1.3" ${A(c)}/><circle cx="13.6" cy="8.2" r="1.3" ${A(c)}/><rect x="15" y="15" width="6.5" height="5" rx="1" ${A(c)}/>`,  // Abteilungsleitung
+  c => `<path d="M8.5 6.5h7M9 9.5l2-1.5M15 9.5l-2-1.5" ${A(c)}/><rect x="15" y="14" width="7" height="5" rx="1" ${A(c)}/><path d="M16.5 16.5h4" ${A(c)}/>`,        // Hacker: Kapuze, Laptop
+  c => `<circle cx="10.4" cy="8.2" r="1.3" ${A(c)}/><circle cx="13.6" cy="8.2" r="1.3" ${A(c)}/><path d="M15 15l2 2-2 2M19 19h3" ${A(c)}/>`,                                          // Lead-Dev: Brille, Terminal
+  c => `<path d="M12 14.5l-1.3 2.2 1.3 4.3 1.3-4.3z" ${A(c)}/><rect x="16" y="13" width="5" height="6.5" rx=".8" ${A(c)}/>`,                                                    // Ausbilder: Krawatte, Ordner
   c => `<circle cx="10.4" cy="8.2" r="1.3" ${A(c)}/><circle cx="13.6" cy="8.2" r="1.3" ${A(c)}/><path d="M8.3 3.3l1.6 1.4L12 2.6l2.1 2.1 1.6-1.4" ${st('#FFC93C', 1.3)}/><path d="M16 15l1.2 1.2 2.4-2.6" ${A(c)}/>`,
 ];
 function portrait(stufe, gr=64){
-  const c = ['#35D6A0','#3F9BFF','#8B7BFF','#FF8A5C','#FFC93C'][stufe-1] || '#8B7BFF', g = nid('pg');
+  const c = ['#35D6A0','#3F9BFF','#FF8A5C','#8B7BFF','#2FCFA0','#FFC93C'][stufe-1] || '#8B7BFF', g = nid('pg');
+  const x = [0, 1, 4, 5, 2, 7][stufe-1];
   return `<svg viewBox="0 0 64 64" width="${gr}" height="${gr}" class="portrait" aria-hidden="true"><defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c}" stop-opacity=".55"/><stop offset="1" stop-color="#0E1535"/></linearGradient></defs>
-    <rect width="64" height="64" rx="16" fill="#121A38"/><rect width="64" height="64" rx="16" fill="url(#${g})"/><g transform="translate(8 8) scale(2)">${figur(PORTRAIT_X[stufe-1] ? PORTRAIT_X[stufe-1](c) : '')}</g></svg>`;
+    <rect width="64" height="64" rx="16" fill="#121A38"/><rect width="64" height="64" rx="16" fill="url(#${g})"/><g transform="translate(8 8) scale(2)">${figur(PORTRAIT_X[x] ? PORTRAIT_X[x](c) : '')}</g></svg>`;
 }
 
 /* ---------- Kleine UI-Symbole ---------- */
@@ -163,5 +206,5 @@ const ART = {
     <g><rect x="156" y="58" width="112" height="62" rx="14" fill="#0E1433" stroke="#35D6A0" stroke-width="3"/><path d="M242 120l6 16-22-16z" fill="#0E1433" stroke="#35D6A0" stroke-width="3" stroke-linejoin="round"/><text x="212" y="100" text-anchor="middle" style="font:900 30px var(--f-display);fill:#35D6A0">3 : 2</text></g></svg>`,
 };
 
-window.GGFX = {FACH, kartenBild, portrait, ico, muenze, booster, bombe, rangAbzeichen, ART};
+window.GGFX = {FACH, kartenBild, kartenBildAlt, silhouette, BILDER, SCHLUESSEL, kwIco, portrait, ico, muenze, booster, bombe, rangAbzeichen, ART};
 })();

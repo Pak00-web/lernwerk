@@ -21,7 +21,7 @@ const ok = (b, t) => { if (b) console.log('  ✓ ' + t); else { fehler++; consol
     alter default privileges in schema public grant all on sequences to anon, authenticated;
     alter default privileges in schema public grant execute on functions to anon, authenticated;
   `);
-  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', 'spiel-fragen.sql']) {
+  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', '2026-09-23-karten-v2.sql', 'spiel-fragen.sql']) {
     try { await db.exec(fs.readFileSync(R + f, 'utf8')); console.log('geladen: ' + f); }
     catch (e) { console.log('FEHLER in ' + f + ': ' + e.message); process.exit(1); }
   }
@@ -44,34 +44,93 @@ const ok = (b, t) => { if (b) console.log('  ✓ ' + t); else { fehler++; consol
 
   console.log('\n== Konto & Rechte');
   const k = await rpc(A, 'spiel_konto');
-  ok(k.deck.length === 10 && Object.keys(k.sammlung).length === 10 && k.booster === 1, 'Starter: 10 Karten, Deck, 1 Booster');
+  ok(k.deck.length === 20 && Object.keys(k.sammlung).length === 20 && k.booster === 3 && k.staub === 0, 'Starter: 20 Karten, Deck, 3 Booster, 0 Staub');
   await darfNicht(A, 'select * from spiel_fragen', 'Lösungen nicht lesbar');
   await darfNicht(A, "update spieler_konto set coins = 9999", 'Coins nicht direkt änderbar');
-  await darfNicht(A, "insert into karten_sammlung values ('" + A + "', 'its-cia', 1)", 'Karten nicht direkt einfügbar');
+  await darfNicht(A, "update spieler_konto set staub = 9999", 'Staub nicht direkt änderbar');
+  await darfNicht(A, "insert into karten_sammlung values ('" + A + "', 'its-drache', 1)", 'Karten nicht direkt einfügbar');
   await darfNicht(A, "select _belohnen('" + A + "', 'x', 'sieg', 999, 999, 0)", 'Belohnungsfunktion nicht aufrufbar');
+  await darfNicht(A, "select _k2_simulation(_k2_starter(), _k2_starter(), 1, 0)", 'Engine-Hilfsfunktionen nicht aufrufbar');
   await darfNicht(A, "select * from kampf_zustand", 'Kampf-Zustand geheim');
   await darfNicht(A, "select * from bomben_geheim", 'Bombenzeit geheim');
   await darfNicht(A, "select * from arena_geheim", 'Arena-Fragen geheim');
   await darfNicht(A, "update kaempfe set sieger = '" + A + "'", 'Kampf-Kopf nicht schreibbar');
   await darfNicht(null, "select spiel_konto()", 'anon darf nicht');
-  ok((await als(A, 'select count(*)::int n from karten'))[0].n === 40, '40 Karten im Katalog lesbar');
+  ok((await als(A, "select count(*)::int n from karten where seltenheit <> 'token'"))[0].n === 45, '45 Karten im Katalog lesbar (+ Spielmarken)');
+  const verteilung = (await su("select fach, seltenheit, count(*)::int n from karten where seltenheit <> 'token' group by 1, 2 order by 1, 2")).rows;
+  ok(['wbl', 'its1', 'aew'].every(f => ['common', 'rare', 'epic', 'legendary'].map(s => (verteilung.find(v => v.fach === f && v.seltenheit === s) || {}).n).join() === '7,4,3,1'), 'Je Fach 7 gewöhnlich, 4 selten, 3 episch, 1 legendär');
 
   console.log('\n== Deck');
-  await darfNicht(A, "select deck_speichern(array['its-cia','wbl-azubi','wbl-azubi','wbl-azubi','wbl-azubi','wbl-azubi','wbl-azubi','wbl-azubi','wbl-azubi','wbl-azubi'])", 'Fremde Karten/zu viele Kopien abgelehnt');
-  await darfNicht(A, "select deck_speichern(array['wbl-azubi'])", 'Falsche Deckgröße abgelehnt');
+  await darfNicht(A, "select deck_speichern(array_fill('wbl-wichtel'::text, array[20]))", 'Zu viele Kopien abgelehnt');
+  await darfNicht(A, "select deck_speichern(array['wbl-wichtel'])", 'Falsche Deckgröße abgelehnt');
+  await darfNicht(A, "select deck_speichern(array['tok-bug'] || (_k2_starter())[1:19])", 'Spielmarken nicht im Deck');
 
-  console.log('\n== Booster');
+  console.log('\n== Booster, Pity, Herstellen');
   const bo = await rpc(A, 'booster_oeffnen', ['its1']);
-  ok(bo.karten.length === 5, 'Booster liefert 5 Karten: ' + bo.karten.map(x => x.id).join(', '));
+  ok(bo.karten.length === 5 && bo.karten.every(x => !x.id.startsWith('tok-')), 'Booster liefert 5 Karten: ' + bo.karten.map(x => x.id).join(', '));
   const sel = (await su("select seltenheit from karten where id = $1", [bo.karten[4].id])).rows[0].seltenheit;
   ok(sel !== 'common', 'Karte 5 mindestens selten (' + sel + ')');
+  await su("update spieler_konto set booster = 1, pity = 14 where user_id = $1", [A]);
+  const bp = await rpc(A, 'booster_oeffnen', ['mix']);
+  const legs = (await su("select count(*)::int n from karten where id = any($1) and seltenheit = 'legendary'", [bp.karten.map(x => x.id)])).rows[0].n;
+  ok(legs >= 1 && bp.konto.pity === 0, 'Pity: 15. Booster ohne Legendäre bringt eine garantiert, Zähler zurück auf 0');
   await darfNicht(A, "select booster_oeffnen('its1')", 'Ohne Booster kein Öffnen');
   await darfNicht(A, "select booster_kaufen()", 'Kaufen ohne 100 Coins abgelehnt');
+  await darfNicht(A, "select karte_herstellen('aew-drache')", 'Herstellen ohne Staub abgelehnt');
+  await su("update spieler_konto set staub = 2000 where user_id = $1", [A]);
+  const hk = await rpc(A, 'karte_herstellen', ['its-sphinx']);
+  ok(hk.sammlung['its-sphinx'] >= 1 && hk.staub === 1600, 'Epische Karte für 400 Staub hergestellt');
+  await darfNicht(A, "select karte_herstellen('tok-bug')", 'Spielmarken nicht herstellbar');
+  await su("update spieler_konto set booster = 20 where user_id = $1", [A]);
+  let staubVor = (await rpc(A, 'spiel_konto')).staub, staubBo = 0;
+  for (let i = 0; i < 20; i++) staubBo += (await rpc(A, 'booster_oeffnen', ['wbl'])).staub;
+  const nachher = await rpc(A, 'spiel_konto');
+  ok(nachher.staub === staubVor + staubBo && Object.values(nachher.sammlung).every(n => n <= 2), '20 WBL-Booster: Überzählige werden zu Staub (+' + staubBo + '), nie mehr als 2 Exemplare');
 
-  console.log('\n== Karten-Kampf gegen Computer (Stufe 1)');
-  await darfNicht(A, "select kampf_starten(3)", 'Stufe 3 gesperrt');
+  console.log('\n== Engine-Regeln');
+  const E = async (sql, p = []) => (await su(sql, p)).rows[0].r;
+  // leeres Grundgerüst: beide mit leerem Deck/Feld, Spieler 0 dran, Phase spielen
+  const leer = `jsonb_build_object('s', jsonb_build_array(_k2_spieler(null, '{}', 25), _k2_spieler(null, '{}', 25)), 'am', 0, 'phase', 'spielen', 'runde', 1, 'log', '[]'::jsonb, 'logn', 0, 'mn', 0)`;
+  const mit = (p, platz, kid, extra = '{}') => `jsonb_set(%s, array['s','${p}','feld','${platz}'], _k2_neu_monster('{}', '${kid}') || '${extra}'::jsonb)`;
+  const bau = teile => teile.reduce((s, t) => t.replace('%s', s), leer);
+  let st = await E(`select _k2_angreifen(${bau([mit(0, 0, 'wbl-greif', '{"bereit":true}'), mit(1, 1, 'wbl-stechuhr')])}, 0, 0, -1) r`).catch(e => e.message);
+  ok(/Wächter/.test(st), 'Wächter muss zuerst angegriffen werden');
+  st = await E(`select _k2_angreifen(${bau([mit(0, 0, 'wbl-greif', '{"bereit":true}'), mit(1, 1, 'its-trojaner')])}, 0, 0, 1) r`).catch(e => e.message);
+  ok(/Getarnte/.test(st), 'Getarnte Monster sind nicht angreifbar');
+  st = await E(`select _k2_angreifen(${bau([mit(0, 0, 'wbl-greif', '{"bereit":true}'), mit(1, 1, 'its-passwort')])}, 0, 0, 1) r`);
+  ok(st.s[1].feld[1] && st.s[1].feld[1].v === 3 && !st.s[1].feld[1].schild && st.s[0].feld[0].v === 3, 'Schild fängt den ersten Treffer ab (Gegenschlag trifft trotzdem)');
+  st = await E(`select _k2_angreifen(${bau([mit(0, 0, 'its-rabe', '{"bereit":true}'), mit(1, 1, 'wbl-titan', '{"tarn":false}')])}, 0, 0, 1) r`);
+  ok(st.s[1].feld[1] === null, 'Gift vernichtet auch einen 5/7-Titan');
+  st = await E(`select _k2_angreifen(${bau([mit(0, 0, 'wbl-greif', '{"bereit":true}')])}, 0, 0, -1) r`);
+  ok(st.s[1].hp === 21 && st.log.some(e => e.art === 'angriff' && e.ziel === -1), 'Direkter Angriff auf den Helden: 25 → 21');
+  st = await E(`select _k2_angreifen(${bau([mit(0, 0, 'wbl-greif', '{"bereit":false}')])}, 0, 0, -1) r`).catch(e => e.message);
+  ok(/kann gerade nicht/.test(st), 'Frisch gelegtes Monster ohne Ansturm greift nicht an');
+  st = await E(`select _k2_angreifen(jsonb_set(${bau([mit(0, 0, 'wbl-greif', '{"bereit":true}')])}, '{s,1,fallen,0}', '{"k":"aew-breakpoint"}'), 0, 0, -1) r`);
+  ok(st.s[1].hp === 25 && st.s[0].feld[0].bet === true && st.s[1].fallen[0] === null, 'Falle „Breakpoint“: Angriff abgebrochen, Angreifer betäubt, Falle verbraucht');
+  st = await E(`select _k2_antwort(jsonb_set(jsonb_set(${bau([mit(0, 0, 'wbl-wichtel'), mit(0, 1, 'wbl-salamander')])}, '{s,0,serie}', '2'), '{s,0,hp}', '20') || '{"phase":"frage"}', 0, true) r`);
+  ok(st.s[0].feld[0].a === 2 && st.s[0].feld[0].v === 3 && st.s[0].hp === 21 && st.s[0].aufstieg === true && st.s[0].fokus === 1, 'Richtige Antwort: Erleuchtet (+1/+1, Heilung 2, Karte ziehen bei leerem Deck = 1 Ermüdung), +1 Fokus, 3er-Serie → Aufstieg');
+  st = await E(`select _k2_aufstieg(${bau([mit(0, 0, 'its-aal')])} || '{}'::jsonb, 0, 0) r`).catch(e => e.message);
+  ok(/3 richtige/.test(st), 'Aufstieg nur nach 3 richtigen in Folge');
+  st = await E(`select _k2_aufstieg(jsonb_set(${bau([mit(0, 0, 'its-aal')])}, '{s,0,aufstieg}', 'true'), 0, 0) r`);
+  ok(st.s[0].feld[0].a === 5 && st.s[0].feld[0].v === 4 && st.s[0].feld[0].sch.includes('gift') && st.s[0].feld[0].auf, 'Aufstieg: +3/+3 und Gift (ITS)');
+  st = await E(`select _k2_spielen(jsonb_set(jsonb_set(${leer}, '{s,0,hand}', '["its-drache"]'), '{s,0,fokus}', '9'), 0, 0, null, null) r`).catch(e => e.message);
+  ok(/Legendäre/.test(st), 'Legendäre Karte ohne richtige Antwort gesperrt');
+  st = await E(`select _k2_spielen(jsonb_set(jsonb_set(jsonb_set(${bau([mit(1, 0, 'wbl-stechuhr'), mit(1, 2, 'wbl-greif')])}, '{s,0,hand}', '["its-drache"]'), '{s,0,fokus}', '9'), '{s,0,bonus}', 'true'), 0, 0, null, null) r`);
+  ok(st.s[0].feld[0].k === 'its-drache' && st.s[1].feld[0] === null && st.s[1].feld[2].v === 1, 'Firewall-Drache mit richtiger Antwort: 3 Schaden an allen Gegnern');
+  st = await E(`select _k2_spielen(jsonb_set(jsonb_set(jsonb_set(${leer}, '{s,0,hand}', '["aew-kaefer"]'), '{s,0,fokus}', '1'), '{s,1,fallen,1}', '{"k":"its-honeypot"}'), 0, 0, null, null) r`);
+  ok(st.s[0].feld[0] === null && st.s[0].feld[1] && st.s[0].feld[1].k === 'tok-bug' && st.s[1].fallen[1] === null, 'Honeypot trifft das ausgespielte Monster, der beschworene Bug bleibt');
+  st = await E(`select _k2_spielen(jsonb_set(jsonb_set(${bau([mit(1, 3, 'wbl-greif')])}, '{s,0,hand}', '["its-patchday"]'), '{s,0,fokus}', '2'), 0, 0, null, 'g3') r`);
+  ok(st.s[1].feld[3].v === 1 && st.s[0].fokus === 0, 'Zauber mit Ziel: Patch-Day 3 Schaden an g3');
+  st = await E(`select _k2_ziehen(${leer}, 0, 3) r`);
+  ok(st.s[0].hp === 19 && st.s[0].muede === 3, 'Leeres Deck: Ermüdung 1 + 2 + 3 Schaden');
+  const sims = (await su("select _k2_simulation(_k2_starter(), array(select jsonb_array_elements_text(_k2_boss(6)->'deck')), 0.7, 0.9) r from generate_series(1, 30)")).rows.map(x => x.r);
+  ok(sims.every(x => x.sieger !== undefined && x.runden > 3 && x.runden < 60), '30 KI-gegen-KI-Partien ohne Fehler, Ø ' + (sims.reduce((s, x) => s + x.runden, 0) / 30).toFixed(1) + ' Züge');
+
+  console.log('\n== Karten-Kampf gegen Computer (Boss 1)');
+  await darfNicht(A, "select kampf_starten(3)", 'Boss 3 gesperrt');
+  await rpc(A, 'deck_speichern', [(await su('select _k2_starter() d')).rows[0].d]);
   let v = await rpc(A, 'kampf_starten', [1]);
-  ok(v.phase === 'frage' && v.frage && v.du.hand.length === 4 && v.gegner.hand === 4 && !v.gegner.deck.length, 'Start: Frage offen, 4 Handkarten, gegnerische Hand verdeckt');
+  ok(v.phase === 'frage' && v.frage && v.du.hand.length === 4 && v.gegner.hand === 4 && typeof v.gegner.deck === 'number' && v.du.feld.length === 4, 'Start: Frage offen, 4 Handkarten, 4 Plätze, gegnerische Hand verdeckt');
   await darfNicht(A, `select kampf_zug_beenden('${v.id}')`, 'Zug beenden vor Antwort abgelehnt');
   const katalog = Object.fromEntries((await su('select * from karten')).rows.map(x => [x.id, x]));
   let zuege = 0;
@@ -80,31 +139,38 @@ const ok = (b, t) => { if (b) console.log('  ✓ ' + t); else { fehler++; consol
     if (v.phase === 'frage') {
       const w = (await loesung(v.frage)) + (zuege % 4 === 0 ? 1 : 0);   // jede 4. falsch
       v = await rpc(A, 'kampf_antwort', [v.id, w]);
-      if (zuege === 1) ok(v.antwort && v.antwort.ok === true && v.du.fokus === 2, 'Richtige Antwort: +1 Fokus (2)');
+      if (zuege === 1) ok(v.antwort && v.antwort.ok === true && v.du.fokus === 2 && v.du.hand.length === 5, 'Richtige Antwort: +1 Fokus (2), +1 Karte (5)');
     }
-    let gespielt = true;
-    while (gespielt && v.status === 'laeuft') {
-      gespielt = false;
-      const frei = [0, 1, 2].find(i => !v.du.feld[i]);
-      if (frei === undefined) break;
-      const h = v.du.hand.findIndex(id => katalog[id].kosten <= v.du.fokus);
-      if (h >= 0) { v = await rpc(A, 'kampf_spielen', [v.id, h, frei]); gespielt = true; }
+    for (let n = 0; n < 8 && v.status === 'laeuft'; n++) {
+      const h = v.du.hand.map((id, i) => [i, katalog[id]]).filter(([, c]) => c.kosten <= v.du.fokus && c.typ === 'monster' && (c.seltenheit !== 'legendary' || v.du.bonus) && v.du.feld.some(f => !f)).sort((a, b) => b[1].kosten - a[1].kosten)[0];
+      if (!h) break;
+      v = await rpc(A, 'kampf_spielen', [v.id, h[0], null, null]);
+    }
+    for (let i = 0; i < 4 && v.status === 'laeuft'; i++) {
+      const m = v.du.feld[i]; if (!m || !m.bereit || m.bet || m.a <= 0) continue;
+      const waechter = v.gegner.feld.findIndex(g => g && g.sch.includes('waechter') && !g.tarn);
+      try { v = await rpc(A, 'kampf_angreifen', [v.id, i, waechter >= 0 ? waechter : -1]); } catch (e) {}
     }
     if (v.status === 'laeuft') v = await rpc(A, 'kampf_zug_beenden', [v.id]);
   }
   ok(v.status === 'fertig' && v.ergebnis, `Kampf beendet nach ${zuege} Zügen: ${v.ergebnis} (${v.du.hp}:${v.gegner.hp})`);
   ok(v.belohnung && v.belohnung.xp > 0, 'Belohnung: ' + JSON.stringify(v.belohnung));
-  ok(v.log.some(e => e.art === 'kampf' || e.art === 'treffer'), 'Log enthält Kampf-Ereignisse');
+  ok(v.log.some(e => e.art === 'angriff') && !v.log.some(e => e.art === 'verbrannt' && e.p !== v.ich), 'Log enthält Angriffe, keine verdeckten Gegnerkarten');
   await darfNicht(A, `select kampf_zug_beenden('${v.id}')`, 'Nach Ende keine Züge mehr');
+  const fr = await rpc(A, 'kampf_starten', [null, null, 'schwer']);
+  ok(fr.frei === 'schwer' && fr.gegner_name === 'Meister-Bot' && fr.gegner.hp === 28, 'Freies Spiel gegen die KI (schwer)');
 
   console.log('\n== Karten-Kampf PvP');
+  await rpc(B, 'spiel_konto');
   await darfNicht(A, `select kampf_starten(null, '${C}')`, 'Gegner aus fremder Klasse abgelehnt');
   let p = await rpc(A, 'kampf_starten', [null, B]);
   await darfNicht(B, `select kampf_antwort('${p.id}', 0)`, 'B darf in A\'s Zug nicht antworten');
   const vb = await rpc(B, 'kampf_ansicht', [p.id]);
-  ok(vb.dran === false && vb.frage === null && typeof vb.gegner.hand === 'number', 'B sieht A\'s Hand und Frage nicht');
+  ok(vb.dran === false && vb.frage === null && typeof vb.gegner.hand === 'number' && Array.isArray(vb.gegner.fallen) && !('deck' in vb.du && Array.isArray(vb.du.deck)), 'B sieht A\'s Hand, Deck, Fallen und Frage nicht');
   await darfNicht(C, `select kampf_ansicht('${p.id}')`, 'Fremde sehen den Kampf nicht');
   p = await rpc(A, 'kampf_antwort', [p.id, await loesung(p.frage)]);
+  const falle = p.du.hand.findIndex(id => katalog[id].typ === 'falle' && katalog[id].kosten <= p.du.fokus);
+  if (falle >= 0) { p = await rpc(A, 'kampf_spielen', [p.id, falle, null, null]); const vb2 = await rpc(B, 'kampf_ansicht', [p.id]); ok(vb2.gegner.fallen.includes(true) && !JSON.stringify(vb2.log).includes(p.du.fallen.find(Boolean).k), 'Gelegte Falle für B nur als verdeckt sichtbar'); }
   p = await rpc(A, 'kampf_zug_beenden', [p.id]);
   ok(p.dran === false, 'Nach Zugende ist A nicht mehr dran');
   const kopf = (await als(B, `select am_zug from kaempfe where id = '${p.id}'`))[0];
