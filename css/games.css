@@ -647,3 +647,17 @@ button.deck-platz.voll:hover{transform:translateY(-3px)}
   .sam-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .ki-wahl .btn small{font-size:10.5px}
 }
+
+/* Bomben-Quiz: wer ist dran, KI überlegt, aufgelöste Antwort */
+.bq-spieler.aktiv .bq-sp:not(.hat):not(.raus){opacity:.55}
+.bq-sp.hat{background:color-mix(in srgb,var(--g-rot) 16%,var(--surface));transform:scale(1.12);z-index:1;padding-right:36px}
+.bq-sp.hat b{color:var(--ink)}
+.bq-mini-bombe{position:absolute;right:4px;top:50%;transform:translateY(-50%)}
+.bq-dran-du{color:var(--g-rot)}
+.bq-denkt{font-size:.55em;font-weight:800;color:var(--ink-3);white-space:nowrap}
+.bq-denkt i{font-style:normal;animation:denkt 1.2s infinite}
+.bq-denkt i:nth-child(2){animation-delay:.2s}.bq-denkt i:nth-child(3){animation-delay:.4s}
+@keyframes denkt{0%,60%,100%{opacity:.2}30%{opacity:1}}
+.bq.bei-mir .bq-frage{border:2px solid var(--g-rot);box-shadow:0 0 0 4px color-mix(in srgb,var(--g-rot) 18%,transparent),var(--shadow)}
+.bq-frage.aufgeloest{border:2px solid var(--line)}
+.bq-ok{color:var(--ok);font-weight:900}.bq-falsch{color:var(--bad);font-weight:900}

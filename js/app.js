@@ -76,6 +76,26 @@ window.LW = {
 
 // Seitenzoom (html{zoom}): Bildschirmkoordinaten für position:fixed/absolute durch ihn teilen
 const zoom = () => parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
+// Zoom nach Breite UND Höhe: auf Desktop soll die Startseite ohne Scrollen passen (≈ 900 CSS-px bei Zoom 1),
+// auch mit Browserleiste und Windows-Skalierung 125 %. Handy/Tablet (< 1100 px) bleibt bei 1. CSS-Media-Queries sind der Rückfall.
+let startseiteHoehe = 900;   // wird auf der Startseite gemessen (startseiteEinpassen)
+function zoomSetzen(){
+  const w = innerWidth, h = innerHeight, el = document.documentElement;
+  if (w < 1100){ el.style.removeProperty('--zoom'); return; }
+  const breite = w >= 3000 ? 1.5 : w >= 2200 ? 1.25 : w >= 1600 ? .92 : .9;
+  el.style.setProperty('--zoom', Math.min(breite, Math.max(.7, h / startseiteHoehe)).toFixed(3));
+}
+// Startseite vermessen: benötigte Höhe in CSS-px bei Zoom 1; mehrfach, weil der Zoom die Textumbrüche ändert
+function startseiteEinpassen(){
+  if (innerWidth < 1100 || !$('.hero')) return;
+  for (let i = 0; i < 3; i++){
+    const z = zoom(), r = rail(), unten = Math.max(($('.unten') || app).getBoundingClientRect().bottom, r && r.lastElementChild ? r.lastElementChild.getBoundingClientRect().bottom : 0) + scrollY;
+    const hoehe = Math.ceil(unten / z) + 8;
+    if (Math.abs(hoehe - startseiteHoehe) < 6) break;
+    startseiteHoehe = hoehe; zoomSetzen();
+  }
+}
+zoomSetzen(); addEventListener('resize', () => { zoomSetzen(); startseiteEinpassen(); });
 
 /* ---------------- Fortschritt ---------------- */
 const INTERVALL = [0, 0, 1, 3, 7, 16]; // Tage je Leitner-Fach 1..5
@@ -183,7 +203,8 @@ const tonIcon = () => { $('#tonBtn').innerHTML = FX.tonAn() ? ICON.ton : ICON.to
 $('#tonBtn').onclick = () => { FX.tonUmschalten(); tonIcon(); }; tonIcon();
 function thema(t){ document.documentElement.dataset.theme = t; try{localStorage.setItem('lernwerk.theme', t);}catch(e){} }
 $('#themeBtn').onclick = () => thema(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
-try { thema(localStorage.getItem('lernwerk.theme') === 'light' ? 'light' : 'dark'); } catch(e){ document.documentElement.dataset.theme = 'dark'; }
+try { const q = new URLSearchParams(location.search).get('theme');   // ?theme=light|dark (z. B. für Screenshots)
+  thema(q === 'light' || q === 'dark' ? q : localStorage.getItem('lernwerk.theme') === 'light' ? 'light' : 'dark'); } catch(e){ document.documentElement.dataset.theme = 'dark'; }
 
 /* ---------------- Router ---------------- */
 let session = null, exam = null, spielOffen = null;
@@ -212,11 +233,11 @@ function route(still){
 /* ---------------- Hülle: Navigation, rechte Spalte ---------------- */
 const NAV = [
   ['#/', 'start', 'Startseite'], ['#/faecher', 'faecher', 'Fächer'],
-  'Spielen', ['#/games', 'gamepadnav', 'Games'], ['#/duell', 'duelle', 'Quiz-Duelle'], ['#/rangliste', 'rang', 'Rangliste'],
+  'Spielen', ['#/games', 'gamepadnav', 'Games'], ['#/rangliste', 'rang', 'Rangliste'],
   'Mein Lernen',
   ['#/karteikarten', 'karten', 'Karteikarten'], ['#/lernpfad', 'pfad', 'Lernpfad'], ['#/fortschritt', 'fortschritt', 'Fortschritt'], ['#/einstellungen', 'einst', 'Einstellungen'],
 ];
-const TABS = [['#/', 'start', 'Start'], ['#/faecher', 'faecher', 'Fächer'], ['#/games', 'gamepadnav', 'Games'], ['#/duell', 'duelle', 'Duelle'], ['#/mehr', 'mehr', 'Mehr']];
+const TABS = [['#/', 'start', 'Start'], ['#/faecher', 'faecher', 'Fächer'], ['#/games', 'gamepadnav', 'Games'], ['#/rangliste', 'rang', 'Rangliste'], ['#/mehr', 'mehr', 'Mehr']];
 function huelle(){
   const nav = $('#side'); if (!nav || !window.GFX) return;
   nav.innerHTML = NAV.map(n => typeof n === 'string' ? `<div class="nav-gruppe">${n}</div>` : `<a class="nav" href="${n[0]}" data-nav="${n[0]}">${GFX.nav[n[1]]}<span>${n[2]}</span></a>`).join('')
@@ -225,7 +246,7 @@ function huelle(){
 }
 function navAktiv(h){
   const basis = h === '#/' || h === '' ? '#/' : '#/' + (h.split('/')[1] || '');
-  const map = {'#/fach':'#/faecher', '#/uebung':'#/', '#/pruefung':'#/', '#/klausur':'#/', '#/abzeichen':'#/fortschritt', '#/konto':'#/einstellungen', '#/datenschutz':'#/einstellungen', '#/lernen':'#/'};
+  const map = {'#/fach':'#/faecher', '#/uebung':'#/', '#/pruefung':'#/', '#/klausur':'#/', '#/abzeichen':'#/fortschritt', '#/konto':'#/einstellungen', '#/datenschutz':'#/einstellungen', '#/lernen':'#/', '#/duell':'#/games'};
   const ziel = map[basis] || basis;
   document.querySelectorAll('[data-nav]').forEach(a => a.classList.toggle('aktiv', a.dataset.nav === ziel || (ziel === '#/mehr' && a.dataset.nav === '#/mehr')));
 }
@@ -261,8 +282,8 @@ function viewHome(){
   </section>
 
   <section class="features">
-    ${feature('gruen','gamepad','Spielerisch lernen','Karteikarten, Quiz, Rechnen, Zeitrennen und 3 Leben – mit Kombos und XP.','#/lernen')}
-    ${feature('lila','personen','Quiz-Duelle','Fordere jemanden aus deiner Klasse heraus und zeige, was du kannst!','#/duell', window.LW_DUELL && window.LW_DUELL.offen() ? window.LW_DUELL.offen()+' × du bist dran' : '')}
+    ${feature('gruen','karten','Spielerisch lernen','Karteikarten, Quiz, Rechnen, Zeitrennen und 3 Leben – mit Kombos und XP.','#/lernen')}
+    ${feature('lila','gamepad','Games','Karten-Kampf, Arena, Bomben-Quiz, Quizduell und Millionär – gegen die KI oder deine Klasse.','#/games', window.LW_DUELL && window.LW_DUELL.offen() ? window.LW_DUELL.offen()+' × Quizduell: du bist dran' : '')}
     ${feature('gold','pokal','Fortschritt & Belohnungen','Sammle XP, steige in der Rangliste auf und schalte Abzeichen frei.','#/fortschritt')}
     ${feature('blau','buch','Alle Fächer & Themen','WBL, ITS1 und AEW – jede Frage aus eurem Unterricht, mit Quelle.','#/faecher')}
   </section>
@@ -296,21 +317,22 @@ function viewHome(){
       <ul class="aktiv-liste">${(S.log||[]).slice(0,5).map(a=>`<li><span class="aktiv-ico ${a.art}">${GFX.mini(AKT_ICON[a.art]||'stern')}</span><div><b>${esc(a.text)}</b><small>${vorZeit(a.t)}</small></div></li>`).join('') || '<li class="leer"><span class="muted small">Noch nichts passiert – leg los, dann erscheinen hier deine Erfolge.</span></li>'}</ul>
     </div>
     <div class="panel rail-kasten cta-duell">
-      <div class="cta-kopf">${GFX.mini('pokal')}<div><b>Heute noch ein Duell?</b><span>Fordere jetzt jemanden aus deiner Klasse heraus und teste dein Wissen!</span></div></div>
-      <button class="btn primary voll" id="ctaDuell">Duell starten ${ICON.pfeil}</button>
+      <div class="cta-kopf">${GFX.mini('pokal')}<div><b>Heute schon gespielt?</b><span>Karten-Kampf, Arena oder Quizduell – sammle XP und Booster!</span></div></div>
+      <button class="btn primary voll" id="ctaDuell">Zu den Games ${ICON.pfeil}</button>
     </div>`;
 
   $('#goOn').onclick = () => startSession({titel:'Weiterlernen', kinds:['K','M','R'], scope:{}, n:15});
   $('#soGehts').onclick = () => FX.fenster(`<div class="eyebrow">So funktioniert’s</div><h2>In 4 Schritten zum Lern-Champion</h2><ol class="so-liste">${SCHRITTE.map(s=>`<li><b>${s[2]}</b><span>${s[3]}</span></li>`).join('')}</ol>`);
-  $('#ctaDuell').onclick = () => go('#/duell');
+  $('#ctaDuell').onclick = () => go('#/games');
   app.querySelectorAll('[data-ziel]').forEach(b => b.onclick = () => go(b.dataset.ziel));
   if (!document.body.classList.contains('ruhig')) document.querySelectorAll('#rail [data-zahl]').forEach(b => FX.hochzaehlen(b, +b.dataset.zahl, 900));
   const alt = quizkarteBehalten; quizkarteBehalten = null;
   if (alt) $('#quizkarte').replaceWith(alt); else heroQuiz();
-  if (eingeloggt && window.LW_SYNC.rangliste) window.LW_SYNC.rangliste().then(d => { const k = $('#rangKasten'); if (!k) return; k.innerHTML = rangKasten(d); rangKastenAn(d); heroGegner(d); });
+  requestAnimationFrame(startseiteEinpassen);
+  if (eingeloggt && window.LW_SYNC.rangliste) window.LW_SYNC.rangliste().then(d => { const k = $('#rangKasten'); if (!k) return; k.innerHTML = rangKasten(d); rangKastenAn(d); heroGegner(d); startseiteEinpassen(); });
   else rangKastenAn(null);
 }
-const SCHRITTE = [['aew','buchnav','Fach wählen','Wähle ein Fach oder ein Thema aus eurem Unterricht.'],['wbl','gamepadnav','Lernen & Üben','Karteikarten, Quiz und Rechenaufgaben – und XP sammeln.'],['its2','duelle','Quiz-Duell starten','Fordere jemanden aus deiner Klasse heraus.'],['dk','rang','Aufsteigen & Belohnen','Level aufsteigen, Rangliste erklimmen, Abzeichen sammeln.']];
+const SCHRITTE = [['aew','buchnav','Fach wählen','Wähle ein Fach oder ein Thema aus eurem Unterricht.'],['wbl','gamepadnav','Lernen & Üben','Karteikarten, Quiz und Rechenaufgaben – und XP sammeln.'],['its2','gamepadnav','Games spielen','Karten-Kampf, Arena, Bomben-Quiz & Co. – gegen die KI oder deine Klasse.'],['dk','rang','Aufsteigen & Belohnen','Level aufsteigen, Rangliste erklimmen, Abzeichen sammeln.']];
 const AKT_ICON = {spiel:'pokal', duell:'pokal', verloren:'personen', abz:'schild', level:'stern', klausur:'blatt', ziel:'haken', neu:'personen'};
 function feature(farbe, ico, titel, text, ziel, extra){
   return `<button class="feature ${farbe}" data-ziel="${ziel}">${GFX.appIcon(farbe, ico, 56)}<h3>${titel}</h3><p>${text}</p>${extra?`<span class="feature-extra">${extra}</span>`:''}<span class="feature-pfeil">${ICON.pfeil}</span></button>`;

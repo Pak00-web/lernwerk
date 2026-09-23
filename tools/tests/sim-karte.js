@@ -9,7 +9,7 @@ const B = +process.argv[2] || 5, N = +process.argv[3] || 40;
   await db.exec(`create role anon; create role authenticated; create schema auth; create schema extensions;
     create table auth.users (id uuid primary key, last_sign_in_at timestamptz, banned_until timestamptz, encrypted_password text, updated_at timestamptz); create table auth.sessions(user_id uuid);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.uid', true), '')::uuid $$; create publication supabase_realtime;`);
-  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', '2026-09-23-karten-v2.sql', 'spiel-fragen.sql']) await db.exec(fs.readFileSync(R + f, 'utf8'));
+  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', '2026-09-23-karten-v2.sql', '2026-09-24-bombe-anzeige.sql', 'spiel-fragen.sql']) await db.exec(fs.readFileSync(R + f, 'utf8'));
   const starter = (await db.query('select _k2_starter() d')).rows[0].d;
   const boss = (await db.query('select _k2_boss($1) b', [B])).rows[0].b;
   const quote = async deck => { let s = 0;

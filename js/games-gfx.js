@@ -167,12 +167,12 @@ function booster(fach='mix', gr=120){
 }
 
 /* ---------- Bombe ---------- */
-const bombe = (gr=160) => { const g = nid('bo'); return `<svg viewBox="0 0 120 120" width="${gr}" height="${gr}" class="bombe-svg" aria-hidden="true"><defs><radialGradient id="${g}" cx=".35" cy=".35" r=".75"><stop offset="0" stop-color="#4A5488"/><stop offset=".45" stop-color="#1D2350"/><stop offset="1" stop-color="#070A1C"/></radialGradient></defs>
+const bombe = (gr=160) => { const g = nid('bo'); return `<svg viewBox="0 0 120 120" width="${gr}" height="${gr}" class="bombe-svg" overflow="visible" aria-hidden="true"><defs><radialGradient id="${g}" cx=".35" cy=".35" r=".75"><stop offset="0" stop-color="#4A5488"/><stop offset=".45" stop-color="#1D2350"/><stop offset="1" stop-color="#070A1C"/></radialGradient></defs>
   <circle cx="56" cy="70" r="40" fill="url(#${g})"/><circle class="bombe-glut" cx="56" cy="70" r="40" fill="#FF4D5E" opacity="0"/>
   <ellipse cx="42" cy="54" rx="10" ry="6" fill="#fff" opacity=".18" transform="rotate(-35 42 54)"/>
   <rect x="70" y="26" width="18" height="14" rx="3" transform="rotate(35 79 33)" fill="#2A3270"/>
   <path class="lunte" d="M84 24c6-8 14-9 20-4" fill="none" stroke="#C9A26B" stroke-width="3" stroke-linecap="round"/>
-  <g class="funke" transform="translate(104 19)"><circle r="5" fill="#FFC93C"/><path d="M0-10v5M0 5v5M-10 0h5M5 0h5M-7-7l3 3M4 4l3 3M-7 7l3-3M4-4l3-3" stroke="#FFE066" stroke-width="2" stroke-linecap="round"/></g></svg>`; };
+  <g transform="translate(104 20)"><g class="funke"><circle r="4.5" fill="#FFC93C"/><path d="M0-9v4M0 5v4M-9 0h4M5 0h4M-6-6l2.5 2.5M3.5 3.5 6 6M-6 6l2.5-2.5M3.5-3.5 6-6" stroke="#FFE066" stroke-width="2" stroke-linecap="round"/></g></g></svg>`; };
 
 /* ---------- Rangabzeichen ---------- */
 const RANG_FARBE = {bronze:['#E09A5A','#8C5523'], silber:['#DDE4EC','#7D8A99'], gold:['#FFD966','#B8860B'], platin:['#8FF0DD','#2E8F86'], diamant:['#9AD4FF','#3A6FD8'], meister:['#D9A2FF','#7B2FBE']};

@@ -57,6 +57,12 @@ const farbe = (R, u) => (R.namen[u] || {}).f || 'aew';
 const istBot = (R, u) => !!(R.namen[u] || {}).ki;
 const ava = (R, u) => istBot(R, u) ? `<span class="ava ki">${G.ico.bot}</span>` : `<span class="ava" style="background:var(--${farbe(R, u)})">${esc(name(R, u)[0].toUpperCase())}</span>`;
 
+// Große Statuszeile: wer ist dran (KI „überlegt …“)
+function statusHtml(R){
+  if (R.status === 'boom') return boomText(R);
+  if (R.bombe_bei === GM.ich()) return '<span class="bq-dran-du">Du bist dran!</span>';
+  return `<b>${esc(name(R, R.bombe_bei))}</b> ist dran${istBot(R, R.bombe_bei) ? ' <span class="bq-denkt">überlegt<i>.</i><i>.</i><i>.</i></span>' : ''}`;
+}
 function zeichne(B){
   const R = B.R, app = L.app(), me = GM.ich();
   if (R.status === 'lobby') return lobby(B);
@@ -64,9 +70,9 @@ function zeichne(B){
   const beiMir = R.bombe_bei === me && R.status === 'laeuft';
   app.innerHTML = `<div class="bq ${beiMir ? 'bei-mir' : ''} ${R.status === 'boom' ? 'boom' : ''}" id="bq">
     <div class="kk-leiste"><button class="btn ghost" id="bqRaus">${L.ICON.back}<span>Verlassen</span></button><span class="kk-titel">Raum ${esc(R.code)} · Runde ${R.runde}</span><span></span></div>
-    <div class="bq-spieler">${R.spieler.map(u => { const lb = R.leben[u] || 0; return `<div class="bq-sp ${u === R.bombe_bei ? 'hat' : ''} ${lb <= 0 ? 'raus' : ''} ${u === me ? 'ich' : ''}" data-u="${u}">${ava(R, u)}<b>${esc(name(R, u))}${u === me ? ' <small>(du)</small>' : ''}</b><span class="bq-herzen">${[0, 1].map(k => `<i class="${k < lb ? '' : 'leer'}">${G.ico.herz}</i>`).join('')}</span>${u === R.bombe_bei ? '<span class="bq-mini-bombe">' + G.bombe(26) + '</span>' : ''}</div>`; }).join('')}</div>
+    <div class="bq-spieler ${R.status === 'laeuft' ? 'aktiv' : ''}">${R.spieler.map(u => { const lb = R.leben[u] || 0; return `<div class="bq-sp ${u === R.bombe_bei ? 'hat' : ''} ${lb <= 0 ? 'raus' : ''} ${u === me ? 'ich' : ''}" data-u="${u}">${ava(R, u)}<b>${esc(name(R, u))}${u === me ? ' <small>(du)</small>' : ''}</b><span class="bq-herzen">${[0, 1].map(k => `<i class="${k < lb ? '' : 'leer'}">${G.ico.herz}</i>`).join('')}</span>${u === R.bombe_bei ? '<span class="bq-mini-bombe">' + G.bombe(26) + '</span>' : ''}</div>`; }).join('')}</div>
     <div class="bq-mitte"><div class="bq-bombe" id="bqBombe">${G.bombe(150)}<div class="bq-timer mono" id="bqUhr">0:00</div></div>
-      <div class="bq-status" id="bqStatus">${R.status === 'boom' ? boomText(R) : beiMir ? 'BOMBE BEI DIR!' : `Bombe bei <b>${esc(name(R, R.bombe_bei))}</b>`}</div>
+      <div class="bq-status" id="bqStatus">${statusHtml(R)}</div>
       <div class="bq-meldung" id="bqMeldung"></div></div>
     <div class="panel qbox bq-frage ${beiMir ? '' : 'zuschauen'}" id="bqFrage"></div>
   </div>`;
@@ -76,11 +82,12 @@ function zeichne(B){
 function frageZeigen(B){
   const R = B.R, el = $('#bqFrage'); if (!el) return;
   if (R.status !== 'laeuft'){ el.innerHTML = `<p class="muted">${R.status === 'boom' ? 'Nächste Runde startet gleich …' : ''}</p>`; B.nr = R.frage_nr; return; }
-  if (B.nr === R.frage_nr) return;
+  if (B.nr === R.frage_nr || B.pause > Date.now()) return;
   B.nr = R.frage_nr;
   const beiMir = R.bombe_bei === GM.ich();
   el.classList.toggle('zuschauen', !beiMir);
   el.innerHTML = (beiMir ? '' : `<p class="small muted bq-zuschauen">${esc(name(R, R.bombe_bei))} muss antworten – du schaust zu.</p>`) + GM.frageHtml(R.frage_id, {gesperrt: !beiMir});
+  el.classList.remove('aufgeloest');
   if (!beiMir) return;
   const root = el.querySelector('.gfrage');
   sperreZeigen(B, root);
@@ -93,6 +100,15 @@ function frageZeigen(B){
       uebernehmen(B, neu);
     } catch(e){ L.toast(GM.fehlerText(e)); GM.frageFrei(root); }
   });
+}
+// Was hat der andere Spieler (oder die KI) geantwortet? Alte Frage 1,9 s aufgelöst zeigen, dann die neue
+function aufloesungZeigen(B, R, l, wer){
+  const el = $('#bqFrage'); if (!el) return;
+  B.pause = Date.now() + 1900;
+  el.classList.add('zuschauen', 'aufgeloest');
+  el.innerHTML = `<p class="small bq-zuschauen"><b>${esc(name(R, wer))}</b> hat geantwortet – <span class="${l.ok ? 'bq-ok' : 'bq-falsch'}">${l.ok ? 'richtig' : 'falsch'}</span></p>` + GM.frageHtml(l.frage, {gesperrt: true});
+  GM.frageAufloesen(el.querySelector('.gfrage'), +l.wahl, +l.richtig, {nurZeigen: true});
+  setTimeout(() => { B.pause = 0; frageZeigen(B); }, 1950);
 }
 // Nach falscher Antwort 2 s gesperrt (prüft der Server)
 function sperreZeigen(B, root){
@@ -118,10 +134,12 @@ function uebernehmen(B, neu){
     if (l.art === 'weiter'){ meldung(`${esc(name(neu, l.von))} lag richtig → Bombe an <b>${esc(name(neu, l.an))}</b>`, 'gut'); GM.klang('wusch'); const b = $('#bqBombe'); if (b){ b.classList.remove('fliegt'); void b.offsetWidth; b.classList.add('fliegt'); } }
     if (l.art === 'falsch') meldung(`${esc(name(neu, l.wer))} lag falsch – die Bombe bleibt!`, 'schlecht');
     if (l.art === 'verlassen') meldung(`${esc(name(neu, l.wer))} hat das Spiel verlassen.`);
+    const wer = l.von || l.wer;
+    if (l.frage && l.wahl != null && wer && wer !== GM.ich()) aufloesungZeigen(B, neu, l, wer);
     const beiMir = neu.bombe_bei === GM.ich();
     if (beiMir && alt.bombe_bei !== GM.ich()){ window.FX && FX.ton('combo'); navigator.vibrate && navigator.vibrate(120); }
     $('#bq') && $('#bq').classList.toggle('bei-mir', beiMir);
-    const st = $('#bqStatus'); if (st) st.innerHTML = beiMir ? 'BOMBE BEI DIR!' : `Bombe bei <b>${esc(name(neu, neu.bombe_bei))}</b>`;
+    const st = $('#bqStatus'); if (st) st.innerHTML = statusHtml(neu);
     document.querySelectorAll('.bq-sp').forEach(s => { s.classList.toggle('hat', s.dataset.u === neu.bombe_bei); const m = s.querySelector('.bq-mini-bombe'); if (m) m.remove(); if (s.dataset.u === neu.bombe_bei) s.insertAdjacentHTML('beforeend', '<span class="bq-mini-bombe">' + G.bombe(26) + '</span>'); });
     frageZeigen(B);
   }

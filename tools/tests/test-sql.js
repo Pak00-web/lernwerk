@@ -21,7 +21,7 @@ const ok = (b, t) => { if (b) console.log('  ✓ ' + t); else { fehler++; consol
     alter default privileges in schema public grant all on sequences to anon, authenticated;
     alter default privileges in schema public grant execute on functions to anon, authenticated;
   `);
-  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', '2026-09-23-karten-v2.sql', 'spiel-fragen.sql']) {
+  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', '2026-09-23-karten-v2.sql', '2026-09-24-bombe-anzeige.sql', 'spiel-fragen.sql']) {
     try { await db.exec(fs.readFileSync(R + f, 'utf8')); console.log('geladen: ' + f); }
     catch (e) { console.log('FEHLER in ' + f + ': ' + e.message); process.exit(1); }
   }
@@ -298,7 +298,7 @@ const ok = (b, t) => { if (b) console.log('  ✓ ' + t); else { fehler++; consol
   ok(rb.spieler.length === 3 && rb.bots.length === 2 && rb.namen[rb.bots[0].id].ki, 'Zwei KI-Mitspieler: ' + rb.bots.map(b => b.n).join(', '));
   rb = await rpc(A, 'bombe_bot_weg', [rb.id]); rb = await rpc(A, 'bombe_bot_hinzu', [rb.id]);
   rb = await rpc(A, 'bombe_starten', [rb.id]);
-  let schritte = 0;
+  let schritte = 0, botLetzte = null;
   while (rb.status !== 'fertig' && schritte++ < 400) {
     if (rb.status === 'boom') { await su("update bomben_raeume set letzte = jsonb_set(letzte, '{zeit}', to_jsonb(now() - interval '5 seconds')) where id = $1", [rb.id]); rb = await rpc(A, 'bombe_weiter', [rb.id]); continue; }
     if (rb.bombe_bei === A) {
@@ -308,8 +308,11 @@ const ok = (b, t) => { if (b) console.log('  ✓ ' + t); else { fehler++; consol
       await su("update bomben_geheim set bot_bis = now() - interval '1 second' where raum_id = $1 and bot_bis is not null", [rb.id]);
       if (schritte % 6 === 0) await su("update bomben_geheim set explodiert_um = now() - interval '1 second' where raum_id = $1", [rb.id]);
       rb = await rpc(A, 'bombe_pruefen', [rb.id]);
+      if (rb.letzte && rb.letzte.wahl != null && rb.letzte.von !== A && rb.letzte.wer !== A) botLetzte = rb.letzte;
     }
   }
+  const botZug = botLetzte;
+  ok(botZug && botZug.wahl != null && botZug.richtig != null && botZug.frage, 'Bot-Antwort sichtbar: letzte enthält frage, wahl, richtig (' + JSON.stringify(botZug && {wahl: botZug.wahl, richtig: botZug.richtig, ok: botZug.ok}) + ')');
   ok(rb.status === 'fertig' && rb.sieger, 'Spiel mit Bots endet (' + schritte + ' Schritte), Sieger: ' + (rb.namen[rb.sieger] || {}).n);
   const eb = (await su("select user_id, xp, details from spiel_ergebnisse where spiel = 'bombe' and (details->>'ki')::boolean")).rows;
   ok(eb.length === 1 && eb[0].user_id === A && eb[0].xp <= 20, 'Nur der Mensch wird belohnt, halbiert: ' + (eb[0] || {}).xp + ' XP');

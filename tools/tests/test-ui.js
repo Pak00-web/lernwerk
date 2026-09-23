@@ -17,7 +17,7 @@ async function dbStart(){
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.uid', true), '')::uuid $$; create publication supabase_realtime;
     grant usage on schema public, auth to anon, authenticated; grant execute on function auth.uid() to anon, authenticated;
     alter default privileges in schema public grant all on tables to anon, authenticated; alter default privileges in schema public grant execute on functions to anon, authenticated;`);
-  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', '2026-09-23-karten-v2.sql', 'spiel-fragen.sql']) await db.exec(fs.readFileSync(ROOT + 'supabase/' + f, 'utf8'));
+  for (const f of ['schema.sql', '2026-09-22-admin.sql', '2026-09-22-games.sql', '2026-09-23-ki.sql', '2026-09-23-karten-v2.sql', '2026-09-24-bombe-anzeige.sql', 'spiel-fragen.sql']) await db.exec(fs.readFileSync(ROOT + 'supabase/' + f, 'utf8'));
   await db.exec(`insert into auth.users(id) values('${A}'),('${B}');
     insert into profile(id,spitzname,klasse_id,farbe) select '${A}','Anna',id,'aew' from klassen; insert into profile(id,spitzname,klasse_id,farbe) select '${B}','Ben',id,'wbl' from klassen;`);
   (await db.query(`select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proretset`)).rows.forEach(r => setFn.add(r.proname));
@@ -115,7 +115,7 @@ async function beantworte(w, rootSel, gut = true){
   await bis(() => $$(wa, '.gcard').length === 5, 8000, 'Hub');
   ok(true, 'Hub zeigt 5 Game-Cards (inkl. Quizduell)');
   ok(!!$(wa, '#side [data-nav="#/games"]') && !!$(wa, '#tabbar [data-nav="#/games"]'), 'Menüpunkt „Games“ in Seitenleiste und Tab-Leiste');
-  ok(!!$(wa, '#side [data-nav="#/rangliste"]') && !$(wa, '#tabbar [data-nav="#/rangliste"]'), 'Rangliste bleibt in der Seitenleiste, auf dem Handy unter „Mehr“');
+  ok(!!$(wa, '#side [data-nav="#/rangliste"]') && !!$(wa, '#tabbar [data-nav="#/rangliste"]') && !$(wa, '#side [data-nav="#/duell"]') && !$(wa, '#tabbar [data-nav="#/duell"]'), 'Rangliste in Seitenleiste und Tab-Leiste, Quizduell nur noch als Game');
   ok($$(wa, '.gf-kachel').length === 6, 'Fortschritt: 6 Kacheln (Level, XP, Coins, Serie, Rang, Booster)');
   ok(/Noch keine Spiele/.test($(wa, '#hub').textContent), 'Letzte Spiele: leerer Zustand');
   ok($(wa, '.gf-kachel.rang').textContent.includes('Bronze'), 'Rang Bronze zu Beginn');
@@ -226,10 +226,10 @@ async function beantworte(w, rootSel, gut = true){
   await bis(() => $(wa, '#bq') && $(wb, '#bq'), 6000, 'Spiel läuft bei beiden');
   const halter = (await db.query('select bombe_bei from bomben_raeume')).rows[0].bombe_bei;
   const [wh, wn] = halter === A ? [wa, wb] : [wb, wa];
-  ok(/BOMBE BEI DIR/.test($(wh, '#bqStatus').textContent) && /Bombe bei/.test($(wn, '#bqStatus').textContent), 'Halter sieht „BOMBE BEI DIR!“, der andere schaut zu');
+  ok(/Du bist dran/.test($(wh, '#bqStatus').textContent) && /ist dran/.test($(wn, '#bqStatus').textContent) && !/Du bist/.test($(wn, '#bqStatus').textContent), 'Halter sieht „Du bist dran!“, der andere sieht, wer dran ist');
   ok($$(wn, '#bqFrage .gopt:not([disabled])').length === 0, 'Zuschauer kann nicht antworten');
   await beantworte(wh, '#bqFrage .gfrage');
-  await bis(() => /BOMBE BEI DIR/.test($(wn, '#bqStatus').textContent), 6000, 'weitergegeben');
+  await bis(() => /Du bist dran/.test($(wn, '#bqStatus').textContent), 6000, 'weitergegeben');
   ok(true, 'Richtige Antwort → Bombe beim anderen');
   // Explosion erzwingen (Zeit liegt nur auf dem Server)
   let runden = 0;
@@ -292,9 +292,11 @@ async function beantworte(w, rootSel, gut = true){
   klick(wa, $(wa, '#start'));
   await bis(() => $(wa, '#bq'), 8000, 'Spiel läuft');
   const tempo = setInterval(() => db.query("update bomben_geheim set bot_bis = least(bot_bis, now()), explodiert_um = least(explodiert_um, now() + interval '2 seconds')").catch(() => {}), 400);
-  const t0 = Date.now();
+  const t0 = Date.now(); let snapDenkt = false, snapAuf = false;
   while (!$(wa, '.g-ergebnis') && Date.now() - t0 < 90000){
     const r = $(wa, '#bqFrage .gfrage');
+    if ($(wa, '.bq-denkt') && !snapDenkt){ snapDenkt = true; snap(wa, 'bombe-ki-denkt'); }
+    if ($(wa, '.bq-frage.aufgeloest') && !snapAuf){ snapAuf = true; snap(wa, 'bombe-ki-antwort'); }
     if (r && $(wa, '#bq.bei-mir') && r.querySelector('.gopt:not([disabled])') && !r.dataset.gesperrt) await beantworte(wa, '#bqFrage .gfrage', true).catch(() => {});
     await warte(200);
   }
