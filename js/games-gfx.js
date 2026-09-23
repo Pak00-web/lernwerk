@@ -68,7 +68,7 @@ const SYM = {
 /* ---------- Lernwerk Legends: Kartenbilder ---------- */
 // Vorhandene Monster-Bilder (von Gemini erzeugt) in img/karten/: Karten-ID → Dateiname. Fehlt ein Eintrag, zeigt die Karte eine Silhouette.
 const BILDER = {
-  'aew-kaefer': 'aew-kaefer.jpg', 'its-drache': 'its-drache.jpg', 'wbl-abmahnung': 'wbl-abmahnung.jpg', 'wbl-einhorn': 'wbl-einhorn.jpg', 'wbl-golem': 'wbl-golem.jpg', 'wbl-greif': 'wbl-greif.jpg', 'wbl-phantom': 'wbl-phantom.jpg', 'wbl-salamander': 'wbl-salamander.jpg', 'wbl-stechuhr': 'wbl-stechuhr.jpg', 'wbl-unterweisung': 'wbl-unterweisung.jpg', 'wbl-wichtel': 'wbl-wichtel.jpg',
+  'aew-basilisk': 'aew-basilisk.jpg', 'aew-breakpoint': 'aew-breakpoint.jpg', 'aew-drache': 'aew-drache.jpg', 'aew-eule': 'aew-eule.jpg', 'aew-kaefer': 'aew-kaefer.jpg', 'aew-kraken': 'aew-kraken.jpg', 'aew-luchs': 'aew-luchs.jpg', 'aew-phantom': 'aew-phantom.jpg', 'aew-refactoring': 'aew-refactoring.jpg', 'aew-review': 'aew-review.jpg', 'aew-schlange': 'aew-schlange.jpg', 'aew-schleim': 'aew-schleim.jpg', 'aew-stapel': 'aew-stapel.jpg', 'aew-titan': 'aew-titan.jpg', 'aew-wurm': 'aew-wurm.jpg', 'its-drache': 'its-drache.jpg', 'wbl-abmahnung': 'wbl-abmahnung.jpg', 'wbl-einhorn': 'wbl-einhorn.jpg', 'wbl-golem': 'wbl-golem.jpg', 'wbl-greif': 'wbl-greif.jpg', 'wbl-phantom': 'wbl-phantom.jpg', 'wbl-salamander': 'wbl-salamander.jpg', 'wbl-stechuhr': 'wbl-stechuhr.jpg', 'wbl-unterweisung': 'wbl-unterweisung.jpg', 'wbl-wichtel': 'wbl-wichtel.jpg',
 };
 // Silhouetten je Kreaturtyp (100×75), flach in der Fachfarbe
 const SIL = {
