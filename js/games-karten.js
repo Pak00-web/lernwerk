@@ -233,6 +233,8 @@ function ziele(K){
   }
   return z;
 }
+// Gewählte Handkarte ohne Ziel (Falle, Zauber ohne Ziel), die jetzt spielbar ist
+function freiSpielbar(K){ const w = K.wahl; if (!w || w.art !== 'hand') return false; const id = K.v.du.hand[w.i], k = kat()[id]; return !!k && !brauchtZiel(k) && spielbar(K, id); }
 const brauchtZiel = k => k && ((k.typ === 'monster') || (k.typ === 'zauber' && ['monster', 'wahl', 'eigen'].includes((k.effekt[0] || {}).ziel)));
 function grundHand(K, id){
   const v = K.v, k = kat()[id]; if (!k) return 'Unbekannte Karte.';
@@ -269,7 +271,7 @@ function hinweis(K){
   if (v.phase === 'frage') return {text: 'Beantworte die Zugfrage'};
   if (w && w.art === 'angriff') return {text: hatWaechter(v.gegner.feld) ? 'Wähle einen Wächter als Ziel – sie schützen den Helden' : 'Wähle ein Ziel: Monster oder Held'};
   if (w && w.art === 'aufstieg') return {text: 'Welches Monster steigt auf?'};
-  if (w && w.art === 'hand'){ const k = kat()[v.du.hand[w.i]], g = grundHand(K, k.id); return {text: g || (k.typ === 'monster' ? 'Tippe einen freien Platz an – oder ziehe die Karte' : brauchtZiel(k) ? 'Tippe ein leuchtendes Ziel an' : 'Karte ausspielen?'), grund: !!g}; }
+  if (w && w.art === 'hand'){ const k = kat()[v.du.hand[w.i]], g = grundHand(K, k.id); return {text: g || (k.typ === 'monster' ? 'Tippe einen freien Platz an – oder ziehe die Karte' : brauchtZiel(k) ? 'Tippe ein leuchtendes Ziel an' : k.typ === 'falle' ? 'Tippe auf dein Spielfeld, um die Falle verdeckt zu legen – oder ziehe sie dorthin' : 'Tippe auf dein Spielfeld, um den Zauber zu wirken – oder ziehe ihn dorthin'), grund: !!g}; }
   const n = v.du.hand.filter(id => spielbar(K, id)).length, a = v.du.feld.filter(m => kannAngreifen(K, m)).length;
   if (!n && !a && !v.du.aufstieg) return {text: 'Nichts mehr zu tun – beende deinen Zug', fertig: true};
   const teile = [];
@@ -328,7 +330,7 @@ function zeichne(K){
       ${geschuetzt ? `<span class="kk-schutz" title="Geschützt: Solange ein Wächter steht, kann der Held nicht angegriffen werden">${G.kwIco('waechter')}<small>geschützt</small></span>` : ''}
       <div class="kk-zaehler"><span class="kk-gegner-hand" title="${v.gegner.hand} Handkarten">${Array.from({length: Math.min(v.gegner.hand, 8)}, () => '<i></i>').join('')}<b>${v.gegner.hand}</b></span>
         <span title="Verdeckte Fallen">${(v.gegner.fallen || []).map(f => `<i class="kk-falle ${f ? 'an' : ''}">${f ? '?' : ''}</i>`).join('')}</span><span title="Karten im Deck">${G.ico.deck}${v.gegner.deck}</span></div></div>
-    <div class="kk-feld">
+    <div class="kk-feld ${freiSpielbar(K) ? 'ablage' : ''}">
       ${reihe('gegner', v.gegner.feld)}
       <div class="kk-mitte">${frage ? '<div class="kk-frage" id="kkFrage"></div>' : `<span class="kk-status ${h.grund ? 'grund' : ''}">${h.text}</span>`}</div>
       ${reihe('du', v.du.feld)}
@@ -356,7 +358,7 @@ function detailHtml(K){
   const v = K.v, d = K.detail || (K.wahl && (K.wahl.art === 'hand' || K.wahl.art === 'info') ? K.wahl : null);
   if (d && (d.art === 'hand' || d.art === 'handzeigen')){
     const id = d.id || v.du.hand[d.i], k = kat()[id]; if (!k) return '';
-    const auswahl = K.wahl && K.wahl.art === 'hand' && v.du.hand[K.wahl.i] === id && d.art === 'hand';
+    const auswahl = K.wahl && K.wahl.art === 'hand' && v.du.hand[K.wahl.i] === id;
     const g = grundHand(K, id), ok = !g && spielbar(K, id);
     const tipp = g || (!ok ? 'Kein gültiges Ziel.' : k.typ === 'monster' ? 'Tippe einen freien Platz an – oder ziehe die Karte dorthin.' : brauchtZiel(k) ? 'Tippe ein leuchtendes Ziel an.' : k.typ === 'falle' ? 'Die Falle liegt verdeckt, bis der Gegner sie auslöst.' : 'Wirkt sofort.');
     return `<div class="kk-detail-karte">${GM.karte(id)}</div><div class="kk-detail-info"><p class="small ${g ? 'kk-grund' : 'muted'}">${auswahl || g ? tipp : 'Tippe die Karte an, um sie zu spielen.'}</p>
@@ -448,11 +450,14 @@ function binden(K){
     else if (hatWaechter(v.gegner.feld)) grundBlase(held, 'Solange ein Wächter steht, ist der Held geschützt.');
   };
   // Klick ins Leere hebt die Auswahl auf
-  K.root.querySelector('.kk-feld').addEventListener('click', e => { if (e.target.classList.contains('kk-feld') || e.target.classList.contains('kk-reihe')){ if (K.wahl && v.phase !== 'frage'){ K.wahl = null; zeichne(K); } } });
+  K.root.querySelector('.kk-feld').addEventListener('click', e => { if (e.target.classList.contains('kk-feld') || e.target.classList.contains('kk-reihe')){
+    if (freiSpielbar(K) && !e.target.closest('.kk-reihe.gegner')) return spielen(K, K.wahl.i, null, null);
+    if (K.wahl && v.phase !== 'frage'){ K.wahl = null; zeichne(K); } } });
 }
 function platzGetippt(K, s, i){
   const v = K.v, w = K.wahl, z = ziele(K), key = (s === 'du' ? 'e' : 'g') + i;
   if (w && (z.has(key) || (s === 'du' && z.has('leer' + i)))) return zielGewaehlt(K, s === 'du' && !v.du.feld[i] ? 'leer' + i : key);
+  if (s === 'du' && freiSpielbar(K)) return spielen(K, w.i, null, null);
   const m = (s === 'du' ? v.du : v.gegner).feld[i];
   if (v.phase === 'frage' && v.dran){ if (m){ K.detail = {art: 'info', seite: s, platz: i, fest: true}; detailZeichnen(K); } return; }
   if (s === 'du' && kannAngreifen(K, m)){ K.wahl = w && w.art === 'angriff' && w.platz === i ? null : {art: 'angriff', platz: i}; return zeichne(K); }
