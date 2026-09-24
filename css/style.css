@@ -668,6 +668,10 @@ body.mit-rail .rail{display:flex;flex-direction:column;gap:18px;padding:22px 0 4
   .unten{grid-template-columns:1fr}
   .hero{grid-template-columns:1fr}
   .hero-bild{min-height:300px}
+  /* Bild unter dem Text: weicher Übergang nach oben statt nach links */
+  .hero-img{-webkit-mask-image:linear-gradient(180deg,transparent 0,rgba(0,0,0,.35) 12%,#000 32%);mask-image:linear-gradient(180deg,transparent 0,rgba(0,0,0,.35) 12%,#000 32%)}
+  .hero-bild{margin-top:-20px}
+  .nav-fuss{display:none}
   .brand-schule{display:none}
 }
 @media (max-width:900px){
