@@ -397,7 +397,7 @@ body.ohne-scroll{overflow:hidden}
 /* =================== Lernwerk Legends =================== */
 /* ---------- Sammelkarte ---------- */
 /* .lwk ist nur der Container (Maße), der Rahmen liegt in .lwk-in – so beziehen sich alle cqw-Werte auf die Kartenbreite.
-/* --bg muss ein Verlauf sein: eine reine Farbe ist in der ersten Hintergrund-Ebene ungültig, dann fällt der ganze Kartenhintergrund weg. */
+   --bg muss ein Verlauf sein: eine reine Farbe ist in der ersten Hintergrund-Ebene ungültig, dann fällt der ganze Kartenhintergrund weg.
    Seltenheit = Rahmen (Verlauf) + Juwel unten mittig; Typ = Band unter dem Bild; Effekte = Marken oben rechts. */
 .lwk{--rand:#6B7593;--rahmen:linear-gradient(160deg,#9AA3BC,#4E5773 45%,#8791AB 70%,#454E69);--juwel:#9AA3BC;--fd:#1A2350;--bg:linear-gradient(#0E1330,#0E1330);container-type:inline-size;position:relative;width:var(--kw,200px);aspect-ratio:63/88;color:#F2F4FF;text-align:left;user-select:none;font-family:var(--f-body);border-radius:6%/4.3%;box-shadow:0 8px 20px rgba(0,0,0,.35)}
 .lwk-in{position:absolute;inset:0;border-radius:5.5cqw;border:2.4cqw solid transparent;background:var(--bg) padding-box,var(--rahmen) border-box;box-shadow:inset 0 0 0 .6cqw rgba(0,0,0,.35);display:flex;flex-direction:column;overflow:hidden}
