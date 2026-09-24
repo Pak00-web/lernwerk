@@ -236,7 +236,7 @@ const NAV = [
   ['#/', 'start', 'Startseite'], ['#/faecher', 'faecher', 'Fächer'],
   'Spielen', ['#/games', 'gamepadnav', 'Games'], ['#/rangliste', 'rang', 'Rangliste'],
   'Mein Lernen',
-  ['#/karteikarten', 'karten', 'Karteikarten'], ['#/lernpfad', 'pfad', 'Lernpfad'], ['#/fortschritt', 'fortschritt', 'Fortschritt'], ['#/einstellungen', 'einst', 'Einstellungen'],
+  ['#/lernen', 'ueben', 'Üben'], ['#/karteikarten', 'karten', 'Karteikarten'], ['#/lernpfad', 'pfad', 'Lernpfad'], ['#/fortschritt', 'fortschritt', 'Fortschritt'], ['#/einstellungen', 'einst', 'Einstellungen'],
 ];
 const TABS = [['#/', 'start', 'Start'], ['#/faecher', 'faecher', 'Fächer'], ['#/games', 'gamepadnav', 'Games'], ['#/rangliste', 'rang', 'Rangliste'], ['#/mehr', 'mehr', 'Mehr']];
 function huelle(){
@@ -255,7 +255,7 @@ function seitenleisteEinpassen(){
 }
 function navAktiv(h){
   const basis = h === '#/' || h === '' ? '#/' : '#/' + (h.split('/')[1] || '');
-  const map = {'#/fach':'#/faecher', '#/uebung':'#/', '#/pruefung':'#/', '#/klausur':'#/', '#/abzeichen':'#/fortschritt', '#/konto':'#/einstellungen', '#/datenschutz':'#/einstellungen', '#/lernen':'#/', '#/duell':'#/games'};
+  const map = {'#/fach':'#/faecher', '#/uebung':'#/', '#/pruefung':'#/', '#/klausur':'#/', '#/abzeichen':'#/fortschritt', '#/konto':'#/einstellungen', '#/datenschutz':'#/einstellungen', '#/duell':'#/games'};
   const ziel = map[basis] || basis;
   document.querySelectorAll('[data-nav]').forEach(a => a.classList.toggle('aktiv', a.dataset.nav === ziel || (ziel === '#/mehr' && a.dataset.nav === '#/mehr')));
 }
@@ -291,7 +291,7 @@ function viewHome(){
   </section>
 
   <section class="features">
-    ${feature('gruen','karten','Spielerisch lernen','Karteikarten, Quiz, Rechnen, Zeitrennen und 3 Leben – mit Kombos und XP.','#/lernen')}
+    ${anfragenKachel()}
     ${feature('lila','gamepad','Games','Karten-Kampf, Arena, Bomben-Quiz, Quizduell und Millionär – gegen die KI oder deine Klasse.','#/games', window.LW_DUELL && window.LW_DUELL.offen() ? window.LW_DUELL.offen()+' × Quizduell: du bist dran' : '')}
     ${feature('gold','pokal','Fortschritt & Belohnungen','Sammle XP, steige in der Rangliste auf und schalte Abzeichen frei.','#/fortschritt')}
     ${feature('blau','buch','Alle Fächer & Themen','WBL, ITS1 und AEW – jede Frage aus eurem Unterricht, mit Quelle.','#/faecher')}
@@ -334,6 +334,7 @@ function viewHome(){
   $('#soGehts').onclick = () => FX.fenster(`<div class="eyebrow">So funktioniert’s</div><h2>In 4 Schritten zum Lern-Champion</h2><ol class="so-liste">${SCHRITTE.map(s=>`<li><b>${s[2]}</b><span>${s[3]}</span></li>`).join('')}</ol>`);
   $('#ctaDuell').onclick = () => go('#/games');
   app.querySelectorAll('[data-ziel]').forEach(b => b.onclick = () => go(b.dataset.ziel));
+  const ak = $('#anfragenKachel'); if (ak) ak.onclick = () => kachelZiel(ak.dataset.ziel);
   if (!document.body.classList.contains('ruhig')) document.querySelectorAll('#rail [data-zahl]').forEach(b => FX.hochzaehlen(b, +b.dataset.zahl, 900));
   const alt = quizkarteBehalten; quizkarteBehalten = null;
   if (alt) $('#quizkarte').replaceWith(alt); else heroQuiz();
@@ -343,6 +344,55 @@ function viewHome(){
 }
 const SCHRITTE = [['aew','buchnav','Fach wählen','Wähle ein Fach oder ein Thema aus eurem Unterricht.'],['wbl','gamepadnav','Lernen & Üben','Karteikarten, Quiz und Rechenaufgaben – und XP sammeln.'],['its2','gamepadnav','Games spielen','Karten-Kampf, Arena, Bomben-Quiz & Co. – gegen die KI oder deine Klasse.'],['dk','rang','Aufsteigen & Belohnen','Level aufsteigen, Rangliste erklimmen, Abzeichen sammeln.']];
 const AKT_ICON = {spiel:'pokal', duell:'pokal', verloren:'personen', abz:'schild', level:'stern', klausur:'blatt', ziel:'haken', neu:'personen'};
+/* ---------------- Mitteilungen: offene Spielanfragen und „du bist dran“ ---------------- */
+function mitteilungen(){
+  const m = [];
+  (window.LW_DUELL && window.LW_DUELL.dran ? window.LW_DUELL.dran() : []).forEach(d => m.push({art: 'duell', titel: `Quizduell gegen ${d.name}`, text: 'Du bist dran', ziel: '#/duell'}));
+  const g = window.LW_GAMES && window.LW_GAMES.anfragen ? window.LW_GAMES.anfragen() : {};
+  if (g.arena) m.push({art: 'arena', titel: g.arena === 1 ? 'Herausforderung in der Wissens-Arena' : `${g.arena} Herausforderungen in der Wissens-Arena`, text: 'Jemand will gegen dich antreten', ziel: '#/games/arena'});
+  if (g.kampf) m.push({art: 'kampf', titel: g.kampf === 1 ? 'Karten-Kampf' : `${g.kampf} Karten-Kämpfe`, text: 'Du bist am Zug', ziel: '#/games/karten'});
+  return m;
+}
+const MITT_ICO = {duell: 'personen', arena: 'pokal', kampf: 'karten'};
+function mitteilungenListe(m){
+  return m.length ? `<ul class="mitt-liste">${m.map(x => `<li><button data-ziel="${x.ziel}">${GFX.appIcon(x.art === 'duell' ? 'gruen' : x.art === 'arena' ? 'blau' : 'lila', MITT_ICO[x.art], 34)}<span><b>${esc(x.titel)}</b><small>${x.text}</small></span>${ICON.pfeil}</button></li>`).join('')}</ul>`
+    : '<p class="mitt-leer">Keine offenen Spielanfragen.</p>';
+}
+function anfragenKachel(){
+  const m = window.LW_SYNC && window.LW_SYNC.angemeldet() ? mitteilungen() : [];
+  const text = m.length ? m.slice(0, 2).map(x => esc(x.titel)).join(' · ') + (m.length > 2 ? ` · +${m.length - 2}` : '') : 'Keine offenen Anfragen. Fordere jemanden aus deiner Klasse heraus!';
+  return `<button class="feature gruen anfragen ${m.length ? 'hat' : ''}" id="anfragenKachel" data-ziel="${m.length === 1 ? m[0].ziel : m.length ? '#mitteilungen' : '#/games'}">${GFX.appIcon('gruen', 'glocke', 56)}${m.length ? `<span class="anfragen-zahl">${m.length}</span>` : ''}<h3>Spielanfragen</h3><p>${text}</p><span class="feature-pfeil">${ICON.pfeil}</span></button>`;
+}
+// Glocke oben: Zahl, Wackeln bei neuen Anfragen, Liste als Ausklapper
+let mittVorher = 0;
+function glockeZeichnen(){
+  const b = $('#glockeBtn'); if (!b) return;
+  const an = !!(window.LW_SYNC && window.LW_SYNC.angemeldet()), m = an ? mitteilungen() : [];
+  b.hidden = !an;
+  const z = b.querySelector('.glocke-zahl'); z.hidden = !m.length; z.textContent = m.length;
+  if (m.length > mittVorher){ b.classList.remove('wackelt'); void b.offsetWidth; b.classList.add('wackelt'); }
+  mittVorher = m.length;
+  const p = $('#mittPanel'); if (p) p.querySelector('.mitt-inhalt').innerHTML = mitteilungenListe(m);
+  const k = $('#anfragenKachel'); if (k){ k.outerHTML = anfragenKachel(); const n = $('#anfragenKachel'); n.onclick = () => kachelZiel(n.dataset.ziel); }
+}
+function kachelZiel(z){ if (z === '#mitteilungen') mittPanel(true); else go(z); }
+function mittPanel(auf){
+  let p = $('#mittPanel'); const b = $('#glockeBtn');
+  if (p && !auf){ p.remove(); b && b.setAttribute('aria-expanded', 'false'); return; }
+  if (!p){
+    p = document.createElement('div'); p.id = 'mittPanel'; p.className = 'mitt-panel pop-in'; p.setAttribute('role', 'dialog'); p.setAttribute('aria-label', 'Mitteilungen');
+    p.innerHTML = `<div class="mitt-kopf"><b>Mitteilungen</b><small>Spielanfragen und Züge</small></div><div class="mitt-inhalt"></div>`;
+    document.body.appendChild(p);
+    p.addEventListener('click', e => { const t = e.target.closest('[data-ziel]'); if (t){ mittPanel(false); go(t.dataset.ziel); } });
+  }
+  p.querySelector('.mitt-inhalt').innerHTML = mitteilungenListe(mitteilungen());
+  b && b.setAttribute('aria-expanded', 'true');
+}
+$('#glockeBtn').onclick = e => { e.stopPropagation(); mittPanel(!$('#mittPanel')); };
+document.addEventListener('click', e => { const p = $('#mittPanel'); if (p && !p.contains(e.target) && !e.target.closest('#glockeBtn, #anfragenKachel')) mittPanel(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#mittPanel')) mittPanel(false); });
+document.addEventListener('lw-mitteilungen', glockeZeichnen);
+document.addEventListener('lw-konto', () => setTimeout(glockeZeichnen, 0));
 function feature(farbe, ico, titel, text, ziel, extra){
   return `<button class="feature ${farbe}" data-ziel="${ziel}">${GFX.appIcon(farbe, ico, 56)}<h3>${titel}</h3><p>${text}</p>${extra?`<span class="feature-extra">${extra}</span>`:''}<span class="feature-pfeil">${ICON.pfeil}</span></button>`;
 }

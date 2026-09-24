@@ -15,7 +15,8 @@ const meine = (d, r) => binA(d) ? r.a : r.b;
 const seine = (d, r) => binA(d) ? r.b : r.a;
 const summe = arr => (arr||[]).filter(Boolean).length;
 
-window.LW_DUELL = { offen: () => duelle.filter(d => d.status==='laeuft' && d.am_zug===ich()).length };
+window.LW_DUELL = { offen: () => duelle.filter(d => d.status==='laeuft' && d.am_zug===ich()).length,
+  dran: () => duelle.filter(d => d.status==='laeuft' && d.am_zug===ich()).map(d => ({id: d.id, name: name(gegner(d))})) };
 L.ICON && Object.assign(window.LW_ROUTEN || (window.LW_ROUTEN = {}), {'#/duell': viewListe});
 
 /* ---------- Daten ---------- */
@@ -26,6 +27,7 @@ async function laden(){
   const ids = [...new Set(duelle.flatMap(d => [d.spieler_a, d.spieler_b]))].filter(id => !namen[id]);
   if (ids.length){ const {data: p} = await sb().from('profile').select('id, spitzname, farbe').in('id', ids); (p||[]).forEach(x => namen[x.id] = x); }
   gewinneVerbuchen();
+  document.dispatchEvent(new Event('lw-mitteilungen'));
 }
 function abonnieren(){
   if (kanal || !sb()) return;

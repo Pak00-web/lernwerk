@@ -150,6 +150,7 @@ const nav = {
   faecher: ln(BUCH), buchnav: ln(BUCH), duelle: ln(POKAL), pokalnav: ln(POKAL),
   rang: ln('<path d="M5 20v-7M12 20V5M19 20v-10"/><path d="M3 20.5h18"/>'),
   karten: ln('<rect x="3" y="6" width="13" height="14" rx="2.5"/><path d="M7 3h11.5A2.5 2.5 0 0 1 21 5.5V17"/>'),
+  ueben: ln('<path d="M13 2.5 4.5 13.5H11l-1 8 8.5-11H12z"/>'),
   pfad: ln('<circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/>'),
   fortschritt: ln('<path d="M4 20V14M10 20V9M16 20v-6M22 20V4"/>'),
   einst: ln('<circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/><circle cx="12" cy="12" r="7"/>'),
@@ -161,6 +162,7 @@ const nav = {
 /* ---------- Farbige App-Icon-Kacheln ---------- */
 const KACHEL = {gruen:['#35D6A0','#0E9C6F'], lila:['#9B8CFF','#5B45E0'], gold:['#FFD65E','#F2A316'], blau:['#58ABFF','#2167E0']};
 const GLYPH = {
+  glocke: '<path d="M12 3a6 6 0 0 0-6 6v3.5L4.5 16h15L18 12.5V9a6 6 0 0 0-6-6z" fill="#fff"/><path d="M9.5 18.5a2.5 2.5 0 0 0 5 0" fill="#fff" opacity=".8"/>',
   karten: '<rect x="3.5" y="6" width="12" height="15" rx="2.2" fill="#fff" opacity=".55" transform="rotate(-10 9.5 13.5)"/><rect x="8.5" y="4" width="12" height="15" rx="2.2" fill="#fff"/><path d="M11.5 11.8l2.2 2.2 3.8-4.4" stroke="COL" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
   gamepad: '<path d="M6 8h12a4 4 0 0 1 4 4.5l-.6 4a2.8 2.8 0 0 1-5 1.3L15 16H9l-1.4 1.8a2.8 2.8 0 0 1-5-1.3l-.6-4A4 4 0 0 1 6 8z" fill="#fff"/><path d="M7 11v3M5.5 12.5h3" stroke="COL" stroke-width="1.8" stroke-linecap="round"/><circle cx="15.5" cy="11.6" r="1.1" fill="COL"/><circle cx="18" cy="13.4" r="1.1" fill="COL"/>',
   personen: '<circle cx="9" cy="8" r="3.4" fill="#fff"/><path d="M2.5 19.5c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6z" fill="#fff"/><circle cx="16.5" cy="8.8" r="2.7" fill="#fff" opacity=".85"/><path d="M15.5 13.6c3.3-.3 6 1.8 6 5.4h-4.3" fill="#fff" opacity=".85"/>',
@@ -168,7 +170,7 @@ const GLYPH = {
   buch: '<path d="M3 5c3-1.4 6-1.4 8.5.4V20c-2.5-1.8-5.5-1.8-8.5-.4z" fill="#fff"/><path d="M21 5c-3-1.4-6-1.4-8.5.4V20c2.5-1.8 5.5-1.8 8.5-.4z" fill="#fff" opacity=".85"/>',
 };
 // Symbolgröße in der Kachel: der flache Controller braucht mehr, damit er nicht verloren wirkt
-const GROESSE = {karten:1.4, gamepad:1.65, personen:1.4, pokal:1.4, buch:1.4};
+const GROESSE = {glocke:1.4, karten:1.4, gamepad:1.65, personen:1.4, pokal:1.4, buch:1.4};
 function kachelIcon(farbe, glyph, gr=56){
   const [a, b] = KACHEL[farbe] || KACHEL.lila, id = 'k' + Math.random().toString(36).slice(2,7);
   return `<svg viewBox="0 0 48 48" width="${gr}" height="${gr}" class="app-icon" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="48" height="48" rx="13" fill="url(#${id})"/><rect x="1" y="1" width="46" height="23" rx="12" fill="#fff" opacity=".12"/><g transform="translate(24 24) scale(${GROESSE[glyph]||1.35}) translate(-12 -12)">${(GLYPH[glyph]||'').replace(/COL/g, b)}</g></svg>`;

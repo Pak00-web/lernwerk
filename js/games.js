@@ -36,6 +36,7 @@ async function kontoLaden(){
   konto = await rpc('spiel_konto');
   spiegeln();
   await xpAbholen();
+  document.dispatchEvent(new Event('lw-mitteilungen'));
   return konto;
 }
 // Vom Server vergebene Spiel-XP in den Lernstand buchen (Level, Tages-XP, Rangliste)
@@ -310,7 +311,11 @@ function melden(art, p){
   // global: Einladungen und "du bist dran", auch außerhalb der Spiele
   if (art === 'arena' && neu.status === 'angefragt' && neu.spieler_b === ich() && p.eventType === 'INSERT' && !hoerer.arena) einladung(neu);
   if (art === 'kampf' && neu.status === 'laeuft' && neu.spieler_b && neu.am_zug === ich() && !hoerer.kampf){ L.toast('Du bist im Karten-Kampf dran!'); window.FX && FX.ton('combo'); }
+  if ((art === 'kampf' || art === 'arena') && (neu.spieler_a === ich() || neu.spieler_b === ich())) neuZaehlen();
 }
+// Mitteilungen aktuell halten: nach Kampf-/Arena-Ereignissen das Konto (Zähler) gebündelt neu laden
+let zaehlenT = null;
+const neuZaehlen = () => { clearTimeout(zaehlenT); zaehlenT = setTimeout(() => { kontoLaden().catch(() => {}); }, 800); };
 function abonnieren(){
   if (kanal || !sb()) return;
   kanal = sb().channel('games')
@@ -535,6 +540,7 @@ Object.assign(window.LW_ROUTEN || (window.LW_ROUTEN = {}), {'#/games': route});
 
 window.LW_GAMES = {
   get katalog(){ return katalog; },
+  anfragen: () => ({kampf: (konto && konto.kampf_offen) || 0, arena: (konto && konto.arena_anfragen) || 0}),
   MODULE, rpc, fehlerText, katalogLaden, kontoLaden, konto: () => konto, nachSpiel, spiegeln, ich, sb, serverZeit, jetzt,
   rang, rangBadge, RAENGE, karte, karteVerdeckt, effektMarken, SELT, kartenRueck, spielFrage, frageHtml, frageBinden, frageFrei, frageAufloesen, hpBar, hpSetzen, karteGross, kartenInfo, schadenZahl, coins,
   SELT, STAUB_PREIS, ART_NAME, regelText, kwChips, ergebnisHtml, ergebnisAn, belohnungListe, belohnungEinsetzen, klang, zurueck, laedt, fehlerZeigen, zieleBinden, beimVerlassen, aufEreignis,
