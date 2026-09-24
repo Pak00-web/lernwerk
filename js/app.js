@@ -83,7 +83,7 @@ function zoomSetzen(){
   const w = innerWidth, h = innerHeight, el = document.documentElement;
   if (w < 1100){ el.style.removeProperty('--zoom'); return; }
   const breite = w >= 3000 ? 1.5 : w >= 2200 ? 1.25 : w >= 1600 ? .92 : .9;
-  el.style.setProperty('--zoom', Math.min(breite, Math.max(.7, h / startseiteHoehe)).toFixed(3));
+  el.style.setProperty('--zoom', Math.min(breite, Math.max(.8, h / startseiteHoehe)).toFixed(3));   // unter 80 % wird die Schrift auf Laptops zu klein
 }
 // Startseite vermessen: benötigte Höhe in CSS-px bei Zoom 1; mehrfach, weil der Zoom die Textumbrüche ändert
 function startseiteEinpassen(){
@@ -95,7 +95,8 @@ function startseiteEinpassen(){
     startseiteHoehe = hoehe; zoomSetzen();
   }
 }
-zoomSetzen(); addEventListener('resize', () => { zoomSetzen(); startseiteEinpassen(); });
+zoomSetzen(); addEventListener('resize', () => { zoomSetzen(); startseiteEinpassen(); seitenleisteEinpassen(); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => seitenleisteEinpassen());
 
 /* ---------------- Fortschritt ---------------- */
 const INTERVALL = [0, 0, 1, 3, 7, 16]; // Tage je Leitner-Fach 1..5
@@ -215,7 +216,7 @@ function route(still){
   if (still !== true) still = false;
   document.body.classList.toggle('ruhig', still);
   const alteQuizkarte = still && (h === '#/' || h === '') ? $('#quizkarte') : null;
-  header(); if (!still) window.scrollTo(0,0); railLeeren(); navAktiv(h); if (!alteQuizkarte) clearTimeout(heroT);
+  header(); if (!still) window.scrollTo(0,0); railLeeren(); navAktiv(h); seitenleisteEinpassen(); if (!alteQuizkarte) clearTimeout(heroT);
   quizkarteBehalten = alteQuizkarte;
   const SEITEN = {'#/faecher':viewFaecher, '#/lernen':viewLernen, '#/karteikarten':viewKarteikarten, '#/lernpfad':viewLernpfad, '#/fortschritt':viewFortschritt, '#/einstellungen':viewEinstellungen, '#/mehr':viewMehr};
   if (SEITEN[h]){ session = null; exam = null; stopTimer(); return SEITEN[h](); }
@@ -243,6 +244,14 @@ function huelle(){
   nav.innerHTML = NAV.map(n => typeof n === 'string' ? `<div class="nav-gruppe">${n}</div>` : `<a class="nav" href="${n[0]}" data-nav="${n[0]}">${GFX.nav[n[1]]}<span>${n[2]}</span></a>`).join('')
     + `<div class="nav-fuss">${GFX.nav.rakete}<span>Lernen. Spielen.<br>Besser werden.</span></div>`;
   $('#tabbar').innerHTML = TABS.map(n => `<a class="tab" href="${n[0]}" data-nav="${n[0]}">${GFX.nav[n[1]]}<span>${n[2]}</span></a>`).join('');
+}
+// Seitenleiste ohne Scrollbar: reicht die Höhe nicht, erst Rakete + Spruch ausblenden, dann die Einträge enger setzen
+function seitenleisteEinpassen(){
+  const s = $('#side'); if (!s) return;
+  s.classList.remove('ohne-fuss', 'eng');
+  const zuHoch = () => s.scrollHeight > s.clientHeight + 1;
+  if (zuHoch()) s.classList.add('ohne-fuss');
+  if (zuHoch()) s.classList.add('eng');
 }
 function navAktiv(h){
   const basis = h === '#/' || h === '' ? '#/' : '#/' + (h.split('/')[1] || '');

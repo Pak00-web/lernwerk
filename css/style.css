@@ -725,3 +725,11 @@ html{zoom:var(--zoom)}
 :root[data-theme="light"] .hero .hl-gelb{color:#FFC93C}
 :root[data-theme="light"] .panel,:root[data-theme="light"] .gcard{border-color:var(--line)}
 :root[data-theme="light"] .top{background:color-mix(in srgb,#FFFFFF 90%,transparent)}
+/* Seitenleiste ohne Scrollbar (app.js seitenleisteEinpassen): bei wenig Höhe erst Rakete + Spruch weg, dann enger */
+.side{scrollbar-width:none}
+.side::-webkit-scrollbar{display:none}
+.side.ohne-fuss .nav-fuss{display:none}
+.side.eng{padding-top:12px;padding-bottom:10px;gap:2px}
+.side.eng .nav{padding:8px 16px;font-size:15.5px}
+.side.eng .nav-ico{width:21px;height:21px}
+.side.eng .nav-gruppe{margin:8px 4px 4px;padding-top:10px}
