@@ -464,8 +464,6 @@ body.ohne-scroll{overflow:hidden}
 .lwk.klein.s-legendary .lwk-juwel,.lwk.mini.s-legendary .lwk-juwel{width:14cqw;height:14cqw}
 .lwk.mini{aspect-ratio:63/80}
 .lwk.klein .lwk-bild{aspect-ratio:16/14}
-/* Glanz: Regenbogen-Rahmen; der Lichtstreifen erscheint nur beim Überfahren (.lwk.kippt::after) */
-.lwk.glanz{--rahmen:linear-gradient(120deg,#9CF,#F9C 35%,#FF9 65%,#9FC)}
 /* Rückseite */
 .lwk.rueck{--rand:#2F3A78;--rahmen:linear-gradient(160deg,#3B4790,#232C5E);--bg:repeating-linear-gradient(45deg,#141C44 0 8px,#101738 8px 16px)}
 .lwk.rueck .lwk-in{align-items:center;justify-content:center}
@@ -539,9 +537,8 @@ button.deck-platz.voll:hover{transform:translateY(-3px)}
 @keyframes ahnung{50%{transform:translateY(-4px) rotate(-1.5deg)}}
 .bo-karte.spannung:not(.offen) .bo-dreh{animation:spannung .9s ease-in both}
 @keyframes spannung{0%{transform:scale(1)}30%{transform:scale(1.06) rotate(-3deg)}60%{transform:scale(1.1) rotate(3deg)}100%{transform:scale(1.14)}}
-.bo-neu,.bo-dub,.bo-glanz{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--ok);color:#06301F;font-weight:900;font-size:12px;padding:3px 10px;border-radius:6px;z-index:3;white-space:nowrap}
+.bo-neu,.bo-dub{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--ok);color:#06301F;font-weight:900;font-size:12px;padding:3px 10px;border-radius:6px;z-index:3;white-space:nowrap}
 .bo-dub{background:#B9A6FF;color:#1B1450;top:auto;bottom:-10px}
-.bo-glanz{background:linear-gradient(90deg,#9CF,#F9C,#FF9);color:#1B1450;top:14px}
 .bo-blitz{position:fixed;inset:0;z-index:90;pointer-events:none;animation:blitz .9s ease-out forwards}
 .bo-blitz.gold{background:radial-gradient(circle at 50% 45%,rgba(255,217,102,.85),rgba(224,176,64,.35) 45%,transparent 75%)}
 .bo-blitz.lila{background:radial-gradient(circle at 50% 45%,rgba(185,166,255,.7),rgba(154,107,255,.25) 45%,transparent 75%)}
@@ -879,7 +876,6 @@ button.deck-platz.voll:hover{transform:translateY(-3px)}
 .lwk.kippt{transform:perspective(800px) rotateX(var(--kx)) rotateY(var(--ky));transition:transform .08s linear}
 .lwk::after{content:"";position:absolute;inset:0;z-index:6;border-radius:6%/4.3%;pointer-events:none;opacity:0;transition:opacity .3s;mix-blend-mode:screen;
   background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.05) 40%,rgba(255,255,255,.2) 48%,rgba(255,255,255,.05) 56%,transparent 64%) no-repeat;background-size:250% 100%;background-position:calc(67% - var(--lx,50%) * .4) 0}
-.lwk.glanz::after{background-image:linear-gradient(115deg,transparent 28%,rgba(120,200,255,.14) 38%,rgba(255,255,255,.24) 48%,rgba(255,170,230,.16) 56%,rgba(255,240,150,.12) 62%,transparent 70%)}
 .lwk.kippt::after{opacity:1}
 /* Werte am Monster springen kurz, wenn sie sich ändern */
 .eh-atk,.eh-hp{transition:background .2s}
@@ -921,3 +917,17 @@ button.deck-platz.voll:hover{transform:translateY(-3px)}
 .sam-lupe{margin-left:auto;padding:3px 8px!important}
 .sam-lupe .gi{width:15px!important;height:15px!important;color:var(--ink-2)!important}
 .kk-detail-karte .lwk{cursor:zoom-in}
+/* Episch und legendär: aufwendigerer Rahmen, damit man den Wert sofort sieht */
+.lwk.s-epic{--bg:linear-gradient(180deg,#24154D,#0E1330 58%)}
+.lwk.s-epic .lwk-in,.lwk.s-legendary .lwk-in{border-width:2.9cqw;box-shadow:inset 0 0 0 .6cqw rgba(0,0,0,.4),inset 0 0 0 1.2cqw color-mix(in srgb,var(--rand) 45%,transparent)}
+.lwk.s-epic .lwk-bild,.lwk.s-legendary .lwk-bild{box-shadow:inset 0 0 0 .5cqw rgba(0,0,0,.35),0 0 0 .7cqw #0E1330,0 0 0 1.3cqw color-mix(in srgb,var(--rand) 70%,transparent)}
+.lwk.s-epic.t-monster .lwk-band{background:#2B1A63;border-color:#A57BFF;color:#E6D6FF}
+.lwk.s-legendary.t-monster .lwk-band{background:linear-gradient(180deg,#5A3F0C,#2A1E00);border-color:#E8B84A;color:#FFE08A}
+.lwk.s-epic .lwk-typ{border-bottom-color:rgba(165,123,255,.25)}
+.lwk.s-legendary .lwk-typ{border-bottom-color:rgba(232,184,74,.3)}
+.lwk.s-epic .lwk-name{color:#F1E9FF}
+/* Legendär: goldenes Wappen oben mittig auf dem Rahmen */
+.lwk.s-legendary::before{content:"";position:absolute;top:-1.6cqw;left:50%;z-index:4;width:24cqw;height:8cqw;transform:translateX(-50%);pointer-events:none;
+  background:linear-gradient(180deg,#FFF3C2,#E0B040 55%,#9C6A12);clip-path:polygon(0 0,100% 0,88% 60%,60% 60%,50% 100%,40% 60%,12% 60%);filter:drop-shadow(0 .6cqw 0 rgba(0,0,0,.35))}
+.lwk.s-epic::before{content:"";position:absolute;top:-1.2cqw;left:50%;z-index:4;width:16cqw;height:5.5cqw;transform:translateX(-50%);pointer-events:none;
+  background:linear-gradient(180deg,#E6D6FF,#8052FF);clip-path:polygon(0 0,100% 0,65% 100%,35% 100%)}
