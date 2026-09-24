@@ -411,9 +411,10 @@ body.ohne-scroll{overflow:hidden}
 /* Typen: Zauber türkis mit Bogenbild, Falle mit Warnstreifen */
 .lwk.t-zauber{--bg:linear-gradient(180deg,#0C2B35,#0E1330 58%)}
 .lwk.t-falle{--bg:linear-gradient(180deg,#34170A,#0E1330 58%)}
-.lwk-bild{position:relative;aspect-ratio:16/10.5;flex:none;background:var(--fd);border-bottom:1.2cqw solid var(--rand);overflow:hidden}
-.lwk.t-zauber .lwk-bild{margin:1.6cqw 1.6cqw 0;border:1.2cqw solid #45D1C4;border-radius:46% 46% 3cqw 3cqw/30% 30% 3cqw 3cqw}
-.lwk.t-falle .lwk-bild{margin:1.6cqw 1.6cqw 0;border:1.2cqw solid #FF8A4C;clip-path:polygon(7% 0,93% 0,100% 10%,100% 100%,0 100%,0 10%)}
+/* Bildrahmen: bei allen Typen dieselbe Form, nur die Farbe zeigt den Typ (Monster = Seltenheit, Zauber türkis, Falle orange) */
+.lwk-bild{--bildrand:var(--rand);position:relative;aspect-ratio:16/10.5;flex:none;margin:1.6cqw 1.6cqw 0;background:var(--fd);border:1.2cqw solid var(--bildrand);border-radius:3cqw;overflow:hidden;box-shadow:inset 0 0 0 .5cqw rgba(0,0,0,.35)}
+.lwk.t-zauber .lwk-bild{--bildrand:#45D1C4}
+.lwk.t-falle .lwk-bild{--bildrand:#FF8A4C}
 .lwk-bild>svg,.lwk-img{width:100%;height:100%;object-fit:cover;display:block}
 .lwk-kosten{position:absolute;top:2.4cqw;left:2.4cqw;width:15cqw;height:16.5cqw;display:grid;place-items:center;font:900 9.5cqw/1 var(--f-display);color:#fff;background:linear-gradient(160deg,#6FA2FF,#2A57E0);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);text-shadow:0 .5cqw 0 rgba(0,0,0,.35)}
 .lwk-marken{position:absolute;top:2.4cqw;right:2.4cqw;display:flex;flex-direction:column;gap:1.4cqw}
@@ -464,9 +465,10 @@ body.ohne-scroll{overflow:hidden}
 .lwk.mini{aspect-ratio:63/80}
 .lwk.klein .lwk-bild{aspect-ratio:16/14}
 /* Glanz und Legendär: bewegter Folien-Schimmer */
-.lwk.glanz .lwk-in::after,.lwk.s-legendary .lwk-in::after{content:"";position:absolute;inset:-50%;z-index:3;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.22) 47%,rgba(160,220,255,.18) 50%,rgba(255,200,255,.14) 53%,transparent 60%);animation:schimmer 3.4s ease-in-out infinite;pointer-events:none}
+.lwk.glanz .lwk-in::after,.lwk.s-legendary .lwk-in::after{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;mix-blend-mode:screen;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.06) 43%,rgba(255,255,255,.34) 48%,rgba(255,255,255,.06) 53%,transparent 58%) no-repeat;background-size:250% 100%;animation:schimmer 5s cubic-bezier(.45,0,.3,1) infinite;transition:opacity .3s}
+.lwk.glanz .lwk-in::after{background-image:linear-gradient(115deg,transparent 34%,rgba(120,200,255,.18) 41%,rgba(255,255,255,.34) 48%,rgba(255,170,230,.2) 54%,rgba(255,240,150,.14) 59%,transparent 64%)}
 .lwk.glanz{--rahmen:linear-gradient(120deg,#9CF,#F9C 35%,#FF9 65%,#9FC)}
-@keyframes schimmer{0%{transform:translateX(-40%)}60%,100%{transform:translateX(40%)}}
+@keyframes schimmer{0%{background-position:110% 0}40%,100%{background-position:-10% 0}}
 /* Rückseite */
 .lwk.rueck{--rand:#2F3A78;--rahmen:linear-gradient(160deg,#3B4790,#232C5E);--bg:repeating-linear-gradient(45deg,#141C44 0 8px,#101738 8px 16px)}
 .lwk.rueck .lwk-in{align-items:center;justify-content:center}
@@ -878,7 +880,11 @@ button.deck-platz.voll:hover{transform:translateY(-3px)}
 /* Karten neigen sich zur Maus (games-gfx.js setzt --kx/--ky/--lx/--ly) */
 .lwk{transition:transform .4s cubic-bezier(.2,.9,.3,1)}
 .lwk.kippt{transform:perspective(800px) rotateX(var(--kx)) rotateY(var(--ky));transition:transform .08s linear}
-.lwk.kippt::after{content:"";position:absolute;inset:0;z-index:6;border-radius:6%/4.3%;pointer-events:none;background:radial-gradient(circle at var(--lx) var(--ly),rgba(255,255,255,.16),transparent 55%)}
+.lwk::after{content:"";position:absolute;inset:0;z-index:6;border-radius:6%/4.3%;pointer-events:none;opacity:0;transition:opacity .3s;mix-blend-mode:screen;
+  background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.05) 40%,rgba(255,255,255,.2) 48%,rgba(255,255,255,.05) 56%,transparent 64%) no-repeat;background-size:250% 100%;background-position:calc(67% - var(--lx,50%) * .4) 0}
+.lwk.glanz::after{background-image:linear-gradient(115deg,transparent 28%,rgba(120,200,255,.14) 38%,rgba(255,255,255,.24) 48%,rgba(255,170,230,.16) 56%,rgba(255,240,150,.12) 62%,transparent 70%)}
+.lwk.kippt::after{opacity:1}
+.lwk.kippt .lwk-in::after{opacity:0}
 /* Werte am Monster springen kurz, wenn sie sich ändern */
 .eh-atk,.eh-hp{transition:background .2s}
 .wert-runter{animation:wertrunter .45s cubic-bezier(.3,1.6,.5,1)}
@@ -894,3 +900,28 @@ button.deck-platz.voll:hover{transform:translateY(-3px)}
 .hp-fuell{position:relative}
 /* Knöpfe geben beim Drücken nach */
 .kk .btn:active:not(:disabled){transform:scale(.97)}
+/* Große Kartenansicht (games.js karteGross) */
+.karte-gross{position:fixed;inset:0;z-index:96;display:grid;place-items:center;padding:16px;overflow-y:auto;background:color-mix(in srgb,#060918 80%,transparent);backdrop-filter:blur(6px);animation:fade .2s ease;cursor:zoom-out}
+.karte-gross.weg{opacity:0;transition:opacity .18s}
+.kg-in{display:flex;align-items:center;justify-content:center;gap:clamp(18px,3vw,40px);flex-wrap:wrap;width:min(980px,100%);cursor:default}
+.kg-karte{--kw:min(400px,calc(68vh * 63 / 88),88vw);animation:kgrein .4s cubic-bezier(.2,1.25,.4,1) both}
+.kg-karte .lwk{box-shadow:0 30px 70px rgba(0,0,0,.6)}
+@keyframes kgrein{from{opacity:0;transform:scale(.8) translateY(24px) rotate(-3deg)}}
+.kg-info{flex:1 1 280px;max-width:400px;display:grid;gap:12px;color:#F2F4FF;animation:kgrein .4s .06s cubic-bezier(.2,1,.4,1) both}
+.kg-info .eyebrow{color:#A9B1D6}
+.kg-info h3{margin:0;font:900 clamp(24px,3vw,32px)/1.1 var(--f-display)}
+.kg-werte{display:flex;flex-wrap:wrap;gap:8px;margin:0}
+.kg-werte span{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;background:#1A2350;font-weight:900}
+.kg-werte .gi{width:16px;height:16px}
+.kg-text{margin:0;font-size:16px;line-height:1.5;color:#D6DBF5}
+.kg-begriffe{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.kg-begriffe li{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-radius:12px;background:#121A38;border:1px solid #252F5C}
+.kg-begriffe li>div{display:grid;gap:2px;font-size:14px;color:#C8CEEA}
+.kg-begriffe b{color:#fff;font-size:14.5px}
+.kg-ico{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#1E2748;color:#E8EEF8}
+.kg-ico .kw-ico{width:17px;height:17px}
+.kg-flavor{margin:0;font-style:italic;color:#8E97C2}
+.kg-info .btn{justify-self:start}
+.sam-lupe{margin-left:auto;padding:3px 8px!important}
+.sam-lupe .gi{width:15px!important;height:15px!important;color:var(--ink-2)!important}
+.kk-detail-karte .lwk{cursor:zoom-in}

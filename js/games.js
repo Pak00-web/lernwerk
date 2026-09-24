@@ -94,6 +94,49 @@ function karte(id, o = {}){
     <div class="lwk-fuss">${mon ? `<span class="lwk-atk" title="Angriff">${G.ico.schwert}<b>${k.angriff}</b></span>` : '<span></span>'}<span class="lwk-juwel" title="${s[0]}"></span>${mon ? `<span class="lwk-hp" title="Leben">${G.ico.herz}<b>${k.verteidigung}</b></span>` : '<span></span>'}</div>
   </div></div>`;
 }
+// Große Kartenansicht (wie bei Yu-Gi-Oh) mit Erklärung aller Symbole.
+// Öffnen: Lupe in der Sammlung, Rechtsklick oder langes Drücken auf eine Karte, zweites Antippen im Booster, Karte im Kampf-Detailbereich.
+const LUPE = '<svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';
+function karteGross(id, o = {}){
+  const k = katalog && katalog[id]; if (!k) return;
+  const alt = document.querySelector('.karte-gross'); if (alt) alt.remove();
+  const f = G.FACH[k.fach] || {}, s = SELT[k.seltenheit] || SELT.common, mon = k.typ === 'monster';
+  const begriffe = [...(k.schluessel || [])];
+  if (mon && (k.effekt || []).length) begriffe.push('ausspielen');
+  if ((k.erleuchtet || []).length) begriffe.push('erleuchtet');
+  if (!mon) begriffe.unshift(k.typ);
+  const liste = begriffe.filter(x => G.SCHLUESSEL[x]).map(x => `<li><span class="kg-ico">${G.kwIco(x)}</span><div><b>${G.SCHLUESSEL[x][0]}</b><span>${G.SCHLUESSEL[x][1]}</span></div></li>`).join('');
+  const w = document.createElement('div'); w.className = 'karte-gross'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', k.name);
+  w.innerHTML = `<div class="kg-in"><div class="kg-karte">${karte(id, {glanz: o.glanz})}</div>
+    <div class="kg-info"><div class="eyebrow">${s[0]} · ${f.name || ''} · ${mon ? (ART_NAME[k.art] || 'Wesen') : k.typ === 'zauber' ? 'Zauber' : 'Falle'}</div><h3>${esc(k.name)}</h3>
+      <p class="kg-werte"><span>${G.ico.fokus} ${k.kosten} Fokus</span>${mon ? `<span>${G.ico.schwert} ${k.angriff} Angriff</span><span>${G.ico.herz} ${k.verteidigung} Leben</span>` : ''}</p>
+      ${k.text ? `<p class="kg-text">${regelText(k.text)}</p>` : ''}${k.seltenheit === 'legendary' ? '<p class="kg-text lwk-legregel">Nur in einem Zug mit richtiger Antwort spielbar.</p>' : ''}
+      ${liste ? `<ul class="kg-begriffe">${liste}</ul>` : ''}${k.flavor ? `<p class="kg-flavor">${esc(k.flavor)}</p>` : ''}
+      <button class="btn" data-kg-zu>Schließen</button></div></div>`;
+  const zu = () => { w.classList.add('weg'); document.removeEventListener('keydown', taste); setTimeout(() => w.remove(), 180); };
+  const taste = e => { if (e.key === 'Escape') zu(); };
+  w.addEventListener('click', e => { if (!e.target.closest('.kg-karte, .kg-info') || e.target.closest('[data-kg-zu]')) zu(); });
+  document.addEventListener('keydown', taste);
+  document.body.appendChild(w); w.querySelector('[data-kg-zu]').focus({preventScroll: true});
+}
+// Rechtsklick / langes Drücken auf eine Karte außerhalb des Kampfs (dort gibt es den Detailbereich), Klick auf die Detailkarte im Kampf
+const GROSS_AUS = '.kk-hand, .kk-feld, .karte-gross';
+const grossId = el => { const l = el && el.closest && el.closest('.lwk[data-karte]'); return l && !l.closest(GROSS_AUS) ? l : null; };
+document.addEventListener('contextmenu', e => { const l = grossId(e.target); if (!l) return; e.preventDefault(); karteGross(l.dataset.karte, {glanz: l.classList.contains('glanz')}); });
+let grossTimer = null, grossLang = false;
+document.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'mouse') return; const l = grossId(e.target); if (!l) return;
+  grossLang = false; clearTimeout(grossTimer);
+  grossTimer = setTimeout(() => { grossLang = true; karteGross(l.dataset.karte, {glanz: l.classList.contains('glanz')}); }, 500);
+});
+['pointerup', 'pointercancel', 'pointermove'].forEach(t => document.addEventListener(t, e => { if (t !== 'pointermove' || Math.abs(e.movementX) + Math.abs(e.movementY) > 6) clearTimeout(grossTimer); }, {passive: true}));
+document.addEventListener('click', e => {
+  if (grossLang){ grossLang = false; e.preventDefault(); e.stopPropagation(); return; } // Klick nach langem Drücken nicht als Auswahl werten
+  const lupe = e.target.closest && e.target.closest('[data-gross]');
+  if (lupe){ e.preventDefault(); e.stopPropagation(); return karteGross(lupe.dataset.gross, {glanz: lupe.dataset.glanz === '1'}); }
+  const d = e.target.closest && e.target.closest('.kk-detail-karte .lwk[data-karte]');
+  if (d) karteGross(d.dataset.karte, {glanz: d.classList.contains('glanz')});
+}, true);
 // Noch nicht gesammelt: verdeckt, nur Nummer, Fach und Seltenheit sind zu sehen
 function karteVerdeckt(id, o = {}){
   const k = katalog[id], f = G.FACH[k.fach] || {}, s = SELT[k.seltenheit] || SELT.common;
@@ -389,7 +432,7 @@ async function viewSammlung(h){
     </div>
     <section class="section"><div class="section-head"><h2>Dein Deck <span class="muted small">${deck.length} / ${DECK_GROESSE}</span></h2>
       <div class="row">${kurve(deck)}<button class="btn primary" id="speichern" ${geaendert && deck.length === DECK_GROESSE ? '' : 'disabled'}>Deck speichern</button></div></div>
-      <p class="small muted">Tippe eine Karte im Deck an, um sie herauszunehmen, und unten eine Karte, um sie hinzuzufügen (höchstens 2 gleiche, legendäre nur 1).</p>
+      <p class="small muted">Rechtsklick, langes Drücken oder die Lupe zeigt eine Karte groß. Tippe eine Karte im Deck an, um sie herauszunehmen, und unten eine Karte, um sie hinzuzufügen (höchstens 2 gleiche, legendäre nur 1).</p>
       <div class="deck-reihe">${Array.from({length: DECK_GROESSE}, (_, i) => deck[i] ? `<button class="deck-platz voll" data-raus="${i}" aria-label="${esc(katalog[deck[i]].name)} herausnehmen">${karte(deck[i], {klasse: 'mini', glanz: glanz[deck[i]]})}</button>` : `<div class="deck-platz"><span>${i + 1}</span></div>`).join('')}</div>
     </section>
     <section class="section"><div class="section-head"><h2>Sammlung</h2>
@@ -399,7 +442,7 @@ async function viewSammlung(h){
         if (!hat) return `<div class="sam-karte fehlt">${karteVerdeckt(k.id)}<div class="sam-fehlt-leiste"><span>Noch nicht gesammelt</span><button class="btn klein" data-herstellen="${k.id}" ${konto.staub >= preis ? '' : 'disabled'} title="Aus Wissensstaub herstellen">${G.ico.fokus}${preis}</button></div></div>`;
         const voll = im >= hat || im >= max || deck.length >= DECK_GROESSE;
         return `<div class="sam-karte"><button class="sam-rein ${voll ? 'voll' : ''}" data-rein="${k.id}" ${voll ? 'aria-disabled="true"' : ''}>${karte(k.id, {glanz: glanz[k.id]})}</button>
-          <div class="sam-anz"><span>×${hat}${im ? ` · ${im} im Deck` : ''}</span>${hat < max ? `<button class="btn klein ghost" data-herstellen="${k.id}" ${konto.staub >= preis ? '' : 'disabled'} title="Weiteres Exemplar herstellen">${G.ico.fokus}${preis}</button>` : ''}</div></div>`; }).join('') || '<p class="muted">Keine Karten in diesem Filter.</p>'}</div>
+          <div class="sam-anz"><span>×${hat}${im ? ` · ${im} im Deck` : ''}</span><button class="btn klein ghost sam-lupe" data-gross="${k.id}" data-glanz="${glanz[k.id] ? 1 : 0}" title="Karte groß ansehen" aria-label="Karte groß ansehen">${LUPE}</button>${hat < max ? `<button class="btn klein ghost" data-herstellen="${k.id}" ${konto.staub >= preis ? '' : 'disabled'} title="Weiteres Exemplar herstellen">${G.ico.fokus}${preis}</button>` : ''}</div></div>`; }).join('') || '<p class="muted">Keine Karten in diesem Filter.</p>'}</div>
     </section>`;
     el.querySelectorAll('[data-raus]').forEach(b => b.onclick = () => { deck.splice(+b.dataset.raus, 1); geaendert = true; zeichne(); });
     el.querySelectorAll('[data-rein]').forEach(b => b.onclick = () => {
@@ -442,13 +485,13 @@ function boosterAufreissen(w, fach, res, zu, fertig){
   g.onclick = () => {
     g.onclick = null; g.classList.add('reisst'); klang('wusch'); window.FX && FX.ton('combo');
     setTimeout(() => {
-      b.innerHTML = `<div class="eyebrow">Tippe die Karten an</div><div class="bo-karten">${res.karten.map((k, i) => {
+      b.innerHTML = `<div class="eyebrow">Tippe die Karten an · noch einmal tippen: groß ansehen</div><div class="bo-karten">${res.karten.map((k, i) => {
         const s = katalog[k.id].seltenheit;
         return `<button class="bo-karte ahnung-${s}" data-i="${i}" style="--i:${i}"><div class="bo-dreh"><div class="bo-seite hinten">${kartenRueck()}</div><div class="bo-seite vorne">${karte(k.id, {glanz: k.glanz})}${k.neu ? '<span class="bo-neu">NEU</span>' : ''}${k.glanz ? '<span class="bo-glanz">GLANZ</span>' : ''}${k.dublette ? `<span class="bo-dub">+${k.staub} Staub</span>` : ''}</div></div></button>`; }).join('')}</div>
         <div class="row" style="justify-content:center"><button class="btn" id="alle">Alle aufdecken</button><button class="btn primary" id="weiter" hidden>${konto.booster ? `Nächsten Booster öffnen (${konto.booster})` : 'Fertig'}</button>${konto.booster ? '<button class="btn ghost" id="fertig" hidden>Fertig</button>' : ''}</div>
         ${res.staub ? `<p class="small muted">Überzählige Karten werden zu Wissensstaub: +${res.staub}</p>` : ''}`;
       const auf = el => {
-        if (el.classList.contains('offen')) return;
+        if (el.classList.contains('offen')){ const r = res.karten[+el.dataset.i]; return karteGross(r.id, {glanz: r.glanz}); }
         const s = katalog[res.karten[+el.dataset.i].id].seltenheit;
         const zeigen = () => { el.classList.add('offen'); klang('flip');
           if (s === 'legendary'){ window.FX && (FX.ton('level'), FX.konfetti(220)); blitz('gold'); }
@@ -483,7 +526,7 @@ Object.assign(window.LW_ROUTEN || (window.LW_ROUTEN = {}), {'#/games': route});
 window.LW_GAMES = {
   get katalog(){ return katalog; },
   MODULE, rpc, fehlerText, katalogLaden, kontoLaden, konto: () => konto, nachSpiel, spiegeln, ich, sb, serverZeit, jetzt,
-  rang, rangBadge, RAENGE, karte, karteVerdeckt, effektMarken, SELT, kartenRueck, spielFrage, frageHtml, frageBinden, frageFrei, frageAufloesen, hpBar, hpSetzen, schadenZahl, coins,
+  rang, rangBadge, RAENGE, karte, karteVerdeckt, effektMarken, SELT, kartenRueck, spielFrage, frageHtml, frageBinden, frageFrei, frageAufloesen, hpBar, hpSetzen, karteGross, schadenZahl, coins,
   SELT, STAUB_PREIS, ART_NAME, regelText, kwChips, ergebnisHtml, ergebnisAn, belohnungListe, belohnungEinsetzen, klang, zurueck, laedt, fehlerZeigen, zieleBinden, beimVerlassen, aufEreignis,
 };
 })();
