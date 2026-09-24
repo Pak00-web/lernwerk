@@ -81,16 +81,21 @@ function effektMarken(k, sch){
 }
 // Karte im Sammelkarten-Stil. o: {klasse ('klein' = ohne Text), attr}
 // Seltenheit: Rahmen + Juwel unten, Typ: farbiges Band (Monster/Zauber/Falle), Effekte: Marken oben rechts
+// Textmenge grob in Zeilen schätzen (bei Grundschrift passen ~6 Zeilen), damit lange Texte kleiner gesetzt werden statt abgeschnitten
+function textStufe(k){
+  const z = (k.schluessel || []).length + Math.ceil((k.text || '').length / 36) + Math.ceil((k.flavor || '').length / 40) + (k.seltenheit === 'legendary' ? 1 : 0);
+  return z > 7 ? 'text-sehr-lang' : z > 5 ? 'text-lang' : '';
+}
 function karte(id, o = {}){
   const k = katalog && katalog[id]; if (!k) return `<div class="lwk leer ${o.klasse || ''}"></div>`;
   const f = G.FACH[k.fach] || {}, s = SELT[k.seltenheit] || SELT.common, mon = k.typ === 'monster';
   const band = mon ? `${G.ico.schwert}<span>${ART_NAME[k.art] || 'Wesen'}</span>` : `${G.kwIco(k.typ)}<span>${k.typ === 'zauber' ? 'Zauber' : 'Falle'}</span>`;
-  return `<div class="lwk s-${k.seltenheit} t-${k.typ} ${o.klasse || ''} " data-karte="${id}" style="--fc:${f.farbe};--fd:${f.dunkel}" ${o.attr || ''}><div class="lwk-in">
+  return `<div class="lwk s-${k.seltenheit} t-${k.typ} ${textStufe(k)} ${o.klasse || ''} " data-karte="${id}" style="--fc:${f.farbe};--fd:${f.dunkel}" ${o.attr || ''}><div class="lwk-in">
     <div class="lwk-bild">${G.kartenBild(k)}<span class="lwk-kosten" title="Kosten: ${k.kosten} Fokus">${k.kosten}</span><span class="lwk-marken">${effektMarken(k)}</span></div>
     <div class="lwk-band">${band}</div>
     <div class="lwk-name">${k.seltenheit === 'legendary' ? '<i class="lwk-krone" aria-hidden="true"></i>' : ''}<span>${esc(k.name)}</span></div>
     <div class="lwk-typ"><span class="lwk-selt">${s[0]}</span><span class="lwk-fach">${f.name}</span></div>
-    <div class="lwk-text">${kwChips(k.schluessel)}${k.text ? `<p>${regelText(k.text)}</p>` : ''}${k.seltenheit === 'legendary' ? '<p class="lwk-legregel">Nur in einem Zug mit richtiger Antwort spielbar.</p>' : ''}${k.flavor ? `<p class="lwk-flavor">${esc(k.flavor)}</p>` : ''}</div>
+    <div class="lwk-text">${kwChips(k.schluessel)}${k.text ? `<p>${regelText(k.text)}</p>` : ''}${k.seltenheit === 'legendary' ? '<p class="lwk-legregel">Nur nach richtiger Antwort spielbar.</p>' : ''}${k.flavor ? `<p class="lwk-flavor">${esc(k.flavor)}</p>` : ''}</div>
     <div class="lwk-fuss">${mon ? `<span class="lwk-atk" title="Angriff">${G.ico.schwert}<b>${k.angriff}</b></span>` : '<span></span>'}<span class="lwk-juwel" title="${s[0]}"></span>${mon ? `<span class="lwk-hp" title="Leben">${G.ico.herz}<b>${k.verteidigung}</b></span>` : '<span></span>'}</div>
   </div></div>`;
 }
