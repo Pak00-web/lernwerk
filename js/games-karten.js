@@ -362,7 +362,7 @@ function detailHtml(K){
     const g = grundHand(K, id), ok = !g && spielbar(K, id);
     const tipp = g || (!ok ? 'Kein gültiges Ziel.' : k.typ === 'monster' ? 'Tippe einen freien Platz an – oder ziehe die Karte dorthin.' : brauchtZiel(k) ? 'Tippe ein leuchtendes Ziel an.' : k.typ === 'falle' ? 'Die Falle liegt verdeckt, bis der Gegner sie auslöst.' : 'Wirkt sofort.');
     return `<div class="kk-detail-karte">${GM.karte(id)}</div><div class="kk-detail-info"><p class="small ${g ? 'kk-grund' : 'muted'}">${auswahl || g ? tipp : 'Tippe die Karte an, um sie zu spielen.'}</p>
-      ${auswahl ? `<div class="row">${ok && !brauchtZiel(k) ? `<button class="btn primary" id="kkSpielen">${k.typ === 'falle' ? 'Falle legen' : 'Ausspielen'}</button>` : ''}<button class="btn ghost" id="kkAbbrechen">Abbrechen</button></div>` : ''}</div>`;
+      ${auswahl ? `<div class="row">${ok && !brauchtZiel(k) ? `<button class="btn primary" id="kkSpielen">${k.typ === 'falle' ? 'Falle legen' : 'Ausspielen'}</button>` : ''}<button class="btn ghost" id="kkAbbrechen">Abbrechen</button></div>` : ''}${GM.kartenInfo(id, {klasse: 'kompakt'})}</div>`;
   }
   if (d && d.art === 'info'){
     const m = (d.seite === 'du' ? v.du : v.gegner).feld[d.platz]; if (!m) return '';
@@ -373,7 +373,7 @@ function detailHtml(K){
       ${extra.length ? `<p class="small">Dazu: ${GM.kwChips(extra)}</p>` : ''}
       ${m.schild ? '<p class="small">Schild aktiv: der nächste Treffer macht keinen Schaden</p>' : ''}${m.tarn ? '<p class="small">Getarnt: nicht angreifbar, bis es selbst angreift</p>' : ''}
       ${grund ? `<p class="small kk-grund">${grund}</p>` : d.seite === 'du' && kannAngreifen(K, m) ? '<p class="small muted">Bereit: tippe das Monster an und dann das Ziel.</p>' : ''}
-      ${K.wahl && K.wahl.art === 'info' ? '<button class="btn ghost" id="kkAbbrechen">Schließen</button>' : ''}</div>`;
+      ${K.wahl && K.wahl.art === 'info' ? '<button class="btn ghost" id="kkAbbrechen">Schließen</button>' : ''}${GM.kartenInfo(m.k, {klasse: 'kompakt'})}</div>`;
   }
   // Ruhezustand: kurzer Verlauf der letzten Ereignisse
   return `<div class="kk-detail-leer"><p class="small muted">${G.ico.hinweis} Fahre über eine Karte, um sie groß zu sehen. Langes Drücken auf dem Handy.</p>

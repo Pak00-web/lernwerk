@@ -548,7 +548,7 @@ button.deck-platz.voll:hover{transform:translateY(-3px)}
 /* Desktop: ein Bildschirm. --kk-h setzt games-karten.js (sichtbare Höhe ab Oberkante); Brett-Reihen und Hand skalieren damit. */
 .kk{--kk-h:760px;--hk:clamp(96px,calc(var(--kk-h) * .18),150px);--dw:clamp(230px,21vw,300px);position:relative;display:grid;gap:8px;margin:0 auto;max-width:1320px;
   height:var(--kk-h);grid-template-columns:minmax(0,1fr) var(--dw);grid-template-rows:auto auto minmax(0,1fr) auto auto;
-  grid-template-areas:"leiste leiste" "gegner detail" "feld detail" "du detail" "hand hand"}
+  grid-template-areas:"leiste leiste" "gegner detail" "feld detail" "du detail" "hand detail"}
 .kk .kk-leiste{margin-top:0}
 .kk>*{min-width:0}
 @keyframes zielpuls{50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--mark) 30%,transparent)}}
@@ -979,3 +979,20 @@ button.deck-platz.voll:hover{transform:translateY(-3px)}
 .lwk.text-sehr-lang .lwk-flavor{display:none}
 .lwk.text-lang .lwk-legregel,.lwk.text-sehr-lang .lwk-legregel{font-size:4.2cqw}
 .lwk.klein .lwk-bild{aspect-ratio:16/14}.lwk.mini .lwk-bild{aspect-ratio:16/10.5}
+/* Detailbereich im Kampf: Karte kleiner, darunter der komplette Text (games.js kartenInfo) */
+.kk-detail-karte{max-width:190px}
+.kk-detail-karte .lwk{max-height:calc(var(--kk-h) * .36)}
+.kg-info.kompakt{flex:none;max-width:none;gap:8px;color:var(--ink);animation:none;margin-top:4px;padding-top:10px;border-top:1px solid var(--line)}
+.kg-info.kompakt .eyebrow{color:var(--ink-3)}
+.kg-info.kompakt h3{font-size:18px}
+.kg-info.kompakt .kg-werte span{padding:4px 9px;font-size:13px;background:var(--surface-2);border-radius:8px}
+.kg-info.kompakt .kg-werte .gi{width:14px;height:14px}
+.kg-info.kompakt .kg-text{font-size:14px;line-height:1.45;color:var(--ink-2)}
+.kg-info.kompakt .kg-text b{color:var(--ink)}
+.kg-info.kompakt .kg-begriffe{gap:6px}
+.kg-info.kompakt .kg-begriffe li{padding:7px 9px;background:var(--surface-2);border-color:var(--line)}
+.kg-info.kompakt .kg-begriffe li>div{font-size:12.5px;color:var(--ink-2)}
+.kg-info.kompakt .kg-begriffe b{font-size:13px;color:var(--ink)}
+.kg-info.kompakt .kg-ico{width:26px;height:26px}
+.kg-info.kompakt .kg-ico .kw-ico{width:15px;height:15px}
+.kg-info.kompakt .kg-flavor{font-size:13px;color:var(--ink-3)}

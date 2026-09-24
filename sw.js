@@ -1,6 +1,6 @@
 /* Lernwerk Service Worker: eigene Dateien immer frisch vom Netz (Cache nur als Offline-Rückfall),
    Schriften/CDN aus dem Cache. Anfragen an Supabase werden nie zwischengespeichert. */
-const CACHE = 'lernwerk-v31';
+const CACHE = 'lernwerk-v33';
 const SHELL = ['./', 'index.html', 'css/style.css', 'css/games.css', 'fragen.js', 'js/grafik.js', 'js/spiel.js', 'js/app.js', 'js/konto.js', 'js/duell.js', 'js/games-gfx.js', 'js/games.js', 'js/games-karten.js', 'js/games-bombe.js', 'js/games-mio.js', 'js/games-arena.js', 'icons/icon.svg', 'manifest.webmanifest', 'img/hero.jpg'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, {cache: 'reload'}))).catch(() => {}))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });

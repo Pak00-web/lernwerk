@@ -102,22 +102,25 @@ function karte(id, o = {}){
 // Große Kartenansicht (wie bei Yu-Gi-Oh) mit Erklärung aller Symbole.
 // Öffnen: Lupe in der Sammlung, Rechtsklick oder langes Drücken auf eine Karte, zweites Antippen im Booster, Karte im Kampf-Detailbereich.
 const LUPE = '<svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';
-function karteGross(id){
-  const k = katalog && katalog[id]; if (!k) return;
-  const alt = document.querySelector('.karte-gross'); if (alt) alt.remove();
+// Kompletter Kartentext als normale Schrift (große Ansicht und Detailbereich im Kampf)
+function kartenInfo(id, o = {}){
+  const k = katalog && katalog[id]; if (!k) return '';
   const f = G.FACH[k.fach] || {}, s = SELT[k.seltenheit] || SELT.common, mon = k.typ === 'monster';
   const begriffe = [...(k.schluessel || [])];
   if (mon && (k.effekt || []).length) begriffe.push('ausspielen');
   if ((k.erleuchtet || []).length) begriffe.push('erleuchtet');
   if (!mon) begriffe.unshift(k.typ);
   const liste = begriffe.filter(x => G.SCHLUESSEL[x]).map(x => `<li><span class="kg-ico">${G.kwIco(x)}</span><div><b>${G.SCHLUESSEL[x][0]}</b><span>${G.SCHLUESSEL[x][1]}</span></div></li>`).join('');
+  return `<div class="kg-info ${o.klasse || ''}"><div class="eyebrow">${s[0]} · ${f.name || ''} · ${mon ? (ART_NAME[k.art] || 'Wesen') : k.typ === 'zauber' ? 'Zauber' : 'Falle'}</div><h3>${esc(k.name)}</h3>
+    <p class="kg-werte"><span>${G.ico.fokus} ${k.kosten} Fokus</span>${mon ? `<span>${G.ico.schwert} ${k.angriff} Angriff</span><span>${G.ico.herz} ${k.verteidigung} Leben</span>` : ''}</p>
+    ${k.text ? `<p class="kg-text">${regelText(k.text)}</p>` : ''}${k.seltenheit === 'legendary' ? '<p class="kg-text lwk-legregel">Nur in einem Zug mit richtiger Antwort spielbar.</p>' : ''}
+    ${liste ? `<ul class="kg-begriffe">${liste}</ul>` : ''}${k.flavor ? `<p class="kg-flavor">${esc(k.flavor)}</p>` : ''}${o.nach || ''}</div>`;
+}
+function karteGross(id){
+  const k = katalog && katalog[id]; if (!k) return;
+  const alt = document.querySelector('.karte-gross'); if (alt) alt.remove();
   const w = document.createElement('div'); w.className = 'karte-gross'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', k.name);
-  w.innerHTML = `<div class="kg-in"><div class="kg-karte">${karte(id)}</div>
-    <div class="kg-info"><div class="eyebrow">${s[0]} · ${f.name || ''} · ${mon ? (ART_NAME[k.art] || 'Wesen') : k.typ === 'zauber' ? 'Zauber' : 'Falle'}</div><h3>${esc(k.name)}</h3>
-      <p class="kg-werte"><span>${G.ico.fokus} ${k.kosten} Fokus</span>${mon ? `<span>${G.ico.schwert} ${k.angriff} Angriff</span><span>${G.ico.herz} ${k.verteidigung} Leben</span>` : ''}</p>
-      ${k.text ? `<p class="kg-text">${regelText(k.text)}</p>` : ''}${k.seltenheit === 'legendary' ? '<p class="kg-text lwk-legregel">Nur in einem Zug mit richtiger Antwort spielbar.</p>' : ''}
-      ${liste ? `<ul class="kg-begriffe">${liste}</ul>` : ''}${k.flavor ? `<p class="kg-flavor">${esc(k.flavor)}</p>` : ''}
-      <button class="btn" data-kg-zu>Schließen</button></div></div>`;
+  w.innerHTML = `<div class="kg-in"><div class="kg-karte">${karte(id)}</div>${kartenInfo(id, {nach: '<button class="btn" data-kg-zu>Schließen</button>'})}</div>`;
   const zu = () => { w.classList.add('weg'); document.removeEventListener('keydown', taste); setTimeout(() => w.remove(), 180); };
   const taste = e => { if (e.key === 'Escape') zu(); };
   w.addEventListener('click', e => { if (!e.target.closest('.kg-karte, .kg-info') || e.target.closest('[data-kg-zu]')) zu(); });
@@ -533,7 +536,7 @@ Object.assign(window.LW_ROUTEN || (window.LW_ROUTEN = {}), {'#/games': route});
 window.LW_GAMES = {
   get katalog(){ return katalog; },
   MODULE, rpc, fehlerText, katalogLaden, kontoLaden, konto: () => konto, nachSpiel, spiegeln, ich, sb, serverZeit, jetzt,
-  rang, rangBadge, RAENGE, karte, karteVerdeckt, effektMarken, SELT, kartenRueck, spielFrage, frageHtml, frageBinden, frageFrei, frageAufloesen, hpBar, hpSetzen, karteGross, schadenZahl, coins,
+  rang, rangBadge, RAENGE, karte, karteVerdeckt, effektMarken, SELT, kartenRueck, spielFrage, frageHtml, frageBinden, frageFrei, frageAufloesen, hpBar, hpSetzen, karteGross, kartenInfo, schadenZahl, coins,
   SELT, STAUB_PREIS, ART_NAME, regelText, kwChips, ergebnisHtml, ergebnisAn, belohnungListe, belohnungEinsetzen, klang, zurueck, laedt, fehlerZeigen, zieleBinden, beimVerlassen, aufEreignis,
 };
 })();
