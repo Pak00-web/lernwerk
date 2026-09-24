@@ -959,3 +959,7 @@ button.deck-platz.voll:hover{transform:translateY(-3px)}
   .bq-platte{inset:14% 8%}
   .bq-tisch .bq-bombe svg.bombe-svg{width:34cqw;height:34cqw}
 }
+/* Gemalte Kachelbilder im Games-Hub: Motiv rechts, beim Überfahren leicht heranzoomen */
+.gcard-bild{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:70% 50%;transition:transform .5s cubic-bezier(.2,.9,.3,1)}
+.gcard:hover .gcard-bild,.gcard:focus-visible .gcard-bild{transform:scale(1.05)}
+.gcard-art .gcard-hinweis{z-index:1}

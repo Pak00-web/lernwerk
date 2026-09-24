@@ -338,6 +338,9 @@ const SPIELE = [
   {id: 'arena', titel: 'Wissens-Arena', text: 'Live gegen andere Lernende. Wissen und Tempo entscheiden.', modus: 'Live-Duell · 5 Runden', beloh: 'Rangpunkte · bis 60 XP', farbe: 'blau', ico: 'schwert'},
   {id: 'duell', titel: 'Quizduell', text: 'Drei Runden, abwechselnd – spiel, wann du Zeit hast.', modus: 'Gegen Klasse · 3 Runden', beloh: 'XP · Rangliste', farbe: 'gruen', ico: 'pokal', ziel: '#/duell'},
 ];
+// Gemalte Kachelbilder (Bild-Pipeline, img/games); fehlt eins, bleibt die SVG-Grafik
+const KACHEL = {karten: 'karten.jpg', bombe: 'bombe.jpg'};
+const kachelArt = s => KACHEL[s.id] ? `<img class="gcard-bild" src="img/games/${KACHEL[s.id]}" alt="" loading="lazy">` : G.ART[s.id]();
 function spielStat(id){
   if (!konto) return '';
   const s = konto.statistik || {};
@@ -352,7 +355,7 @@ function spielKarte(s, stat){
   const hinweis = konto && s.id === 'karten' && konto.kampf_offen ? `${konto.kampf_offen} × du bist dran`
     : konto && s.id === 'arena' && konto.arena_anfragen ? `${konto.arena_anfragen} Herausforderung` : duellDran ? `${duellDran} × du bist dran` : '';
   return `<article class="gcard g-${s.farbe}" data-spiel="${s.id}" data-ziel-spiel="${s.ziel || '#/games/' + s.id}" tabindex="0" role="link" aria-label="${s.titel} spielen">
-    <div class="gcard-art">${G.ART[s.id]()}${hinweis ? `<span class="gcard-hinweis">${hinweis}</span>` : ''}</div>
+    <div class="gcard-art">${kachelArt(s)}${hinweis ? `<span class="gcard-hinweis">${hinweis}</span>` : ''}</div>
     <div class="gcard-body"><div class="gcard-titel"><h3>${s.titel}</h3><span class="gcard-pfeil">${L.ICON.pfeil}</span></div><p>${s.text}</p>
       <div class="gcard-fuss"><span class="gcard-modus">${G.ico[s.ico]}${s.modus}</span>${stat ? `<span class="gcard-stat">${stat}</span>` : ''}</div>
     </div></article>`;
