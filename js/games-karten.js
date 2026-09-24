@@ -636,6 +636,14 @@ function zahl(el, text, art){
   d.style.left = (r.left + r.width / 2) / zm + 'px'; d.style.top = (r.top + window.scrollY + r.height * .3) / zm + 'px';
   document.body.appendChild(d); setTimeout(() => d.remove(), 1100);
 }
+// Werte-Plakette am Monster sofort mitziehen (danach zeichnet zeichne() ohnehin den echten Stand)
+function wertAendern(u, art, delta){
+  const b = u && delta ? u.querySelector(art === 'a' ? '.eh-atk' : '.eh-hp') : null; if (!b) return;
+  b.textContent = Math.max(0, +b.textContent + delta);
+  if (art === 'v' && delta < 0) b.classList.add('runter');
+  anim(b, delta < 0 ? 'wert-runter' : 'wert-hoch');
+}
+const geschuetzt = u => !!(u && u.classList.contains('schild'));
 // Karte kurz groß zeigen (Gegner spielt etwas / Falle schnappt zu)
 async function karteZeigen(K, id, titel, art){
   if (!K.root || K.schnell) return;
@@ -704,7 +712,11 @@ async function abspielen(K, ev, neu){
         GM.klang('wusch'); await pause(K, 300);
         einschlag(ziel, 'treffer');
         if (e.ziel === -1){ heldHp(K, o, -e.schaden); zahl(heldEl(K, o), '−' + e.schaden); }
-        else { anim(ziel, 'getroffen'); zahl(ziel, '−' + e.schaden); if (e.zurueck) zahl(a, '−' + e.zurueck); GM.klang('treffer'); }
+        else {
+          anim(ziel, 'getroffen'); zahl(ziel, '−' + e.schaden); if (!geschuetzt(ziel)) wertAendern(ziel, 'v', -e.schaden);
+          if (e.zurueck){ zahl(a, '−' + e.zurueck); if (!geschuetzt(a)) wertAendern(a, 'v', -e.zurueck); }
+          GM.klang('treffer');
+        }
         await pause(K, 520);
         break; }
       case 'abgewehrt':
@@ -716,10 +728,10 @@ async function abspielen(K, ev, neu){
           const ziel = e.ziel === 'held' ? heldEl(K, ks) : einheitEl(K, ks, e.platz);
           if (zauberVon && !K.schnell) await geschoss(zauberVon, ziel, 'zauber'); else einschlag(ziel, 'treffer');
           if (e.ziel === 'held'){ heldHp(K, ks, -e.wert); zahl(heldEl(K, ks), '−' + e.wert); }
-          else { anim(ziel, 'getroffen'); zahl(ziel, '−' + e.wert); GM.klang('treffer'); }
+          else { anim(ziel, 'getroffen'); zahl(ziel, '−' + e.wert); if (!geschuetzt(ziel)) wertAendern(ziel, 'v', -e.wert); GM.klang('treffer'); }
           await pause(K, 380);
         } else if (e.e === 'heilen'){ heldHp(K, ks, e.wert); zahl(heldEl(K, ks), '+' + e.wert, 'heil'); partikel(heldEl(K, ks), 'gruen'); await pause(K, 350); }
-        else if (e.e === 'staerken'){ const u = einheitEl(K, ks, e.platz); anim(u, 'leuchtet'); partikel(u, 'gold'); zahl(u, `+${e.a || 0}/+${e.v || 0}`, 'heil'); await pause(K, 300); }
+        else if (e.e === 'staerken'){ const u = einheitEl(K, ks, e.platz); anim(u, 'leuchtet'); partikel(u, 'gold'); zahl(u, `+${e.a || 0}/+${e.v || 0}`, 'heil'); wertAendern(u, 'a', e.a || 0); wertAendern(u, 'v', e.v || 0); await pause(K, 300); }
         else if (e.e === 'schild'){ const u = einheitEl(K, ks, e.platz); if (u) u.classList.add('schild'); partikel(u, 'blau'); await pause(K, 200); }
         else if (e.e === 'betaeuben'){ const u = einheitEl(K, ks, e.platz); if (u){ u.classList.add('bet'); anim(u, 'getroffen'); } await pause(K, 300); }
         break;

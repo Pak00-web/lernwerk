@@ -150,11 +150,12 @@ function frageAufloesen(root, gewaehlt, richtig, o = {}){
 function hpBar(hp, max, o = {}){
   const p = Math.max(0, Math.min(100, Math.round(hp / max * 100)));
   return `<div class="hpbar ${p <= 25 ? 'kritisch' : p <= 50 ? 'mittel' : ''} ${o.klasse || ''}" ${o.id ? `id="${o.id}"` : ''} data-hp="${hp}" data-max="${max}">
-    <div class="hp-spur"><i class="hp-fuell" style="width:${p}%"></i></div><span class="hp-zahl">${G.ico.herz}<b>${Math.max(0, hp)}</b><small>/${max}</small></span></div>`;
+    <div class="hp-spur" style="--nach:${p}%"><i class="hp-fuell" style="width:${p}%"></i></div><span class="hp-zahl">${G.ico.herz}<b>${Math.max(0, hp)}</b><small>/${max}</small></span></div>`;
 }
 function hpSetzen(el, hp){
   if (!el) return; const max = +el.dataset.max, alt = +el.dataset.hp, p = Math.max(0, Math.min(100, Math.round(hp / max * 100)));
-  el.dataset.hp = hp; el.querySelector('.hp-fuell').style.width = p + '%'; el.querySelector('.hp-zahl b').textContent = Math.max(0, hp);
+  el.dataset.hp = hp; el.querySelector('.hp-fuell').style.width = p + '%';
+  const spur = el.querySelector('.hp-spur'); if (spur){ spur.classList.toggle('heilt', hp > alt); spur.style.setProperty('--nach', p + '%'); } el.querySelector('.hp-zahl b').textContent = Math.max(0, hp);
   el.classList.toggle('kritisch', p <= 25); el.classList.toggle('mittel', p > 25 && p <= 50);
   if (hp < alt){ el.classList.remove('treffer'); void el.offsetWidth; el.classList.add('treffer'); schadenZahl(el, alt - hp); }
   else if (hp > alt) schadenZahl(el, hp - alt, true);

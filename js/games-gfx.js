@@ -213,5 +213,21 @@ const ART = {
     <g><rect x="156" y="58" width="112" height="62" rx="14" fill="#0E1433" stroke="#35D6A0" stroke-width="3"/><path d="M242 120l6 16-22-16z" fill="#0E1433" stroke="#35D6A0" stroke-width="3" stroke-linejoin="round"/><text x="212" y="100" text-anchor="middle" style="font:900 30px var(--f-display);fill:#35D6A0">3 : 2</text></g></svg>`,
 };
 
+// Karten neigen sich zur Maus, ein weiches Licht folgt. Nur Maus, nicht bei reduzierter Bewegung.
+const KIPP = '.sam-rein .lwk, .deck-platz .lwk, .bo-karte.offen .lwk, .kk-detail-karte .lwk, .kk-auftritt .lwk';
+let kippEl = null;
+const kippAus = el => { el.classList.remove('kippt'); el.style.removeProperty('--kx'); el.style.removeProperty('--ky'); };
+document.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse' || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  const el = e.target && e.target.closest ? e.target.closest(KIPP) : null;
+  if (kippEl && kippEl !== el) kippAus(kippEl);
+  kippEl = el; if (!el) return;
+  const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+  el.classList.add('kippt');
+  el.style.setProperty('--kx', ((.5 - y) * 12).toFixed(1) + 'deg'); el.style.setProperty('--ky', ((x - .5) * 14).toFixed(1) + 'deg');
+  el.style.setProperty('--lx', (x * 100).toFixed(0) + '%'); el.style.setProperty('--ly', (y * 100).toFixed(0) + '%');
+}, {passive: true});
+document.addEventListener('pointerleave', () => { if (kippEl) kippAus(kippEl); kippEl = null; });
+
 window.GGFX = {FACH, kartenBild, kartenBildAlt, silhouette, BILDER, SCHLUESSEL, kwIco, portrait, ico, muenze, booster, bombe, rangAbzeichen, ART};
 })();
