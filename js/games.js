@@ -347,7 +347,7 @@ const SPIELE = [
   {id: 'duell', titel: 'Quizduell', text: 'Drei Runden, abwechselnd – spiel, wann du Zeit hast.', modus: 'Gegen Klasse · 3 Runden', beloh: 'XP · Rangliste', farbe: 'gruen', ico: 'pokal', ziel: '#/duell'},
 ];
 // Gemalte Kachelbilder (Bild-Pipeline, img/games); fehlt eins, bleibt die SVG-Grafik
-const KACHEL = {karten: 'karten.jpg', bombe: 'bombe.jpg'};
+const KACHEL = {karten: 'karten.jpg', bombe: 'bombe.jpg', millionaer: 'millionaer.jpg', arena: 'arena.jpg', duell: 'duell.jpg'};
 const kachelArt = s => KACHEL[s.id] ? `<img class="gcard-bild" src="img/games/${KACHEL[s.id]}" alt="" loading="lazy">` : G.ART[s.id]();
 function spielStat(id){
   if (!konto) return '';
