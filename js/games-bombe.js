@@ -63,6 +63,18 @@ function statusHtml(R){
   if (R.bombe_bei === GM.ich()) return '<span class="bq-dran-du">Du bist dran!</span>';
   return `<b>${esc(name(R, R.bombe_bei))}</b> ist dran${istBot(R, R.bombe_bei) ? ' <span class="bq-denkt">überlegt<i>.</i><i>.</i><i>.</i></span>' : ''}`;
 }
+// Sitzwinkel am Tisch: du unten (90°), die anderen reihum
+function sitz(R, i){ const n = R.spieler.length, ich = Math.max(0, R.spieler.indexOf(GM.ich())); return Math.round(90 + (i - ich) * 360 / n); }
+// Bombe fliegt vom alten zum neuen Halter
+function wurf(von, an){
+  const a = document.querySelector(`.bq-sp[data-u="${von}"]`), b = document.querySelector(`.bq-sp[data-u="${an}"]`);
+  if (!a || !b || !a.animate || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  const zm = L.zoom() || 1, ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+  const x0 = (ra.left + ra.width / 2) / zm, y0 = (ra.top + ra.height / 2) / zm, dx = (rb.left + rb.width / 2) / zm - x0, dy = (rb.top + rb.height / 2) / zm - y0;
+  const d = document.createElement('div'); d.className = 'bq-wurf'; d.innerHTML = G.bombe(44); d.style.left = x0 + 'px'; d.style.top = y0 + 'px';
+  document.body.appendChild(d);
+  d.animate([{transform: 'translate(-50%,-50%) scale(.6) rotate(0)'}, {transform: `translate(calc(-50% + ${dx / 2}px), calc(-50% + ${dy / 2 - 70}px)) scale(1.1) rotate(200deg)`, offset: .5}, {transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.7) rotate(400deg)`}], {duration: 600, easing: 'cubic-bezier(.4,0,.6,1)'}).finished.then(() => d.remove(), () => d.remove());
+}
 function zeichne(B){
   const R = B.R, app = L.app(), me = GM.ich();
   if (R.status === 'lobby') return lobby(B);
@@ -70,9 +82,11 @@ function zeichne(B){
   const beiMir = R.bombe_bei === me && R.status === 'laeuft';
   app.innerHTML = `<div class="bq ${beiMir ? 'bei-mir' : ''} ${R.status === 'boom' ? 'boom' : ''}" id="bq">
     <div class="kk-leiste"><button class="btn ghost" id="bqRaus">${L.ICON.back}<span>Verlassen</span></button><span class="kk-titel">Raum ${esc(R.code)} · Runde ${R.runde}</span><span></span></div>
-    <div class="bq-spieler ${R.status === 'laeuft' ? 'aktiv' : ''}">${R.spieler.map(u => { const lb = R.leben[u] || 0; return `<div class="bq-sp ${u === R.bombe_bei ? 'hat' : ''} ${lb <= 0 ? 'raus' : ''} ${u === me ? 'ich' : ''}" data-u="${u}">${ava(R, u)}<b>${esc(name(R, u))}${u === me ? ' <small>(du)</small>' : ''}</b><span class="bq-herzen">${[0, 1].map(k => `<i class="${k < lb ? '' : 'leer'}">${G.ico.herz}</i>`).join('')}</span>${u === R.bombe_bei ? '<span class="bq-mini-bombe">' + G.bombe(26) + '</span>' : ''}</div>`; }).join('')}</div>
-    <div class="bq-mitte"><div class="bq-bombe" id="bqBombe">${G.bombe(150)}<div class="bq-timer mono" id="bqUhr">0:00</div></div>
-      <div class="bq-status" id="bqStatus">${statusHtml(R)}</div>
+    <div class="bq-tisch"><div class="bq-platte"></div>
+    <div class="bq-bombe-platz"><div class="bq-bombe" id="bqBombe">${G.bombe(150)}<div class="bq-timer mono" id="bqUhr">0:00</div></div></div>
+    <div class="bq-spieler ${R.status === 'laeuft' ? 'aktiv' : ''}">${R.spieler.map((u, i) => { const lb = R.leben[u] || 0; return `<div class="bq-sp ${u === R.bombe_bei ? 'hat' : ''} ${lb <= 0 ? 'raus' : ''} ${u === me ? 'ich' : ''}" data-u="${u}" style="--a:${sitz(R, i)}deg">${ava(R, u)}<b>${esc(name(R, u))}${u === me ? ' <small>(du)</small>' : ''}</b><span class="bq-herzen">${[0, 1].map(k => `<i class="${k < lb ? '' : 'leer'}">${G.ico.herz}</i>`).join('')}</span>${u === R.bombe_bei ? '<span class="bq-mini-bombe">' + G.bombe(26) + '</span>' : ''}</div>`; }).join('')}</div>
+    </div>
+    <div class="bq-mitte"><div class="bq-status" id="bqStatus">${statusHtml(R)}</div>
       <div class="bq-meldung" id="bqMeldung"></div></div>
     <div class="panel qbox bq-frage ${beiMir ? '' : 'zuschauen'}" id="bqFrage"></div>
   </div>`;
@@ -131,7 +145,7 @@ function uebernehmen(B, neu){
   // Bombe weitergegeben oder falsch
   if (neu.frage_nr !== alt.frage_nr){
     const l = neu.letzte || {};
-    if (l.art === 'weiter'){ meldung(`${esc(name(neu, l.von))} lag richtig → Bombe an <b>${esc(name(neu, l.an))}</b>`, 'gut'); GM.klang('wusch'); const b = $('#bqBombe'); if (b){ b.classList.remove('fliegt'); void b.offsetWidth; b.classList.add('fliegt'); } }
+    if (l.art === 'weiter'){ meldung(`${esc(name(neu, l.von))} lag richtig → Bombe an <b>${esc(name(neu, l.an))}</b>`, 'gut'); GM.klang('wusch'); wurf(l.von, l.an); }
     if (l.art === 'falsch') meldung(`${esc(name(neu, l.wer))} lag falsch – die Bombe bleibt!`, 'schlecht');
     if (l.art === 'verlassen') meldung(`${esc(name(neu, l.wer))} hat das Spiel verlassen.`);
     const wer = l.von || l.wer;
