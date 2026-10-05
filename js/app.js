@@ -661,7 +661,7 @@ function renderSession(){
   app.innerHTML = `<div class="session">${sessionTop()}<div id="q" class="rein"></div></div>`;
   $('#quit').onclick = () => { if (s.modus==='duell' && !confirm('Runde abbrechen? Du kannst sie später weiterspielen.')) return; session=null; go(s.modus==='duell' ? '#/duell' : (s.cfg && s.cfg.zurueck) || '#/'); };
   if (s.modus==='rennen'){ if (!rennT) rennT = setInterval(rennenTick, 250); rennenTick(); }
-  if (it.kind==='K') renderK(it.e); else if (it.kind==='M') renderM(it.e, false); else renderR(it.r, false);
+  if (it.kind==='K') renderK(it.e); else if (it.kind==='M') renderM(it.e, false); else if (it.kind==='E') renderE(it.e, false); else renderR(it.r, false);
 }
 function next(){ if (!session) return; session.i++; renderSession(); }
 /* Gemeinsame Auswertung einer Antwort in der Übung */
@@ -759,6 +759,66 @@ function renderR(r, examMode){
   inp.addEventListener('keydown', ev => { if (ev.key==='Enter'){ ev.preventDefault(); $('#check').click(); } });
   keyHandler = null;
 }
+/* Eingabe-Aufgaben (Typ E): Zahl eintippen (e.wert) oder Stichpunkte schreiben (e.begriffe + e.mind).
+   begriffe: [[Anzeige, Stichwort, Stichwort, …], …] – ein Begriff gilt als genannt, wenn eines seiner Stichworte vorkommt.
+   Reine Zahlen als Stichwort zählen nur als eigene Zahl (8 passt nicht in 18 oder 4,8). */
+const normE = s => String(s == null ? '' : s).toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+  .replace(/(\d),(\d)/g,'$1.$2').replace(/[^a-z0-9.\s]/g,' ').replace(/\s+/g,' ').trim();
+function pruefeE(e, text){
+  if (e.wert != null){
+    const zahlen = (String(text || '').replace(/(\d),(\d)/g,'$1.$2').match(/\d+(\.\d+)?/g) || []).map(Number);
+    const ok = zahlen.length > 0 && zahlen.every(z => z === e.wert);
+    return {ok, anteil: ok ? 1 : 0, treffer: [], fehlt: []};
+  }
+  const t = ' ' + normE(text) + ' ';
+  const hat = b => b.slice(1).some(w => { w = normE(w); return /^\d+(\.\d+)?$/.test(w) ? new RegExp('(^|[^0-9.])' + w.replace('.', '\\.') + '(?![0-9]|\\.[0-9])').test(t) : t.includes(w); });
+  const treffer = e.begriffe.filter(hat);
+  const anteil = Math.min(1, treffer.length / e.mind);
+  return {ok: anteil >= 1, anteil, treffer: treffer.map(b => b[0]), fehlt: e.begriffe.filter(b => !hat(b)).map(b => b[0])};
+}
+const wertText = e => de(e.wert, e.wert % 1 ? 1 : 0) + (e.einheit ? ' ' + e.einheit : '');
+function eFeedback(e, r, nachTreffer){
+  if (e.wert != null) return `<div class="feedback ${r.ok?'ok':'bad'} pop">${r.ok ? ICON.ok + pick(LOB) : ICON.x + 'Richtig ist: <b style="margin-left:6px">' + esc(wertText(e)) + '</b>'}</div>`;
+  const kopf = r.ok ? ICON.ok + pick(LOB) + ` <span class="e-zahl">${r.treffer.length} Punkte erkannt</span>` : ICON.x + `<span>${r.treffer.length} von mindestens ${e.mind} Punkten erkannt</span>`;
+  return `<div class="feedback ${r.ok?'ok':r.anteil>=.5?'halb':'bad'} pop">${kopf}</div>
+    <div class="e-begriffe">${r.treffer.map(t => `<span class="e-b da">${ICON.ok}${esc(t)}</span>`).join('')}${r.fehlt.map(t => `<span class="e-b fehlt">${esc(t)}</span>`).join('')}</div>
+    ${nachTreffer ? '<p class="tiny muted">Grün = in deiner Antwort gefunden. Grau = hättest du auch nennen können.</p>' : ''}`;
+}
+function renderE(e, examMode){
+  const target = examMode ? $('#eq') : $('#q'), zahl = e.wert != null, alt = examMode && exam.ant[exam.i] != null ? exam.ant[exam.i] : '';
+  target.innerHTML = `${qhead(e, `<span class="tag" style="color:var(--accent)">${zahl ? 'Zahl eingeben' : 'Antwort schreiben'}</span>`)}
+  <div class="panel qbox" id="qbox"><div class="q">${md(e.frage)}</div>
+    ${zahl ? `<div class="e-zeile"><input class="inp" id="ein" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="Zahl" value="${esc(alt)}">${e.einheit ? `<span class="e-einheit">${esc(e.einheit)}</span>` : ''}</div>`
+      : `<textarea class="inp" id="ein" spellcheck="true" placeholder="Stichpunkte reichen – mit Komma oder neuer Zeile trennen">${esc(alt)}</textarea><p class="small muted" style="margin-top:6px">Gesucht: mindestens <b>${e.mind}</b> ${e.mind === 1 ? 'Punkt' : 'Punkte'} · <span class="mono">Strg+Enter</span> zum Prüfen</p>`}
+    <div id="efb"></div></div>
+  <div class="row" style="margin-top:16px"><button class="btn primary" id="check" style="flex:1">${examMode ? 'Antwort speichern' : 'Prüfen'}</button>${examMode ? '' : '<button class="btn" id="skip">Weiß ich nicht</button>'}</div>`;
+  const inp = $('#ein'); setTimeout(() => inp.focus(), 50);
+  const auswerten = (text) => {
+    if (inp.disabled) return;
+    inp.disabled = true; const sk = $('#skip'); if (sk) sk.remove();
+    const r = pruefeE(e, text); inp.classList.add(r.ok ? 'ok' : 'bad');
+    $('#efb').innerHTML = eFeedback(e, r, true) + `<details class="steps" ${r.ok ? '' : 'open'}><summary>Musterlösung</summary><div class="steps-body answer">${md(e.antwort)}</div></details>` + srcHtml(e.quelle);
+    rateItem(e.id, r.ok, r.anteil >= .5);
+    let wdh = null;
+    if (!r.ok && !session.modus){ wdh = {kind:'E', e, wdh:true}; session.items.splice(Math.min(session.items.length, session.i + 5), 0, wdh); }
+    const auto = antwort(r.ok, inp, r.ok ? 12 : r.anteil >= .5 ? 5 : 2, $('#qbox'));
+    const b = $('#check'); if (auto){ b.remove(); return; }
+    b.textContent = 'Weiter'; b.onclick = next; b.focus();
+    // Die Stichwort-Prüfung kann sich irren: selbst als richtig werten
+    if (!r.ok && text.trim()){ b.insertAdjacentHTML('afterend', `<button class="btn ghost" id="doch">${ICON.ok}War doch richtig</button>`);
+      $('#doch').onclick = () => { rateItem(e.id, true, false); if (wdh){ const k = session.items.indexOf(wdh); if (k > -1) session.items.splice(k, 1); } session.richtig++; toast('Als richtig gezählt'); next(); }; }
+  };
+  $('#check').onclick = () => {
+    if (examMode){ exam.ant[exam.i] = inp.value; examNext(); return; }
+    if (inp.disabled) return next();
+    if (!inp.value.trim()){ inp.focus(); return; }
+    auswerten(inp.value);
+  };
+  const sk = $('#skip'); if (sk) sk.onclick = () => auswerten('');
+  inp.addEventListener('keydown', ev => { if (ev.key === 'Enter' && (zahl || ev.ctrlKey || ev.metaKey)){ ev.preventDefault(); $('#check').click(); } });
+  keyHandler = null;
+}
+
 function renderSessionEnd(){
   const s=session; if (!s) return;
   if (s.beiEnde){ const f = s.beiEnde; session = null; return f(s); }
@@ -832,6 +892,7 @@ function renderExam(){
   $('#quit').onclick = () => { if (confirm('Klausur abbrechen? Die Antworten gehen verloren.')){ const z = x.zurueck; exam=null; stopTimer(); go(z || '#/'); } };
   if (!timerT) timerT = setInterval(tick, 1000); tick();
   if (it.kind==='M') renderM(it.e, true);
+  else if (it.kind==='E') renderE(it.e, true);
   else if (it.kind==='R') renderR(it.r, true);
   else renderExamK(it.e);
 }
@@ -859,6 +920,7 @@ function finishExam(){
   x.aufg.forEach((a,k) => {
     let got = 0, max = a.kind==='R' ? a.r.punkte : (a.e.punkte||2);
     if (a.kind==='M'){ const sel=new Set(x.ant[k]||[]); const ok=a.e.optionen.every((o,i)=>o[1]===sel.has(i)); got = ok?max:0; rateItem(a.e.id, ok, false); if(!ok) fehler.push(a); }
+    else if (a.kind==='E'){ const r = pruefeE(a.e, x.ant[k]); a._r = r; got = Math.round(max*r.anteil*2)/2; rateItem(a.e.id, r.ok, r.anteil>=.5); if (!r.ok) fehler.push(a); }
     else if (a.kind==='R'){ const ok = x.ant[k]!=null && a.r.check(x.ant[k]); got = ok?max:0; if(!ok) fehler.push(a); }
     else { const s = x.selbst[k] ?? 0; got = max*s; rateItem(a.e.id, s===1, s===0.5); if (s<1) fehler.push(a); }
     pkt += got; const tid = a.kind==='R'?a.r.thema:a.e.thema; proThema[tid] = proThema[tid]||[0,0]; proThema[tid][0]+=got; proThema[tid][1]+=max;
@@ -877,12 +939,12 @@ function finishExam(){
       <p class="muted small">IHK-Schlüssel: ab 92 % sehr gut · 81 % gut · 67 % befriedigend · 50 % ausreichend · 30 % mangelhaft.</p></div>
   </div>
   <section class="section"><div class="section-head"><h2>Nach Themen</h2></div><div class="stack">${Object.entries(proThema).map(([tid,[g,m]])=>{const f=fachOfThema(tid); const p=Math.round(g/m*100); return `<div class="panel" style="padding:14px 16px;display:grid;gap:8px"><div class="row" style="justify-content:space-between"><b>${esc(themaOf(tid).name)}</b><span class="mono small">${de(g,1)}/${m} · ${p} %</span></div><div class="bar"><i style="width:${p}%;background:var(--${f.farbe})"></i></div></div>`;}).join('')}</div></section>
-  ${fehler.length?`<section class="section"><div class="section-head"><h2>Das solltest du wiederholen</h2><button class="btn primary" id="uebeF">${ICON.target}Diese ${fehler.length} Aufgaben üben</button></div><div class="stack">${fehler.map(a=>a.kind==='R'?`<div class="panel mist"><b>${esc(a.r.name)}</b><div class="small muted">Aufgabe: ${a.r.zeige||''} · richtige Lösung: <span class="mono">${esc(a.r.loesung)}</span></div></div>`:`<div class="panel mist"><b>${md(a.e.frage)}</b><div class="answer small">${a.e.typ==='M'?'Richtig: '+a.e.optionen.filter(o=>o[1]).map(o=>md(o[0])).join(' · '):md(a.e.antwort)}</div>${srcHtml(a.e.quelle)}</div>`).join('')}</div></section>`:'<p style="margin-top:24px" class="muted">Keine Fehler – perfekt!</p>'}
+  ${fehler.length?`<section class="section"><div class="section-head"><h2>Das solltest du wiederholen</h2><button class="btn primary" id="uebeF">${ICON.target}Diese ${fehler.length} Aufgaben üben</button></div><div class="stack">${fehler.map(a=>a.kind==='R'?`<div class="panel mist"><b>${esc(a.r.name)}</b><div class="small muted">Aufgabe: ${a.r.zeige||''} · richtige Lösung: <span class="mono">${esc(a.r.loesung)}</span></div></div>`:`<div class="panel mist"><b>${md(a.e.frage)}</b><div class="answer small">${a.e.typ==='M'?'Richtig: '+a.e.optionen.filter(o=>o[1]).map(o=>md(o[0])).join(' · '):md(a.e.antwort)}</div>${a._r ? eFeedback(a.e, a._r, false) : ''}${srcHtml(a.e.quelle)}</div>`).join('')}</div></section>`:'<p style="margin-top:24px" class="muted">Keine Fehler – perfekt!</p>'}
   <div class="row" style="margin-top:26px"><button class="btn" id="home">Zur Übersicht</button><button class="btn" id="neu">${ICON.exam}Neue Klausur</button></div></div>`;
   if (prozent>=50) konfetti(prozent>=81?180:110);
   $('#home').onclick=()=>go(x.zurueck || '#/'); $('#neu').onclick=()=>x.klausur ? startProbe(klausurOf(x.klausur)) : go('#/klausur');
   if (x.zurueck) $('#home').textContent = 'Zurück zur Klausur';
-  const uf=$('#uebeF'); if (uf) uf.onclick = () => { const items = fehler.map(a=>a.kind==='R'?{kind:'R',r:aufgabe(a.r.key)}:{kind:a.e.typ==='M'?'M':'K',e:a.e}); items.forEach(i=>{ if(i.e) delete i.e._order; }); session={titel:'Fehler aus der Klausur', items, i:0, richtig:0, xp:0, cfg:{titel:'Schwächen trainieren', kinds:['K','M'], scope:x.scope || {}, n:15, nurSchwach:true, zurueck:x.zurueck}}; go('#/uebung'); };
+  const uf=$('#uebeF'); if (uf) uf.onclick = () => { const items = fehler.map(a=>a.kind==='R'?{kind:'R',r:aufgabe(a.r.key)}:{kind:a.e.typ,e:a.e}); items.forEach(i=>{ if(i.e) delete i.e._order; }); session={titel:'Fehler aus der Klausur', items, i:0, richtig:0, xp:0, cfg:{titel:'Schwächen trainieren', kinds:x.scope ? ['M','E'] : ['K','M'], scope:x.scope || {}, n:15, nurSchwach:true, zurueck:x.zurueck}}; go('#/uebung'); };
 }
 
 /* ---------------- Klausur-Vorbereitung (eigener Bereich je Klausur, Daten aus klausuren.js) ---------------- */
@@ -908,7 +970,7 @@ const bereit = k => mastery(einheitenIn({klausur:k.id}));
 const probeTag = k => (k.plan.find(p => p.art === 'probe') || {}).tag;
 
 function startPlan(k, p){
-  const basis = {titel:p.titel, kinds:['K','M'], n:p.n || 15, zurueck:'#/klausuren/' + k.id, vorb:{k:k.id, tag:p.tag}};
+  const basis = {titel:p.titel, kinds:['M','E'], n:p.n || 15, zurueck:'#/klausuren/' + k.id, vorb:{k:k.id, tag:p.tag}};
   if (p.art === 'probe') return startProbe(k, p.tag);
   if (p.art === 'klausur'){ zahlenblatt(k); planAbhaken(k.id, p.tag, true); return viewVorbereitung(k.id); }
   if (p.art === 'faelle') return startSession(Object.assign(basis, {scope:{klausur:k.id, fall:true}}));
@@ -982,7 +1044,7 @@ function viewVorbereitung(id){
   <section class="section kv-zwei">
     <div class="panel kv-box"><div class="kasten-kopf">${GFX.mini('lampe')}<h3>Zahlenblatt</h3></div><table class="kv-tab">${k.zahlen.map(z => `<tr><td>${esc(z[0])}</td><td>${esc(z[1])}</td></tr>`).join('')}</table><button class="btn voll" data-mix="zahl">${ICON.target}Zahlen abfragen</button></div>
     <div class="panel kv-box"><div class="kasten-kopf">${GFX.mini('blatt')}<h3>Probeklausur</h3></div>
-      <p class="muted small">${probe.length} Aufgaben · ${probePkt} Punkte · ${k.probe.minuten} Minuten – wie die Mini-Probeklausur der Lernmappe. Antwort schreiben, mit der Musterlösung vergleichen, ehrlich bewerten. Am Ende gibt es eine Note.</p>
+      <p class="muted small">${probe.length} Aufgaben · ${probePkt} Punkte · ${k.probe.minuten} Minuten – die Mini-Probeklausur der Lernmappe. Antworten in Stichpunkten eintippen, die Seite wertet automatisch aus und gibt eine Note.</p>
       ${ergebnisse.length ? `<ul class="kv-ergebnisse">${ergebnisse.map(r => `<li><b style="color:${notenFarbe(r.note)}">Note ${r.note}</b><span>${r.datum} · ${r.punkte} von ${r.max} Punkten · ${r.prozent} %</span></li>`).join('')}</ul>` : probeTag(k) ? `<p class="small muted">Noch nicht geschrieben – im Lernplan am ${tagKurz(probeTag(k))}.</p>` : ''}
       <button class="btn primary voll" id="kvProbe">${ICON.exam}Probeklausur starten</button></div>
   </section>
@@ -996,13 +1058,13 @@ function viewVorbereitung(id){
   app.querySelectorAll('[data-plan]').forEach(b => b.onclick = () => startPlan(k, k.plan.find(p => p.tag === b.dataset.plan)));
   app.querySelectorAll('[data-hk]').forEach(b => b.onclick = () => { planAbhaken(k.id, b.dataset.hk, !v.tage[b.dataset.hk]); viewVorbereitung(id); });
   app.querySelectorAll('[data-lern]').forEach(b => b.onclick = () => lernseite(k, b.dataset.lern.split(',')));
-  app.querySelectorAll('[data-ueb]').forEach(b => b.onclick = () => startSession({titel: themaOf(b.dataset.ueb).name, kinds:['K','M'], scope:{klausur:k.id, themen:[b.dataset.ueb]}, n:12, zurueck}));
+  app.querySelectorAll('[data-ueb]').forEach(b => b.onclick = () => startSession({titel: themaOf(b.dataset.ueb).name, kinds:['M','E'], scope:{klausur:k.id, themen:[b.dataset.ueb]}, n:12, zurueck}));
   app.querySelectorAll('[data-mix]').forEach(b => b.onclick = () => {
     const m = b.dataset.mix, scope = {klausur:k.id};
     if (m === 'fall') scope.fall = true;
     if (m === 'zahl') scope.zahl = true;
     if (m === 'schwach' && !einheitenIn(scope).some(e => S.box[e.id] && S.box[e.id].b <= 2)) return toast('Noch keine Schwächen – erst ein paar Fragen üben.');
-    startSession({titel: {alle:'Alles gemischt', fall:'Fallaufgaben', zahl:'Zahlen-Drill', schwach:'Meine Schwächen'}[m], kinds:['K','M'], scope, n: m === 'zahl' ? 12 : 15, nurSchwach: m === 'schwach', zurueck});
+    startSession({titel: {alle:'Alles gemischt', fall:'Fallaufgaben', zahl:'Zahlen-Drill', schwach:'Meine Schwächen'}[m], kinds:['M','E'], scope, n: m === 'zahl' ? 12 : 15, nurSchwach: m === 'schwach', zurueck});
   });
   $('#kvProbe').onclick = () => startProbe(k);
   app.querySelectorAll('[data-sc]').forEach(c => c.onchange = () => { if (c.checked) v.check[c.dataset.sc] = Date.now(); else delete v.check[c.dataset.sc]; save(); viewVorbereitung(id); });

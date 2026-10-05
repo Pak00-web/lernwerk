@@ -12,6 +12,8 @@ class Lokal extends ResourceLoader {
     return Promise.resolve(Buffer.from(''));   // Schriften, CDN, Supabase: leer
   }
 }
+const findeE = (E, d) => { const qt = d.querySelector('.q').textContent.trim(); return E.find(x => x.typ === 'E' && x.frage.replace(/\*\*/g, '') === qt); };
+const loesungE = e => e.wert != null ? String(e.wert).replace('.', ',') : e.begriffe.map(b => b[1].trim()).join(', ');
 (async () => {
   const vc = new VirtualConsole(); const jsFehler = [];
   vc.on('jsdomError', e => { if (!/Not implemented/.test(e.message)) jsFehler.push(e.message + ' ' + String((e.detail && e.detail.stack) || e.stack || '').split('\n').slice(0, 3).join(' ')); });
@@ -62,7 +64,10 @@ class Lokal extends ResourceLoader {
     if (process.env.DBG) console.log('R', runden, (d.querySelector('.sbar .mono') || {}).textContent, !!d.querySelector('#flip'), !!d.querySelector('.opt'), ((d.querySelector('.q') || {}).textContent || '').slice(0, 40));
     const tagTxt = (d.querySelector('.qhead .tag') || {}).textContent || '';
     if (!/Ausbildungsvertrag/.test(tagTxt)) nurKlausur = false;
-    if (d.querySelector('#flip')){ await klick('#flip'); await klick('[data-r="2"]'); await warte(450); }
+    if (d.querySelector('#flip')){ ok(false, 'Karteikarte in der Klausur-Vorbereitung'); break; }
+    else if (d.querySelector('#ein')){ const e = findeE(E, d); if (!e){ ok(false, 'Eingabe-Frage nicht gefunden'); break; } d.querySelector('#ein').value = loesungE(e); await klick('#check');
+      if (process.env.SNAP && !global.snap){ global.snap = 1; fs.writeFileSync(path.join(ROOT, 'snap-e.html'), '<!doctype html>' + d.documentElement.outerHTML.replace(/<script[\s\S]*?<\/script>/g, '')); }
+      if (!d.querySelector('.feedback.ok')){ ok(false, 'Musterantwort nicht erkannt: ' + e.id); break; } await klick('#check'); }
     else if (d.querySelector('.opt')){   // richtige Optionen über den Fragetext finden
       const qt = d.querySelector('.q').textContent.trim(), e = E.find(x => x.typ === 'M' && x.frage.replace(/\*\*/g, '') === qt);
       if (!e) { ok(false, 'Frage nicht gefunden: ' + qt); break; }
@@ -93,8 +98,9 @@ class Lokal extends ResourceLoader {
   await klick('#kvProbe');
   ok(w.location.hash === '#/pruefung', 'Probeklausur startet');
   let n = 0;
-  while (d.querySelector('#show') && n < 20){ n++; d.querySelector('#ta').value = 'Antwort'; await klick('#show'); await klick('[data-p="1"]'); }
-  ok(n === 12, '12 Aufgaben beantwortet');
+  while (d.querySelector('#ein') && n < 20){ n++; d.querySelector('#ein').value = loesungE(findeE(E, d)); await klick('#check'); }
+  ok(n === 12, '12 Aufgaben als Eingabe beantwortet');
+  ok(!E.some(e => e.typ === 'K'), 'keine Karteikarten mehr');
   ok(d.querySelector('.gradebig') && d.querySelector('.gradebig').textContent.includes('1'), 'Note 1 bei voller Punktzahl');
   ok(w.LW.stand().vorb['wbl-k1'].tage[k.plan.find(p => p.art === 'probe').tag], 'Probeklausur-Schritt im Lernplan abgehakt');
   await klick('#home');

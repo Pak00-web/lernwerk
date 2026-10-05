@@ -1,7 +1,7 @@
 /* Lernwerk – Klausur-Vorbereitung
    Eigener Bereich je angekündigter Klausur: eigener Lernplan, eigene Lernseiten, eigene Fragen.
    Die Fragen hier stehen NICHT im allgemeinen Fragenpool (Fächer, Üben, Games) – sie bereiten nur auf diese eine Klausur vor.
-   Typen wie in fragen.js: K = Karteikarte, M = Multiple Choice. fall:true = Fallaufgabe, zahl:true = Zahlen-Drill, probe:true = nur Probeklausur. */
+   Typen: M = Multiple Choice, E = Eingabe (Stichpunkte mit begriffe/mind oder Zahl mit wert/einheit). Keine Karteikarten. fall:true = Fallaufgabe, zahl:true = Zahlen-Drill, probe:true = nur Probeklausur. */
 (function () {
   const L = [];
 
@@ -9,11 +9,24 @@
   const E = [];
   const K = (id, thema, frage, antwort, quelle, punkte = 2, extra = {}) => E.push({ id: 'k1-' + id, thema: 'k1-' + thema, typ: 'K', frage, antwort, quelle, punkte, ...extra });
   const M = (id, thema, frage, optionen, quelle, punkte = 2, extra = {}) => E.push({ id: 'k1-' + id, thema: 'k1-' + thema, typ: 'M', frage, optionen, quelle, punkte, ...extra });
+  // Eingabe: Stichpunkte (begriffe + mind) oder Zahl (wert + einheit)
+  const EI = (id, thema, frage, begriffe, mind, antwort, quelle, punkte = 3, extra = {}) => E.push({ id: 'k1-' + id, thema: 'k1-' + thema, typ: 'E', frage, begriffe, mind, antwort, quelle, punkte, ...extra });
+  const EZ = (id, thema, frage, wert, einheit, antwort, quelle, punkte = 2, extra = {}) => E.push({ id: 'k1-' + id, thema: 'k1-' + thema, typ: 'E', frage, wert, einheit, antwort, quelle, punkte, zahl: true, ...extra });
   const LM = s => 'WBL · Lernmappe Klausur 1, S. ' + s;
+  // Stichwortlisten (klein, ohne Umlaute: ä = ae …). Ein Begriff zählt, wenn eines seiner Stichworte in der Antwort vorkommt.
+  const S_BET = [['Auszubildender lernt', 'lernt', 'lernen', 'erlernt', 'lernende'], ['Ausbildender = Betrieb / Vertragspartner', 'betrieb', 'vertragspartner', 'unternehmen', 'firma'], ['Ausbilder = Person, die ausbildet', 'person', 'ausbildet', 'betreu', 'verantwortlich', 'mitarbeiter']];
+  const S_DUAL = [['zwei Lernorte', 'zwei', ' 2 ', 'beide', 'dual'], ['Betrieb (Praxis)', 'betrieb', 'praxis', 'praktisch'], ['Berufsschule (Theorie)', 'schule', 'theorie', 'theoretisch']];
+  const S_IHK = [['Vertrag prüfen', 'vertrag'], ['Eignung von Betrieb/Ausbilder prüfen', 'eignung', 'geeignet', 'ausbildungsstaette'], ['ins Verzeichnis eintragen', 'verzeichnis', 'eintrag', 'registr'], ['Ausbildung überwachen', 'ueberwach', 'kontroll'], ['Prüfungen organisieren', 'pruefungen', 'pruefung organis', 'abschlusspruefung', 'zwischenpruefung'], ['Prüfungsausschüsse einsetzen', 'ausschuss', 'ausschuesse'], ['Verkürzung/Verlängerung', 'verkuerz', 'verlaenger'], ['Anlaufstelle bei Problemen', 'berat', 'anlauf', 'problem', 'hilf']];
+  const S_VERTRAG = [['Ausbildungsberuf', 'beruf', 'bezeichnung'], ['Ziel und Gliederung', 'ziel', 'gliederung'], ['Beginn', 'beginn', 'start'], ['Dauer', 'dauer der ausbildung', 'ausbildungsdauer', 'dauer'], ['Maßnahmen außerhalb', 'ausserhalb', 'massnahme', 'extern', 'ueberbetrieb'], ['tägliche Arbeitszeit', 'arbeitszeit'], ['Probezeit', 'probezeit'], ['Vergütung', 'verguetung', 'gehalt', 'lohn', 'geld'], ['Urlaub', 'urlaub'], ['Kündigung', 'kuendig'], ['Tarifverträge', 'tarif', 'betriebsvereinbarung'], ['Ausbildungsnachweis', 'nachweis', 'berichtsheft'], ['Name und Anschrift', 'name', 'anschrift', 'adresse']];
+  const S_AZUBI = [['Lernpflicht', 'lern'], ['Sorgfaltspflicht', 'sorgfalt', 'sorgfaeltig'], ['Gehorsamspflicht / Weisungen', 'gehorsam', 'weisung', 'anweisung'], ['Schweigepflicht', 'schweig', 'geheim', 'verschwieg'], ['Berichtsheft führen', 'bericht', 'nachweis'], ['Berufsschule besuchen', 'schul', 'teilnahme', 'teilnehmen'], ['Wettbewerbsverbot', 'wettbewerb', 'konkurrenz']];
+  const S_BETRIEB = [['Ausbildungspflicht', 'ausbildungspflicht', 'ausbilden', 'vermitteln', 'beibringen'], ['Vergütungspflicht', 'verguet', 'bezahl', 'lohn', 'geld', 'gehalt'], ['Freistellungspflicht', 'freistell', 'frei stellen', 'freigeben'], ['Ausbildungsmittel kostenlos', 'mittel', 'kostenlos', 'material', 'werkzeug', 'arbeitsmittel'], ['Fürsorge und Schutz', 'fuersorge', 'schutz'], ['Zeugnis', 'zeugnis']];
+  const S_PROBE = [['mindestens 1 Monat', '1 monat', 'einen monat', 'ein monat', '1 bis 4', '1 4 monat'], ['höchstens 4 Monate', '4 monat', 'vier monat', 'bis 4'], ['ohne Kündigungsfrist', 'frist', 'jederzeit', 'sofort', 'fristlos'], ['ohne Grund', 'grund', 'grundlos'], ['schriftlich', 'schriftlich']];
+  const S_JZEIT = [['8 Std. pro Tag', '8'], ['40 Std. pro Woche', '40'], ['5 Tage pro Woche', '5', 'fuenf'], ['30 Min. Pause ab mehr als 4,5 Std.', '30'], ['60 Min. Pause ab mehr als 6 Std.', '60'], ['12 Std. Freizeit', '12']];
+  const S_URLAUB = [['unter 16: 30 Werktage', '30'], ['unter 17: 27 Werktage', '27'], ['unter 18: 25 Werktage', '25']];
   const B160 = 'WBL · Buch S. 157–160 (Unterricht)', KARIN = 'WBL · Arbeitsblatt S. 16–17 Karin (Unterricht)';
 
   /* ---- 1. Beteiligte ---- */
-  K('b1', 'beteiligte', 'Erkläre den Unterschied zwischen **Auszubildendem**, **Ausbildendem** und **Ausbilder**.', '- **Auszubildender:** lernt einen anerkannten Ausbildungsberuf\n- **Ausbildender:** der Ausbildungsbetrieb – Vertragspartner des Azubis, verantwortlich für die ordnungsgemäße Ausbildung\n- **Ausbilder:** die konkrete Person im Betrieb, die ausbildet – fachlich und persönlich geeignet', LM(3), 3);
+  EI('b1', 'beteiligte', 'Erkläre den Unterschied zwischen **Auszubildendem**, **Ausbildendem** und **Ausbilder**.', S_BET, 3, '- **Auszubildender:** lernt einen anerkannten Ausbildungsberuf\n- **Ausbildender:** der Ausbildungsbetrieb – Vertragspartner des Azubis, verantwortlich für die ordnungsgemäße Ausbildung\n- **Ausbilder:** die konkrete Person im Betrieb, die ausbildet – fachlich und persönlich geeignet', LM(3), 3);
   M('b2', 'beteiligte', 'Wer ist der **Ausbildende**?', [
     ['Der Ausbildungsbetrieb – der Vertragspartner des Azubis', true, 'Der Ausbildende schließt den Vertrag und trägt die Verantwortung.'],
     ['Die Person, die im Betrieb ausbildet', false, 'Das ist der **Ausbilder**.'],
@@ -38,8 +51,8 @@
   ], LM(3));
 
   /* ---- 2. Duale Ausbildung ---- */
-  K('d1', 'dual', 'Warum heißt die Ausbildung **dual**?', 'Sie findet an **zwei Lernorten** statt: im **Ausbildungsbetrieb** (Praxis) und in der **Berufsschule** (Theorie).', LM(4), 2);
-  K('d2', 'dual', 'Welche Aufgaben haben **Betrieb** und **Berufsschule**?', '- **Betrieb:** praktische Ausbildung – fachpraktische Kenntnisse, Fertigkeiten und Fähigkeiten; setzt die Ausbildungsordnung mit dem betrieblichen Ausbildungsplan um\n- **Berufsschule:** fachtheoretische Grundlagen, Lern- und Arbeitstechniken, berufsbezogene Allgemeinbildung', LM(4), 4);
+  EI('d1', 'dual', 'Warum heißt die Ausbildung **dual**? Erkläre kurz.', S_DUAL, 3, 'Sie findet an **zwei Lernorten** statt: im **Ausbildungsbetrieb** (Praxis) und in der **Berufsschule** (Theorie).', LM(4), 2);
+  EI('d2', 'dual', 'Welche Aufgaben haben **Betrieb** und **Berufsschule**? Nenne je eine.', [['Betrieb: Praxis', 'praxis', 'praktisch', 'fertigkeit'], ['Schule: Theorie', 'theorie', 'theoretisch'], ['Lern- und Arbeitstechniken', 'technik'], ['Allgemeinbildung', 'allgemein']], 2, '- **Betrieb:** praktische Ausbildung – fachpraktische Kenntnisse, Fertigkeiten und Fähigkeiten; setzt die Ausbildungsordnung mit dem betrieblichen Ausbildungsplan um\n- **Berufsschule:** fachtheoretische Grundlagen, Lern- und Arbeitstechniken, berufsbezogene Allgemeinbildung', LM(4), 3);
   M('d3', 'dual', 'Wofür gibt es **überbetriebliche Ausbildungsstätten**?', [
     ['Sie vermitteln Inhalte, die der Betrieb selbst nicht vermitteln kann', true, 'Sie ergänzen die Ausbildung im Betrieb.'],
     ['Sie ersetzen die Berufsschule', false, 'Sie ergänzen den Betrieb, nicht die Schule.'],
@@ -58,7 +71,7 @@
   ], LM(4));
 
   /* ---- 3. IHK ---- */
-  K('i1', 'ihk', 'Nenne **fünf Aufgaben der IHK** als zuständige Stelle.', '- prüft den **Ausbildungsvertrag**\n- prüft die Eignung der **Ausbildungsstätte** und des **Ausbilders**\n- trägt das Ausbildungsverhältnis ins **Verzeichnis** ein\n- **überwacht** die Ausbildung\n- organisiert **Prüfungen**, setzt **Prüfungsausschüsse** ein\n- entscheidet über **Verkürzung/Verlängerung**\n- **Anlaufstelle** bei Problemen', LM(5), 5);
+  EI('i1', 'ihk', 'Nenne **fünf Aufgaben der IHK** als zuständige Stelle.', S_IHK, 5, '- prüft den **Ausbildungsvertrag**\n- prüft die Eignung der **Ausbildungsstätte** und des **Ausbilders**\n- trägt das Ausbildungsverhältnis ins **Verzeichnis** ein\n- **überwacht** die Ausbildung\n- organisiert **Prüfungen**, setzt **Prüfungsausschüsse** ein\n- entscheidet über **Verkürzung/Verlängerung**\n- **Anlaufstelle** bei Problemen', LM(5), 5);
   M('i2', 'ihk', 'Was gehört zu den Aufgaben der IHK? (mehrere richtig)', [
     ['Prüft, ob der Ausbildungsvertrag den Vorgaben entspricht', true, 'Richtig.'],
     ['Überwacht die Ausbildung', true, 'Richtig.'],
@@ -71,7 +84,11 @@
     ['Der Ausbilder allein', false, 'Er kann es beantragen, entscheiden tut die IHK.'],
     ['Die Berufsschule', false, 'Nein.'],
   ], LM(5));
-  K('i4', 'ihk', 'Fasse die Aufgaben der IHK in **fünf Verben** zusammen (Merksatz).', 'Die IHK **prüft, registriert, überwacht, berät** und **organisiert Prüfungen**.', LM(5), 2);
+  M('i4', 'ihk', 'Welcher Merksatz fasst die Aufgaben der IHK zusammen?', [
+    ['Die IHK prüft, registriert, überwacht, berät und organisiert Prüfungen', true, 'Merksatz aus der Lernmappe.'],
+    ['Die IHK unterrichtet, benotet und zahlt die Vergütung', false, 'Unterricht = Berufsschule, Vergütung = Betrieb.'],
+    ['Die IHK stellt Azubis ein und kündigt sie', false, 'Das macht der Ausbildende.'],
+  ], LM(5));
   M('i5', 'ihk', 'Ein Azubi hat ernste Probleme mit seinem Betrieb. Wer ist eine wichtige **Anlaufstelle**?', [
     ['Die IHK', true, 'Sie ist bei Problemen in der Ausbildung eine wichtige Anlaufstelle.'],
     ['Das Finanzamt', false, 'Hat mit der Ausbildung nichts zu tun.'],
@@ -79,7 +96,7 @@
   ], LM(5));
 
   /* ---- 4. Ausbildungsvertrag ---- */
-  K('v1', 'vertrag', 'Nenne **mindestens acht** wesentliche Inhalte des Berufsausbildungsvertrags.', '- Name und Anschrift des Azubis (und des Ausbildenden)\n- Bezeichnung des Ausbildungsberufs\n- Art, Ziel, sachliche und zeitliche Gliederung\n- Beginn und Dauer\n- Ausbildungsmaßnahmen außerhalb des Betriebs\n- regelmäßige tägliche Arbeitszeit\n- Dauer der **Probezeit**\n- Höhe und Zahlungstermin der **Vergütung**\n- **Urlaub**\n- Kündigungsvoraussetzungen\n- Hinweis auf Tarifverträge/Betriebsvereinbarungen\n- Form des Ausbildungsnachweises', LM(6), 5);
+  EI('v1', 'vertrag', 'Nenne **mindestens acht** wesentliche Inhalte des Berufsausbildungsvertrags.', S_VERTRAG, 8, '- Name und Anschrift des Azubis (und des Ausbildenden)\n- Bezeichnung des Ausbildungsberufs\n- Art, Ziel, sachliche und zeitliche Gliederung\n- Beginn und Dauer\n- Ausbildungsmaßnahmen außerhalb des Betriebs\n- regelmäßige tägliche Arbeitszeit\n- Dauer der **Probezeit**\n- Höhe und Zahlungstermin der **Vergütung**\n- **Urlaub**\n- Kündigungsvoraussetzungen\n- Hinweis auf Tarifverträge/Betriebsvereinbarungen\n- Form des Ausbildungsnachweises', LM(6), 5);
   M('v2', 'vertrag', 'Was muss im Ausbildungsvertrag stehen? (mehrere richtig)', [
     ['Dauer der Probezeit', true, 'Pflichtangabe.'],
     ['Höhe und Zahlungstermin der Vergütung', true, 'Pflichtangabe.'],
@@ -105,15 +122,20 @@
   ], LM(6));
 
   /* ---- 5. Rechte und Pflichten ---- */
-  K('p1', 'pflichten', 'Nenne **fünf Pflichten des Auszubildenden**.', '- **Lernpflicht**\n- **Sorgfaltspflicht** (Arbeitsmittel sorgfältig behandeln)\n- **Gehorsamspflicht** (berechtigte Weisungen befolgen)\n- **Schweigepflicht** (Betriebsgeheimnisse)\n- **Ausbildungsnachweis** (Berichtsheft) führen\n- Teilnahme an **Berufsschule** und Ausbildungsmaßnahmen', LM(7), 5);
-  K('p2', 'pflichten', 'Nenne **vier Pflichten des Ausbildenden**.', '- **Ausbildungspflicht** (Kenntnisse, Fertigkeiten, Fähigkeiten vermitteln)\n- **Vergütungspflicht**\n- **Freistellungspflicht** (Berufsschule, Prüfungen)\n- **Ausbildungsmittel kostenlos** bereitstellen\n- so ausbilden, dass das Ziel erreicht wird\n- **Fürsorge und Schutz**', LM(7), 4);
+  EI('p1', 'pflichten', 'Nenne **fünf Pflichten des Auszubildenden**.', S_AZUBI, 5, '- **Lernpflicht**\n- **Sorgfaltspflicht** (Arbeitsmittel sorgfältig behandeln)\n- **Gehorsamspflicht** (berechtigte Weisungen befolgen)\n- **Schweigepflicht** (Betriebsgeheimnisse)\n- **Ausbildungsnachweis** (Berichtsheft) führen\n- Teilnahme an **Berufsschule** und Ausbildungsmaßnahmen\n- aus dem Unterricht: **Wettbewerbsverbot**', LM(7), 5);
+  EI('p2', 'pflichten', 'Nenne **vier Pflichten des Ausbildenden** (Betrieb).', S_BETRIEB, 4, '- **Ausbildungspflicht** (Kenntnisse, Fertigkeiten, Fähigkeiten vermitteln)\n- **Vergütungspflicht**\n- **Freistellungspflicht** (Berufsschule, Prüfungen)\n- **Ausbildungsmittel kostenlos** bereitstellen\n- **Fürsorge und Schutz**\n- aus dem Unterricht: **Zeugnispflicht**', LM(7), 4);
   M('p3', 'pflichten', 'Welche Paare gehören zusammen? (Pflicht des Azubis ↔ Pflicht des Betriebs)', [
     ['Lernpflicht ↔ Ausbildungspflicht', true, 'Merke als Paar.'],
     ['Berufsschulbesuch ↔ Freistellung', true, 'Merke als Paar.'],
     ['Sorgfältiger Umgang ↔ Ausbildungsmittel bereitstellen', true, 'Merke als Paar.'],
     ['Schweigepflicht ↔ Vergütungspflicht', false, 'Diese beiden haben nichts miteinander zu tun.'],
   ], LM(7), 3, { mehrfach: true });
-  K('p4', 'pflichten', 'Welche Pflichten kennst du **zusätzlich aus dem Unterricht** (Buch)?', '- Azubi: **Wettbewerbsverbot** – dem Betrieb keine Konkurrenz machen (z. B. Schwarzarbeit)\n- Betrieb: **Zeugnispflicht** (Zeugnis am Ende) und **Fürsorgepflicht** (nur ausbildungsdienliche, angemessene Arbeiten)', B160 + ' Aufg. 3/4', 3);
+  M('p4', 'pflichten', 'Welche Pflichten kennst du **zusätzlich aus dem Unterricht** (Buch)? (mehrere richtig)', [
+    ['Wettbewerbsverbot (Azubi)', true, 'Dem Betrieb keine Konkurrenz machen, z. B. Schwarzarbeit.'],
+    ['Zeugnispflicht (Betrieb)', true, 'Am Ende der Ausbildung gibt es ein Zeugnis.'],
+    ['Fürsorgepflicht (Betrieb)', true, 'Nur ausbildungsdienliche, angemessene Arbeiten.'],
+    ['Überstundenpflicht (Azubi)', false, 'Gibt es nicht.'],
+  ], B160 + ' Aufg. 3/4', 3, { mehrfach: true });
   M('p5', 'pflichten', 'Ein Azubi kopiert sein Berichtsheft komplett von jemand anderem. Was stimmt?', [
     ['Er verletzt seine Pflicht, den Ausbildungsnachweis ordnungsgemäß zu führen', true, 'Fall 6 der Lernmappe.'],
     ['Erlaubt, solange der Inhalt stimmt', false, 'Er muss es selbst ordnungsgemäß führen.'],
@@ -146,7 +168,7 @@
   ], B160 + ' Aufg. 5e', 2, { fall: true });
 
   /* ---- 6. Probezeit ---- */
-  K('z1', 'probezeit', 'Erkläre die Regeln zur **Probezeit**.', '- mindestens **1 Monat**, höchstens **4 Monate**\n- beide Seiten können **jederzeit** kündigen\n- **ohne Kündigungsfrist** und **ohne Grund**\n- Kündigung immer **schriftlich**', LM(8), 4);
+  EI('z1', 'probezeit', 'Erkläre die Regeln zur **Probezeit** (Dauer und Kündigung).', S_PROBE, 4, '- mindestens **1 Monat**, höchstens **4 Monate**\n- beide Seiten können **jederzeit** kündigen\n- **ohne Kündigungsfrist** und **ohne Grund**\n- Kündigung immer **schriftlich**', LM(8), 4);
   M('z2', 'probezeit', 'Wie lange dauert die Probezeit?', [
     ['Mindestens 1, höchstens 4 Monate', true, 'Zahlenanker: 1 bis 4 Monate.'],
     ['Genau 6 Monate', false, 'Das ist die Probezeit bei vielen Arbeitsverträgen, nicht in der Ausbildung.'],
@@ -168,10 +190,14 @@
     ['Ja – in der Probezeit reicht mündlich', false, 'Auch in der Probezeit schriftlich.'],
     ['Ja, wenn ein Zeuge dabei war', false, 'Schriftform ist Pflicht.'],
   ], B160 + ' Aufg. 7c', 2, { fall: true });
-  K('z6', 'probezeit', 'Wozu dient die Probezeit?', 'Beide Seiten prüfen, ob **Ausbildung, Beruf und Zusammenarbeit passen**: Der Betrieb prüft die Eignung des Azubis, der Azubi prüft, ob Beruf und Betrieb zu ihm passen.', LM(8), 2);
+  M('z6', 'probezeit', 'Wozu dient die Probezeit?', [
+    ['Beide prüfen, ob Ausbildung, Beruf und Zusammenarbeit passen', true, 'Der Betrieb prüft die Eignung, der Azubi, ob Beruf und Betrieb zu ihm passen.'],
+    ['Der Azubi arbeitet ohne Vergütung zur Probe', false, 'Auch in der Probezeit gibt es Vergütung.'],
+    ['Die IHK testet den Azubi', false, 'Die IHK ist daran nicht beteiligt.'],
+  ], LM(8));
 
   /* ---- 7. Kündigung nach der Probezeit ---- */
-  K('n1', 'kuendigung', 'Erkläre den Unterschied zwischen Kündigung **während** und **nach** der Probezeit.', '- **Probezeit:** beide jederzeit, ohne Frist, ohne Grund, schriftlich\n- **Danach – Betrieb:** nur **fristlos aus wichtigem Grund**, schriftlich **mit Gründen**\n- **Danach – Azubi:** fristlos aus wichtigem Grund oder mit **4 Wochen Frist**, wenn er die Ausbildung aufgibt oder einen anderen Beruf lernen will', LM(9), 4);
+  EI('n1', 'kuendigung', 'Erkläre den Unterschied zwischen Kündigung **während** und **nach** der Probezeit.', [['Probezeit: jederzeit ohne Grund', 'jederzeit', 'ohne grund', 'grundlos', 'ohne frist'], ['danach nur aus wichtigem Grund', 'wichtig'], ['fristlos', 'fristlos'], ['Azubi: 4 Wochen bei Aufgabe/Berufswechsel', '4 wochen', 'vier wochen'], ['schriftlich mit Gründen', 'schriftlich', 'begruend', 'gruende']], 3, '- **Probezeit:** beide jederzeit, ohne Frist, ohne Grund, schriftlich\n- **Danach – Betrieb:** nur **fristlos aus wichtigem Grund**, schriftlich **mit Gründen**\n- **Danach – Azubi:** fristlos aus wichtigem Grund oder mit **4 Wochen Frist**, wenn er die Ausbildung aufgibt oder einen anderen Beruf lernen will', LM(9), 4);
   M('n2', 'kuendigung', 'Wie kann der **Betrieb** nach der Probezeit kündigen?', [
     ['Nur fristlos aus wichtigem Grund – schriftlich mit Angabe der Gründe', true, 'Eine normale Kündigung gibt es für den Betrieb nicht.'],
     ['Mit 4 Wochen Frist ohne Grund', false, 'Die 4 Wochen gelten nur für den Azubi.'],
@@ -204,7 +230,7 @@
   ], B160 + ' Aufg. 7b', 2, { fall: true });
 
   /* ---- 8. Jugendarbeitsschutz: Arbeitszeit, Pausen, Ruhe ---- */
-  K('j1', 'jarbschg', 'Nenne die wichtigsten **Arbeitszeit- und Pausenregeln** für Jugendliche.', '- höchstens **8 Std./Tag**, **40 Std./Woche**, **5 Tage**\n- Pause **30 Min.** bei mehr als 4,5 bis 6 Std.\n- Pause **60 Min.** bei mehr als 6 Std.\n- Pause zählt erst ab **15 Min.** am Stück\n- höchstens **4,5 Std.** ohne Pause\n- **12 Std.** Freizeit zwischen zwei Arbeitstagen\n- Arbeit nur zwischen **6 und 20 Uhr**', LM(10), 5);
+  EI('j1', 'jarbschg', 'Nenne die wichtigsten **Arbeitszeit- und Pausenregeln** für Jugendliche – mit Zahlen.', S_JZEIT, 5, '- höchstens **8 Std./Tag**, **40 Std./Woche**, **5 Tage**\n- Pause **30 Min.** bei mehr als 4,5 bis 6 Std.\n- Pause **60 Min.** bei mehr als 6 Std.\n- Pause zählt erst ab **15 Min.** am Stück\n- höchstens **4,5 Std.** ohne Pause\n- **12 Std.** Freizeit zwischen zwei Arbeitstagen\n- Arbeit nur zwischen **6 und 20 Uhr**', LM(10), 5);
   M('j2', 'jarbschg', 'Wie lange dürfen Jugendliche grundsätzlich arbeiten?', [
     ['8 Std. am Tag, 40 Std. pro Woche, 5 Tage', true, 'Zahlen-Merksatz 8 – 40 – 5.'],
     ['10 Std. am Tag, 48 Std. pro Woche', false, 'Zu viel für Jugendliche.'],
@@ -250,10 +276,15 @@
     ['Ja – sie arbeitet ja nur 8 Stunden', false, 'Die Schichtzeit ist das Problem.'],
     ['Ja – 7 bis 20 Uhr liegt im erlaubten Rahmen', false, 'Uhrzeit ok, Schichtzeit nicht.'],
   ], KARIN + ' Aufg. 4', 3, { fall: true });
-  K('j11', 'jarbschg', 'Was bedeutet der Zahlen-Merksatz **8 – 40 – 5 – 12**?', '**8** Std. pro Tag · **40** Std. pro Woche · **5** Tage pro Woche · **12** Std. Freizeit zwischen zwei Arbeitstagen', LM(10), 2, { zahl: true });
+  M('j11', 'jarbschg', 'Wofür steht die **12** im Zahlen-Merksatz 8 – 40 – 5 – 12?', [
+    ['12 Stunden Freizeit zwischen zwei Arbeitstagen', true, '8 Std./Tag · 40 Std./Woche · 5 Tage · 12 Std. Freizeit.'],
+    ['12 Werktage Urlaub', false, 'Urlaub: 30 / 27 / 25 Werktage.'],
+    ['12 Minuten Pause', false, 'Pausen: 30 bzw. 60 Minuten.'],
+    ['Höchstens 12 Stunden Schichtzeit', false, 'Schichtzeit höchstens 10 Std.'],
+  ], LM(10), 2, { zahl: true });
 
   /* ---- 9. Jugendarbeitsschutz: Urlaub, Schule, Schutz ---- */
-  K('u1', 'urlaub', 'Welche **Urlaubsansprüche** haben Jugendliche?', 'Stichtag: **Alter zu Beginn des Kalenderjahres**\n- unter 16 → **30 Werktage**\n- unter 17 → **27 Werktage**\n- unter 18 → **25 Werktage**', LM(11), 3, { zahl: true });
+  EI('u1', 'urlaub', 'Welche **Urlaubsansprüche** haben Jugendliche unter 16, unter 17 und unter 18 Jahren? (Werktage)', S_URLAUB, 3, 'Stichtag: **Alter zu Beginn des Kalenderjahres**\n- unter 16 → **30 Werktage**\n- unter 17 → **27 Werktage**\n- unter 18 → **25 Werktage**', LM(11), 3, { zahl: true });
   M('u2', 'urlaub', 'Ein Azubi ist am **1. Januar 16 Jahre** alt. Wie viel Urlaub bekommt er mindestens?', [
     ['27 Werktage', true, 'Er ist noch nicht 17 → 27 Werktage.'],
     ['30 Werktage', false, '30 gelten nur, wenn er noch nicht 16 ist.'],
@@ -284,7 +315,11 @@
     ['Für alle Azubis, egal wie alt', false, 'Nur unter 18.'],
     ['Nur für Schüler im Praktikum', false, 'Für alle Beschäftigten unter 18.'],
   ], LM(10));
-  K('u8', 'urlaub', 'Welche ärztliche Untersuchung schreibt das JArbSchG vor Beginn vor?', 'Die **Erstuntersuchung** – höchstens 14 Monate vor Beginn. Ohne sie darf der Jugendliche **nicht beschäftigt** werden. Im ersten Jahr folgt eine **Nachuntersuchung**.', KARIN + ' Aufg. 7', 2);
+  M('u8', 'urlaub', 'Welche ärztliche Untersuchung schreibt das JArbSchG **vor Beginn** vor?', [
+    ['Die Erstuntersuchung – ohne sie darf der Jugendliche nicht beschäftigt werden', true, 'Höchstens 14 Monate vor Beginn; im ersten Jahr folgt eine Nachuntersuchung.'],
+    ['Keine – nur bei gefährlichen Berufen', false, 'Die Erstuntersuchung gilt für alle Jugendlichen.'],
+    ['Ein Sehtest beim Optiker', false, 'Gemeint ist die ärztliche Erstuntersuchung.'],
+  ], KARIN + ' Aufg. 7');
   M('u9', 'urlaub', 'Karin (16) soll am Berufsschultag freiwillig für 20 € im Betrieb arbeiten. Zulässig?', [
     ['Nein – Freistellung für die Berufsschule, auch freiwillig nicht', true, 'Aus dem Unterricht (Karin Aufg. 5).'],
     ['Ja, wenn sie freiwillig zustimmt', false, 'Auch freiwillig nicht.'],
@@ -296,20 +331,38 @@
     ['Auf die Höhe der Vergütung', false, 'Spielt für den Arbeitsschutz keine Rolle.'],
   ], LM(11));
 
+  /* ---- Zahlen eintippen ---- */
+  EZ('e1', 'probezeit', 'Wie viele **Monate** darf die Probezeit **höchstens** dauern?', 4, 'Monate', 'Höchstens **4 Monate** (mindestens 1 Monat).', LM(8));
+  EZ('e2', 'probezeit', 'Wie viele **Monate** muss die Probezeit **mindestens** dauern?', 1, 'Monat', 'Mindestens **1 Monat** (höchstens 4 Monate).', LM(8));
+  EZ('e3', 'kuendigung', 'Ein Azubi will nach der Probezeit einen anderen Beruf lernen. Wie viele **Wochen** Kündigungsfrist gelten?', 4, 'Wochen', '**4 Wochen** – bei Aufgabe der Ausbildung oder Wechsel in einen anderen Beruf.', LM(9));
+  EZ('e4', 'jarbschg', 'Wie viele **Stunden** dürfen Jugendliche grundsätzlich **pro Tag** arbeiten?', 8, 'Stunden', 'Höchstens **8 Stunden** pro Tag.', LM(10));
+  EZ('e5', 'jarbschg', 'Wie viele **Stunden** dürfen Jugendliche grundsätzlich **pro Woche** arbeiten?', 40, 'Stunden', 'Höchstens **40 Stunden** pro Woche, an 5 Tagen.', LM(10));
+  EZ('e6', 'jarbschg', 'Ein Jugendlicher arbeitet **7 Stunden**. Wie viele **Minuten** Pause stehen ihm mindestens zu?', 60, 'Minuten', 'Mehr als 6 Std. Arbeit → **60 Minuten** Pause.', LM(10), 2, { fall: true });
+  EZ('e7', 'jarbschg', 'Kevin (17) arbeitet **5,5 Stunden**. Wie viele **Minuten** Pause muss er mindestens bekommen?', 30, 'Minuten', 'Mehr als 4,5 bis 6 Std. → **30 Minuten** Pause.', LM(12) + ' Fall 1', 2, { fall: true });
+  EZ('e8', 'jarbschg', 'Wie viele **Stunden** Freizeit müssen Jugendliche zwischen zwei Arbeitstagen mindestens haben?', 12, 'Stunden', 'Mindestens **12 Stunden**.', LM(10));
+  EZ('e9', 'jarbschg', 'Wie viele **Minuten** muss eine Unterbrechung mindestens dauern, damit sie als Ruhepause zählt?', 15, 'Minuten', 'Mindestens **15 Minuten** am Stück.', LM(10));
+  EZ('e10', 'jarbschg', 'Wie viele **Stunden** dürfen Jugendliche höchstens **am Stück ohne Pause** arbeiten?', 4.5, 'Stunden', 'Höchstens **4,5 Stunden**.', LM(10));
+  EZ('e11', 'jarbschg', 'Bis wie viel **Uhr** dürfen Jugendliche grundsätzlich höchstens arbeiten?', 20, 'Uhr', 'Grundsätzlich nur zwischen **6 und 20 Uhr**.', LM(10));
+  EZ('e12', 'jarbschg', 'Wie viele **Stunden** darf die Schichtzeit (Arbeit + Pausen) eines Jugendlichen höchstens betragen?', 10, 'Stunden', 'Höchstens **10 Stunden** (aus dem Unterricht, Karin Aufg. 4).', KARIN + ' Aufg. 4');
+  EZ('e13', 'urlaub', 'Ein Azubi ist am **1. Januar 15 Jahre** alt. Wie viele **Werktage** Urlaub bekommt er mindestens?', 30, 'Werktage', 'Noch nicht 16 → **30 Werktage**.', LM(11), 2, { fall: true });
+  EZ('e14', 'urlaub', 'Ein Azubi ist am **1. Januar 16 Jahre** alt. Wie viele **Werktage** Urlaub bekommt er mindestens?', 27, 'Werktage', 'Noch nicht 17 → **27 Werktage**.', LM(11), 2, { fall: true });
+  EZ('e15', 'urlaub', 'Eine Azubi ist am **1. Januar 17 Jahre** alt. Wie viele **Werktage** Urlaub bekommt sie mindestens?', 25, 'Werktage', 'Noch nicht 18 → **25 Werktage**.', LM(11), 2, { fall: true });
+  EZ('e16', 'urlaub', 'Ab **mehr als wie vielen** Unterrichtsstunden muss ein Jugendlicher (1× pro Woche) nach der Berufsschule nicht mehr in den Betrieb?', 5, 'Unterrichtsstunden', 'Bei **mehr als 5** Unterrichtsstunden (aus dem Unterricht, Karin Aufg. 3).', KARIN + ' Aufg. 3');
+
   /* ---- Probeklausur (S. 14, Lösungshinweise S. 15) – nur im Probeklausur-Modus ---- */
-  const P = (id, thema, frage, antwort, punkte) => K(id, thema, frage, antwort, LM('14/15') + ' Aufg. ' + id.slice(2), punkte, { probe: true });
-  P('pk1', 'dual', 'Erkläre in eigenen Worten, was eine **duale Ausbildung** ist.', 'Ausbildung an **zwei zentralen Lernorten**: im **Betrieb** für die Praxis und in der **Berufsschule** für Theorie und berufsbezogene Bildung.', 3);
-  P('pk2', 'beteiligte', 'Erkläre den Unterschied zwischen **Auszubildendem, Ausbildendem und Ausbilder**.', 'Auszubildender **lernt**; Ausbildender ist der **Betrieb/Vertragspartner**; Ausbilder ist die **verantwortliche Ausbildungsperson**.', 3);
-  P('pk3', 'vertrag', 'Nenne **mindestens acht** wesentliche Inhalte eines Berufsausbildungsvertrags.', 'Z. B. Ausbildungsberuf, Ziel und Gliederung, Beginn, Dauer, externe Maßnahmen, Arbeitszeit, Probezeit, Vergütung, Urlaub, Kündigungsregeln, Tarifhinweise, Ausbildungsnachweis.', 4);
-  P('pk4', 'pflichten', 'Nenne **fünf Pflichten des Auszubildenden**.', 'Z. B. Lernpflicht, Sorgfalt, Weisungen beachten, Schweigepflicht, Berichtsheft führen.', 3);
-  P('pk5', 'pflichten', 'Nenne **vier Pflichten des Ausbildenden**.', 'Z. B. ausbilden, Vergütung zahlen, freistellen, Ausbildungsmittel bereitstellen.', 3);
-  P('pk6', 'ihk', 'Nenne **fünf Aufgaben der IHK** als zuständige Stelle.', 'Vertrag/Eignung prüfen, registrieren, überwachen, Prüfungen organisieren, Prüfungsausschüsse einsetzen, über Verkürzung/Verlängerung entscheiden.', 3);
-  P('pk7', 'probezeit', 'Erkläre die **Regeln zur Probezeit**.', 'Mindestens **1**, höchstens **4 Monate**; in dieser Zeit **schriftliche** Kündigung **ohne Frist** und **ohne Grund** möglich.', 3);
-  P('pk8', 'kuendigung', 'Erkläre den Unterschied zwischen Kündigung **während** und **nach** der Probezeit.', 'Nach der Probezeit gelten strengere Voraussetzungen, besonders der **wichtige Grund** für eine fristlose Kündigung durch den Ausbildenden. Der Azubi kann zusätzlich mit **4 Wochen** Frist kündigen, wenn er die Ausbildung aufgibt oder den Beruf wechselt.', 3);
-  P('pk9', 'jarbschg', 'Nenne die wichtigsten **Arbeitszeit- und Pausenregeln** für Jugendliche.', 'Grundsätzlich **8 Std./Tag, 40 Std./Woche, 5 Tage**; **30 Min.** Pause bei mehr als 4,5 bis 6 Std., **60 Min.** bei mehr als 6 Std.; **12 Std.** Ruhezeit.', 4);
-  P('pk10', 'jarbschg', 'Ein **17-jähriger** Azubi arbeitet von **8:00 bis 16:00 Uhr** und bekommt nur **30 Minuten** Pause. Beurteile den Fall.', 'Nicht ausreichend: Er arbeitet mehr als 6 Stunden – für Jugendliche sind dann **60 Minuten** Pause vorgeschrieben.', 3);
-  P('pk11', 'urlaub', 'Welche **Urlaubsansprüche** gelten für Jugendliche unter 16, unter 17 und unter 18 Jahren?', 'Unter 16: **30**; unter 17: **27**; unter 18: **25 Werktage**.', 3);
-  P('pk12', 'pflichten', 'Warum darf der Betrieb einen Azubi nicht dauerhaft mit **ausbildungsfremden Tätigkeiten** beschäftigen?', 'Die Ausbildung dient dem **Ausbildungsziel** und muss die vorgeschriebenen beruflichen Inhalte vermitteln (**Ausbildungspflicht**).', 2);
+  const P = (id, thema, frage, begriffe, mind, antwort, punkte) => EI(id, thema, frage, begriffe, mind, antwort, LM('14/15') + ' Aufg. ' + id.slice(2), punkte, { probe: true });
+  P('pk1', 'dual', 'Erkläre in eigenen Worten, was eine **duale Ausbildung** ist.', S_DUAL, 3, 'Ausbildung an **zwei zentralen Lernorten**: im **Betrieb** für die Praxis und in der **Berufsschule** für Theorie und berufsbezogene Bildung.', 3);
+  P('pk2', 'beteiligte', 'Erkläre den Unterschied zwischen **Auszubildendem, Ausbildendem und Ausbilder**.', S_BET, 3, 'Auszubildender **lernt**; Ausbildender ist der **Betrieb/Vertragspartner**; Ausbilder ist die **verantwortliche Ausbildungsperson**.', 3);
+  P('pk3', 'vertrag', 'Nenne **mindestens acht** wesentliche Inhalte eines Berufsausbildungsvertrags.', S_VERTRAG, 8, 'Z. B. Ausbildungsberuf, Ziel und Gliederung, Beginn, Dauer, externe Maßnahmen, Arbeitszeit, Probezeit, Vergütung, Urlaub, Kündigungsregeln, Tarifhinweise, Ausbildungsnachweis.', 4);
+  P('pk4', 'pflichten', 'Nenne **fünf Pflichten des Auszubildenden**.', S_AZUBI, 5, 'Z. B. Lernpflicht, Sorgfalt, Weisungen beachten, Schweigepflicht, Berichtsheft führen.', 3);
+  P('pk5', 'pflichten', 'Nenne **vier Pflichten des Ausbildenden**.', S_BETRIEB, 4, 'Z. B. ausbilden, Vergütung zahlen, freistellen, Ausbildungsmittel bereitstellen.', 3);
+  P('pk6', 'ihk', 'Nenne **fünf Aufgaben der IHK** als zuständige Stelle.', S_IHK, 5, 'Vertrag/Eignung prüfen, registrieren, überwachen, Prüfungen organisieren, Prüfungsausschüsse einsetzen, über Verkürzung/Verlängerung entscheiden.', 3);
+  P('pk7', 'probezeit', 'Erkläre die **Regeln zur Probezeit**.', S_PROBE, 4, 'Mindestens **1**, höchstens **4 Monate**; in dieser Zeit **schriftliche** Kündigung **ohne Frist** und **ohne Grund** möglich.', 3);
+  P('pk8', 'kuendigung', 'Erkläre den Unterschied zwischen Kündigung **während** und **nach** der Probezeit.', [['Probezeit: jederzeit ohne Grund', 'jederzeit', 'ohne grund', 'grundlos', 'ohne frist'], ['danach nur aus wichtigem Grund', 'wichtig'], ['Azubi: 4 Wochen bei Aufgabe/Berufswechsel', '4 wochen', 'vier wochen']], 2, 'Nach der Probezeit gelten strengere Voraussetzungen, besonders der **wichtige Grund** für eine fristlose Kündigung durch den Ausbildenden. Der Azubi kann zusätzlich mit **4 Wochen** Frist kündigen, wenn er die Ausbildung aufgibt oder den Beruf wechselt.', 3);
+  P('pk9', 'jarbschg', 'Nenne die wichtigsten **Arbeitszeit- und Pausenregeln** für Jugendliche.', S_JZEIT, 5, 'Grundsätzlich **8 Std./Tag, 40 Std./Woche, 5 Tage**; **30 Min.** Pause bei mehr als 4,5 bis 6 Std., **60 Min.** bei mehr als 6 Std.; **12 Std.** Ruhezeit.', 4);
+  P('pk10', 'jarbschg', 'Ein **17-jähriger** Azubi arbeitet von **8:00 bis 16:00 Uhr** und bekommt nur **30 Minuten** Pause. Beurteile den Fall.', [['nicht ausreichend', 'nicht', 'unzulaessig', 'verstoss', 'zu wenig', 'zu kurz', 'falsch'], ['60 Minuten nötig', '60'], ['mehr als 6 Std. Arbeit', '6', 'sechs', '7.5', '7 5']], 2, 'Nicht ausreichend: Er arbeitet mehr als 6 Stunden – für Jugendliche sind dann **60 Minuten** Pause vorgeschrieben.', 3);
+  P('pk11', 'urlaub', 'Welche **Urlaubsansprüche** gelten für Jugendliche unter 16, unter 17 und unter 18 Jahren?', S_URLAUB, 3, 'Unter 16: **30**; unter 17: **27**; unter 18: **25 Werktage**.', 3);
+  P('pk12', 'pflichten', 'Warum darf der Betrieb einen Azubi nicht dauerhaft mit **ausbildungsfremden Tätigkeiten** beschäftigen?', [['Ausbildungsziel erreichen', 'ziel'], ['berufliche Inhalte vermitteln (Ausbildungspflicht)', 'ausbildungspflicht', 'vermitteln', 'inhalte', 'lernen', 'beruf']], 2, 'Die Ausbildung dient dem **Ausbildungsziel** und muss die vorgeschriebenen beruflichen Inhalte vermitteln (**Ausbildungspflicht**).', 2);
 
   L.push({
     id: 'wbl-k1', fach: 'wbl', titel: 'WBL-Klausur 1', untertitel: 'Ausbildung & Arbeitsrecht', datum: '2026-10-15',
