@@ -9,6 +9,7 @@ node test-sql.js          # Server-Logik, Engine-Regeln, Booster/Pity/Staub, KI-
 node test-ui.js           # echte Seite in jsdom, zwei Spieler A/B (ca. 2 Minuten)
 node sim.js [n]           # Balance Lernwerk Legends: KI gegen KI, Wissensvorteil, Bosse
 node sim-karte.js <boss>  # Einfluss einzelner Karten eines Boss-Decks
+node test-klausuren.js    # Klausur-Vorbereitung (#/klausuren): Lernplan, Übung, Probeklausur, Trennung vom allgemeinen Pool
 ```
 
 `SNAP=<Ordner> node test-ui.js` speichert zusätzlich DOM-Schnappschüsse (Sammlung, Booster, Lobby, Kampf) als HTML,

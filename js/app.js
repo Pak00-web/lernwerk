@@ -39,7 +39,12 @@ function md(s){
   return out;
 }
 const fachOf = id => D.faecher.find(f => f.id === id);
-const themaOf = id => D.themen.find(t => t.id === id);
+// Klausur-Vorbereitung (klausuren.js): eigene Themen und Fragen, getrennt vom allgemeinen Pool
+const KL = window.LW_KLAUSUREN || [];
+const KL_THEMEN = KL.flatMap(k => k.themen.map(t => Object.assign(t, {fach: k.fach, klausur: k.id})));
+KL.forEach(k => k.einheiten.forEach(e => { e.klausur = k.id; }));
+const klausurOf = id => KL.find(k => k.id === id);
+const themaOf = id => D.themen.find(t => t.id === id) || KL_THEMEN.find(t => t.id === id);
 const fachOfThema = tid => fachOf((themaOf(tid)||{}).fach);
 const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
 let zufall = Math.random; // für Duelle durch einen Seed ersetzbar, damit beide dieselben Zahlen bekommen
@@ -140,9 +145,12 @@ function streak(){
   while (S.days[dayKey(t)]) { n++; t -= 86400000; }
   return n;
 }
-const einheitenIn = (scope) => D.einheiten.filter(e => (!scope.themen || scope.themen.includes(e.thema)) && (!scope.fach || (themaOf(e.thema)||{}).fach === scope.fach));
+// scope.klausur: nur die Fragen dieser Klausur (Probeklausur-Aufgaben nur mit scope.probe), sonst der allgemeine Pool
+const einheitenIn = (scope) => scope.klausur
+  ? ((klausurOf(scope.klausur)||{}).einheiten||[]).filter(e => !!scope.probe === !!e.probe && (!scope.themen || scope.themen.includes(e.thema)) && (!scope.fall || e.fall) && (!scope.zahl || e.zahl))
+  : D.einheiten.filter(e => (!scope.themen || scope.themen.includes(e.thema)) && (!scope.fach || (themaOf(e.thema)||{}).fach === scope.fach));
 function mastery(list){ if (!list.length) return 0; return Math.round(list.reduce((s,e)=>s+boxOf(e.id),0) / (list.length*5) * 100); }
-const rechenIn = (scope) => { const set = new Set(); D.themen.forEach(t => { if (t.rechnen && (!scope.themen || scope.themen.includes(t.id)) && (!scope.fach || t.fach===scope.fach)) t.rechnen.forEach(r=>set.add(r)); }); return [...set]; };
+const rechenIn = (scope) => { const set = new Set(); if (scope.klausur) return []; D.themen.forEach(t => { if (t.rechnen && (!scope.themen || scope.themen.includes(t.id)) && (!scope.fach || t.fach===scope.fach)) t.rechnen.forEach(r=>set.add(r)); }); return [...set]; };
 
 /* ---------------- Rechenaufgaben ---------------- */
 const grp4 = s => String(s).replace(/\s/g,'').replace(/(.{4})(?=.)/g,'$1 ');
@@ -222,6 +230,7 @@ function route(still){
   if (SEITEN[h]){ session = null; exam = null; stopTimer(); return SEITEN[h](); }
   if (h.startsWith('#/fach/')) return viewFach(h.split('/')[2]);
   if (h === '#/klausur') return viewKlausurSetup();
+  if (h === '#/klausuren' || h.startsWith('#/klausuren/')){ session = null; exam = null; stopTimer(); const id = h.split('/')[2]; return id ? viewVorbereitung(id) : viewKlausuren(); }
   if (h === '#/abzeichen') return viewAbzeichen();
   if (window.LW_ROUTEN){ for (const [p, f] of Object.entries(window.LW_ROUTEN)) if (h.startsWith(p)) { session = null; exam = null; stopTimer(); spielOffen = h; return f(h); } }
   spielOffen = null;
@@ -236,7 +245,7 @@ const NAV = [
   ['#/', 'start', 'Startseite'], ['#/faecher', 'faecher', 'Fächer'],
   'Spielen', ['#/games', 'gamepadnav', 'Games'], ['#/rangliste', 'rang', 'Rangliste'],
   'Mein Lernen',
-  ['#/lernen', 'ueben', 'Üben'], ['#/karteikarten', 'karten', 'Karteikarten'], ['#/lernpfad', 'pfad', 'Lernpfad'], ['#/fortschritt', 'fortschritt', 'Fortschritt'], ['#/einstellungen', 'einst', 'Einstellungen'],
+  ['#/klausuren', 'klausur', 'Klausuren'], ['#/lernen', 'ueben', 'Üben'], ['#/karteikarten', 'karten', 'Karteikarten'], ['#/lernpfad', 'pfad', 'Lernpfad'], ['#/fortschritt', 'fortschritt', 'Fortschritt'], ['#/einstellungen', 'einst', 'Einstellungen'],
 ];
 const TABS = [['#/', 'start', 'Start'], ['#/faecher', 'faecher', 'Fächer'], ['#/games', 'gamepadnav', 'Games'], ['#/rangliste', 'rang', 'Rangliste'], ['#/mehr', 'mehr', 'Mehr']];
 function huelle(){
@@ -399,6 +408,8 @@ function feature(farbe, ico, titel, text, ziel, extra){
 function tipp(faellig, heute){
   const dran = window.LW_DUELL ? window.LW_DUELL.offen() : 0;
   if (dran) return `Du bist in ${dran} ${dran===1?'Duell':'Duellen'} dran!`;
+  const k = naechsteKlausur();
+  if (k && k.tage <= 14){ const p = planHeute(k.k); return `${k.k.titel} ${k.tage===0?'ist heute':k.tage===1?'ist morgen':'in '+k.tage+' Tagen'}${p && !planErledigt(k.k, p.tag) && p.art!=='klausur' ? ' – heute dran: ' + p.titel : ''}. Lernplan unter „Klausuren“.`; }
   if (heute < S.ziel) return `Noch ${S.ziel-heute} Antworten bis zum Tagesziel.`;
   if (faellig) return `${faellig} Einheiten sind zum Wiederholen fällig.`;
   return 'Tagesziel geschafft – Zeit für ein Zeitrennen!';
@@ -648,7 +659,7 @@ function renderSession(){
   if (s.i >= s.items.length) return renderSessionEnd();
   const it = s.items[s.i];
   app.innerHTML = `<div class="session">${sessionTop()}<div id="q" class="rein"></div></div>`;
-  $('#quit').onclick = () => { if (s.modus==='duell' && !confirm('Runde abbrechen? Du kannst sie später weiterspielen.')) return; session=null; go(s.modus==='duell' ? '#/duell' : '#/'); };
+  $('#quit').onclick = () => { if (s.modus==='duell' && !confirm('Runde abbrechen? Du kannst sie später weiterspielen.')) return; session=null; go(s.modus==='duell' ? '#/duell' : (s.cfg && s.cfg.zurueck) || '#/'); };
   if (s.modus==='rennen'){ if (!rennT) rennT = setInterval(rennenTick, 250); rennenTick(); }
   if (it.kind==='K') renderK(it.e); else if (it.kind==='M') renderM(it.e, false); else renderR(it.r, false);
 }
@@ -757,6 +768,7 @@ function renderSessionEnd(){
   if (s.modus==='rennen'){ rekord = s.richtig > S.stat.rennenBest; if (rekord) S.stat.rennenBest = s.richtig; zeile = 'Bestwert: '+S.stat.rennenBest+' richtige in 60 s'; }
   if (s.modus==='leben'){ rekord = s.richtig > S.stat.lebenBest; if (rekord) S.stat.lebenBest = s.richtig; zeile = 'Bestwert: '+S.stat.lebenBest+' richtige mit 3 Leben'; }
   if (s.modus){ save(); abzeichenPruefen(); }
+  if (s.cfg && s.cfg.vorb) planAbhaken(s.cfg.vorb.k, s.cfg.vorb.tag, true);
   const n = Math.max(1, gespielt); const p = Math.round(s.richtig/n*100);
   app.innerHTML = `<div class="session"><div class="panel end pop">
     <div class="eyebrow">${esc(s.titel)} ${s.modus?'vorbei':'geschafft'}</div>
@@ -767,7 +779,8 @@ function renderSessionEnd(){
   </div></div>`;
   FX.hochzaehlen($('#endN'), s.richtig); FX.hochzaehlen($('#endXP'), s.xp, 900);
   if (rekord && s.richtig){ FX.ton('level'); konfetti(160); } else if (p>=80 && s.richtig){ konfetti(110); }
-  $('#again').onclick = () => s.modus ? startSpiel(s.modus) : startSession(s.cfg); $('#home').onclick = () => { session=null; go('#/'); };
+  $('#again').onclick = () => s.modus ? startSpiel(s.modus) : startSession(s.cfg); $('#home').onclick = () => { session=null; go((s.cfg && s.cfg.zurueck) || '#/'); };
+  if (s.cfg && s.cfg.zurueck) $('#home').textContent = 'Zurück zur Klausur';
   session = null;
 }
 let keyHandler = null;
@@ -816,7 +829,7 @@ function renderExam(){
   if (x.i >= x.aufg.length) return finishExam();
   const it = x.aufg[x.i];
   app.innerHTML = `<div class="session"><div class="sbar"><button class="btn ghost" id="quit" aria-label="Klausur abbrechen">${ICON.x}</button><div class="dots" style="flex:1">${x.aufg.map((a,k)=>`<i class="${k<x.i?'done':''} ${k===x.i?'cur':''}"></i>`).join('')}</div><span class="timer" id="tm"></span></div><div id="eq"></div></div>`;
-  $('#quit').onclick = () => { if (confirm('Klausur abbrechen? Die Antworten gehen verloren.')){ exam=null; stopTimer(); go('#/'); } };
+  $('#quit').onclick = () => { if (confirm('Klausur abbrechen? Die Antworten gehen verloren.')){ const z = x.zurueck; exam=null; stopTimer(); go(z || '#/'); } };
   if (!timerT) timerT = setInterval(tick, 1000); tick();
   if (it.kind==='M') renderM(it.e, true);
   else if (it.kind==='R') renderR(it.r, true);
@@ -856,6 +869,7 @@ function finishExam(){
   logEintrag('klausur', 'Probe-Klausur ' + x.titel + ': Note ' + n[1]);
   addXP(prozent>=50 ? 50 : 15);
   exam = null;
+  if (x.vorb) planAbhaken(x.vorb.k, x.vorb.tag, true);
   app.innerHTML = `<div class="session">
   <div class="panel result-top pop" style="margin-top:24px">
     <div class="gradebig" style="background:${notenFarbe(n[1])}"><div><b>${n[1]}</b><small>${n[2]}</small></div></div>
@@ -866,8 +880,132 @@ function finishExam(){
   ${fehler.length?`<section class="section"><div class="section-head"><h2>Das solltest du wiederholen</h2><button class="btn primary" id="uebeF">${ICON.target}Diese ${fehler.length} Aufgaben üben</button></div><div class="stack">${fehler.map(a=>a.kind==='R'?`<div class="panel mist"><b>${esc(a.r.name)}</b><div class="small muted">Aufgabe: ${a.r.zeige||''} · richtige Lösung: <span class="mono">${esc(a.r.loesung)}</span></div></div>`:`<div class="panel mist"><b>${md(a.e.frage)}</b><div class="answer small">${a.e.typ==='M'?'Richtig: '+a.e.optionen.filter(o=>o[1]).map(o=>md(o[0])).join(' · '):md(a.e.antwort)}</div>${srcHtml(a.e.quelle)}</div>`).join('')}</div></section>`:'<p style="margin-top:24px" class="muted">Keine Fehler – perfekt!</p>'}
   <div class="row" style="margin-top:26px"><button class="btn" id="home">Zur Übersicht</button><button class="btn" id="neu">${ICON.exam}Neue Klausur</button></div></div>`;
   if (prozent>=50) konfetti(prozent>=81?180:110);
-  $('#home').onclick=()=>go('#/'); $('#neu').onclick=()=>go('#/klausur');
-  const uf=$('#uebeF'); if (uf) uf.onclick = () => { const items = fehler.map(a=>a.kind==='R'?{kind:'R',r:aufgabe(a.r.key)}:{kind:a.e.typ==='M'?'M':'K',e:a.e}); items.forEach(i=>{ if(i.e) delete i.e._order; }); session={titel:'Fehler aus der Klausur', items, i:0, richtig:0, xp:0, cfg:{titel:'Schwächen trainieren', kinds:['K','M'], scope:{}, n:15, nurSchwach:true}}; go('#/uebung'); };
+  $('#home').onclick=()=>go(x.zurueck || '#/'); $('#neu').onclick=()=>x.klausur ? startProbe(klausurOf(x.klausur)) : go('#/klausur');
+  if (x.zurueck) $('#home').textContent = 'Zurück zur Klausur';
+  const uf=$('#uebeF'); if (uf) uf.onclick = () => { const items = fehler.map(a=>a.kind==='R'?{kind:'R',r:aufgabe(a.r.key)}:{kind:a.e.typ==='M'?'M':'K',e:a.e}); items.forEach(i=>{ if(i.e) delete i.e._order; }); session={titel:'Fehler aus der Klausur', items, i:0, richtig:0, xp:0, cfg:{titel:'Schwächen trainieren', kinds:['K','M'], scope:x.scope || {}, n:15, nurSchwach:true, zurueck:x.zurueck}}; go('#/uebung'); };
+}
+
+/* ---------------- Klausur-Vorbereitung (eigener Bereich je Klausur, Daten aus klausuren.js) ---------------- */
+const WT = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+const datumVon = tag => new Date(tag + 'T12:00:00');
+const tagKurz = tag => { const d = datumVon(tag); return WT[d.getDay()] + ' ' + String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.'; };
+const tagLang = tag => { const d = datumVon(tag); return WT[d.getDay()] + ', ' + d.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'}); };
+const tageBis = tag => Math.round((datumVon(tag) - datumVon(dayKey())) / 86400000);
+const countText = t => t < 0 ? 'vorbei' : t === 0 ? 'heute' : t === 1 ? 'morgen' : 'in ' + t + ' Tagen';
+function vorbStand(id){ S.vorb = S.vorb || {}; return S.vorb[id] = S.vorb[id] || {tage:{}, check:{}}; }
+const planErledigt = (k, tag) => !!(S.vorb && S.vorb[k.id] && S.vorb[k.id].tage[tag]);
+function planAbhaken(kid, tag, an){
+  const v = vorbStand(kid), war = !!v.tage[tag];
+  if (an) v.tage[tag] = v.tage[tag] || Date.now(); else delete v.tage[tag];
+  save();
+  const k = klausurOf(kid), p = k && k.plan.find(x => x.tag === tag);
+  if (an && !war && p) logEintrag('ziel', k.titel + ': „' + p.titel + '“ erledigt');
+}
+// Lernplan-Schritt für heute; vor Planbeginn der erste Schritt, nach dem Plan keiner
+function planHeute(k){ const h = dayKey(); if (h < k.plan[0].tag) return k.plan[0]; return k.plan.find(p => p.tag === h) || null; }
+function naechsteKlausur(){ return KL.map(k => ({k, tage: tageBis(k.datum)})).filter(x => x.tage >= 0).sort((a,b) => a.tage - b.tage)[0] || null; }
+const bereit = k => mastery(einheitenIn({klausur:k.id}));
+const probeTag = k => (k.plan.find(p => p.art === 'probe') || {}).tag;
+
+function startPlan(k, p){
+  const basis = {titel:p.titel, kinds:['K','M'], n:p.n || 15, zurueck:'#/klausuren/' + k.id, vorb:{k:k.id, tag:p.tag}};
+  if (p.art === 'probe') return startProbe(k, p.tag);
+  if (p.art === 'klausur'){ zahlenblatt(k); planAbhaken(k.id, p.tag, true); return viewVorbereitung(k.id); }
+  if (p.art === 'faelle') return startSession(Object.assign(basis, {scope:{klausur:k.id, fall:true}}));
+  if (p.art === 'fehler'){ const schwach = einheitenIn({klausur:k.id}).filter(e => S.box[e.id] && S.box[e.id].b <= 2).length; return startSession(Object.assign(basis, {scope:{klausur:k.id}, nurSchwach: schwach >= 5})); }
+  startSession(Object.assign(basis, {scope:{klausur:k.id, themen:p.themen}}));   // lernen, check, gross (ohne themen = alles)
+}
+function startProbe(k, tag){
+  const items = einheitenIn({klausur:k.id, probe:true});
+  exam = {titel: k.titel + ' · Probeklausur', aufg: items.map(e => ({kind:e.typ, e})), i:0, ant:[], selbst:[], max: items.reduce((s,e) => s + (e.punkte||2), 0),
+    ende: Date.now() + k.probe.minuten*60000, themen:[], klausur:k.id, scope:{klausur:k.id}, zurueck:'#/klausuren/' + k.id, vorb:{k:k.id, tag: tag || probeTag(k)}};
+  go('#/pruefung');
+}
+function lernseite(k, ids){
+  const th = ids.map(id => k.themen.find(t => t.id === id)).filter(Boolean);
+  FX.fenster(`<div class="kv-lernseite">${th.map(t => `<div class="eyebrow">Lernseite · Lernmappe S. ${t.seite}</div><h2>${esc(t.name)}</h2><div class="kv-lern">${md(t.lern.join('\n'))}</div><div class="kv-merke"><b>Merke</b>${md(t.merke)}</div>`).join('<hr>')}
+    <p class="small muted">Einmal konzentriert lesen, Fenster schließen und den Inhalt laut mit eigenen Worten erklären. Danach üben.</p></div>`);
+}
+function zahlenblatt(k){
+  FX.fenster(`<div class="kv-lernseite"><div class="eyebrow">${esc(k.titel)}</div><h2>Zahlenblatt</h2><table class="kv-tab">${k.zahlen.map(z => `<tr><td>${esc(z[0])}</td><td>${esc(z[1])}</td></tr>`).join('')}</table></div>`);
+}
+
+function viewKlausuren(){
+  const l = KL.map(k => ({k, t: tageBis(k.datum)})).sort((a,b) => (a.t < 0) - (b.t < 0) || (a.t < 0 ? b.t - a.t : a.t - b.t));
+  app.innerHTML = seitenKopf('Prüfungsvorbereitung', 'Klausuren', 'Für jede angekündigte Klausur ein eigener Lernplan – nur mit dem Stoff, der drankommt.') + (l.length ? `<div class="kv-liste">${l.map(({k, t}) => {
+    const f = fachOf(k.fach), b = bereit(k), erl = k.plan.filter(p => planErledigt(k, p.tag)).length;
+    return `<button class="panel kv-karte ${t < 0 ? 'vorbei' : ''}" data-kl="${k.id}" style="--fc:var(--${f.farbe})">
+      <div class="kv-karte-kopf"><span class="kv-fach">${f.name}</span><span class="kv-wann ${t >= 0 && t <= 3 ? 'knapp' : ''}">${countText(t)}</span></div>
+      <h2>${esc(k.titel)}</h2><p class="muted">${esc(k.untertitel)} · ${tagLang(k.datum)}</p>
+      <div class="kv-karte-fuss"><div class="ring sm" style="--p:${b};--c:var(--${f.farbe})"><div><b>${b}%</b></div></div><div class="kv-karte-stand"><b>${erl} von ${k.plan.length}</b><small>Lernplan-Schritte erledigt</small></div><span class="kv-los">Vorbereiten ${ICON.pfeil}</span></div>
+    </button>`; }).join('')}</div>` : `<div class="panel" style="padding:20px"><p class="muted">Gerade ist keine Klausur angekündigt.</p></div>`);
+  app.querySelectorAll('[data-kl]').forEach(b => b.onclick = () => go('#/klausuren/' + b.dataset.kl));
+}
+
+function viewVorbereitung(id){
+  const k = klausurOf(id); if (!k) return go('#/klausuren');
+  const f = fachOf(k.fach), t = tageBis(k.datum), b = bereit(k), v = vorbStand(k.id), heute = dayKey(), hp = planHeute(k);
+  const probe = einheitenIn({klausur:k.id, probe:true}), probePkt = probe.reduce((s,e) => s + (e.punkte||2), 0);
+  const ergebnisse = S.klausuren.filter(x => x.titel === k.titel + ' · Probeklausur').slice(-3).reverse();
+  const erl = k.plan.filter(p => v.tage[p.tag]).length, nCheck = k.selbstcheck.filter((_, i) => v.check[i]).length;
+  const status = p => v.tage[p.tag] ? 'erledigt' : p.tag === heute ? 'heute' : p.tag < heute ? 'verpasst' : 'offen';
+  const artIcon = {lernen:ICON.cards, check:ICON.target, faelle:ICON.quiz, gross:ICON.bolt, probe:ICON.exam, fehler:ICON.target, klausur:ICON.trophy};
+  const umfang = p => p.art === 'probe' ? probe.length + ' Aufgaben' : p.art === 'klausur' ? 'Zahlenblatt' : (p.n || 15) + ' Fragen';
+  const themaKurz = tid => (k.themen.find(x => x.id === tid) || {}).name || '';
+  app.innerHTML = `<button class="btn ghost back" id="bk">${ICON.back}Alle Klausuren</button>
+  <section class="panel kv-kopf" style="--fc:var(--${f.farbe})">
+    <div class="kv-kopf-text"><div class="eyebrow">Prüfungsvorbereitung · ${f.name}</div><h1>${esc(k.titel)}</h1><p class="muted">${esc(k.untertitel)} · ${tagLang(k.datum)}</p>
+      <div class="kv-chips">${k.themen.map(th => `<span>${esc(th.name)}</span>`).join('')}</div></div>
+    <div class="kv-kopf-zahlen"><div class="kv-count ${t >= 0 && t <= 3 ? 'knapp' : ''}"><b>${t < 0 ? '–' : t}</b><span>${t < 0 ? 'vorbei' : t === 0 ? 'heute!' : t === 1 ? 'Tag' : 'Tage'}</span></div>
+      <div class="ring" style="--p:${b};--c:var(--${f.farbe})"><div><b>${b}%</b><small>sicher</small></div></div></div>
+  </section>
+  ${hp ? `<section class="panel kv-heute ${v.tage[hp.tag] ? 'fertig' : ''}" style="--fc:var(--${f.farbe})">
+    <div class="kv-heute-ico">${artIcon[hp.art]}</div>
+    <div class="kv-heute-text"><div class="eyebrow">${hp.tag === heute ? 'Heute dran' : 'Los geht’s am'} · ${tagKurz(hp.tag)}</div><h2>${esc(hp.titel)}</h2><p class="muted small">${hp.dauer} · ${umfang(hp)}${v.tage[hp.tag] ? ' · <b class="kv-ok">erledigt</b>' : ''}</p></div>
+    <div class="row">${hp.themen && hp.themen.length < 4 ? `<button class="btn" data-lern="${hp.themen.join(',')}">${ICON.book}Lernseite${hp.themen.length > 1 ? 'n' : ''}</button>` : ''}<button class="btn primary" data-plan="${hp.tag}">${ICON.play}${v.tage[hp.tag] ? 'Nochmal' : hp.art === 'klausur' ? 'Zahlenblatt' : 'Los geht’s'}</button></div>
+  </section>` : ''}
+
+  <section class="section"><div class="section-head"><h2>Lernplan</h2><span class="muted small">${erl} von ${k.plan.length} erledigt · der Haken setzt sich nach einer Übung von selbst</span></div>
+  <div class="panel kv-plan">${k.plan.map(p => { const st = status(p), d = tagKurz(p.tag).split(' ');
+    return `<div class="kv-tag ${st}"><button class="kv-haken" data-hk="${p.tag}" aria-label="${st === 'erledigt' ? 'Als offen markieren' : 'Als erledigt markieren'}" title="${st === 'erledigt' ? 'Als offen markieren' : 'Als erledigt markieren'}">${ICON.ok}</button>
+      <div class="kv-datum"><b>${d[0]}</b><small>${d[1]}</small></div>
+      <div class="kv-was"><b>${esc(p.titel)}</b><small>${p.dauer} · ${umfang(p)}${st === 'heute' ? ' · <i>heute</i>' : st === 'verpasst' ? ' · <i>nachholen</i>' : ''}</small></div>
+      <button class="btn klein ${st === 'heute' ? 'primary' : ''}" data-plan="${p.tag}">${p.art === 'klausur' ? 'Zahlenblatt' : st === 'erledigt' ? 'Nochmal' : 'Starten'}</button></div>`; }).join('')}</div></section>
+
+  <section class="section"><div class="section-head"><h2>Themen der Klausur</h2><span class="muted small">Lernseite lesen, dann üben</span></div>
+  <div class="kv-themen">${k.themen.map(th => { const l = einheitenIn({klausur:k.id, themen:[th.id]}), m = mastery(l);
+    return `<div class="panel kv-thema"><div class="kv-thema-kopf"><b>${esc(th.name)}</b><span class="mono small">${m} %</span></div><div class="bar"><i style="width:${Math.max(m, 2)}%;background:var(--${f.farbe})"></i></div><small class="muted">${l.length} Fragen · Lernmappe S. ${th.seite}</small>
+      <div class="row"><button class="btn klein" data-lern="${th.id}">${ICON.book}Lernseite</button><button class="btn klein" data-ueb="${th.id}">${ICON.bolt}Üben</button></div></div>`; }).join('')}</div>
+  <div class="row kv-mix"><button class="btn" data-mix="alle">${ICON.cards}Alles gemischt</button><button class="btn" data-mix="fall">${ICON.quiz}Nur Fallaufgaben</button><button class="btn" data-mix="zahl">${ICON.target}Nur Zahlen</button><button class="btn" data-mix="schwach">${ICON.flame}Meine Schwächen</button></div>
+  <p class="kv-nicht small muted">Nicht Teil der Klausur: ${k.nichtDran.map(n => `<span>${esc(n)}</span>`).join('')}</p></section>
+
+  <section class="section kv-zwei">
+    <div class="panel kv-box"><div class="kasten-kopf">${GFX.mini('lampe')}<h3>Zahlenblatt</h3></div><table class="kv-tab">${k.zahlen.map(z => `<tr><td>${esc(z[0])}</td><td>${esc(z[1])}</td></tr>`).join('')}</table><button class="btn voll" data-mix="zahl">${ICON.target}Zahlen abfragen</button></div>
+    <div class="panel kv-box"><div class="kasten-kopf">${GFX.mini('blatt')}<h3>Probeklausur</h3></div>
+      <p class="muted small">${probe.length} Aufgaben · ${probePkt} Punkte · ${k.probe.minuten} Minuten – wie die Mini-Probeklausur der Lernmappe. Antwort schreiben, mit der Musterlösung vergleichen, ehrlich bewerten. Am Ende gibt es eine Note.</p>
+      ${ergebnisse.length ? `<ul class="kv-ergebnisse">${ergebnisse.map(r => `<li><b style="color:${notenFarbe(r.note)}">Note ${r.note}</b><span>${r.datum} · ${r.punkte} von ${r.max} Punkten · ${r.prozent} %</span></li>`).join('')}</ul>` : probeTag(k) ? `<p class="small muted">Noch nicht geschrieben – im Lernplan am ${tagKurz(probeTag(k))}.</p>` : ''}
+      <button class="btn primary voll" id="kvProbe">${ICON.exam}Probeklausur starten</button></div>
+  </section>
+
+  <section class="section"><div class="section-head"><h2>Selbstcheck</h2><span class="muted small">${nCheck} von ${k.selbstcheck.length} · Haken erst, wenn du es ohne Nachschauen erklären kannst</span></div>
+  <div class="panel kv-check">${k.selbstcheck.map((c, i) => `<label class="check"><input type="checkbox" data-sc="${i}" ${v.check[i] ? 'checked' : ''}><span>${esc(c)}</span></label>`).join('')}</div></section>
+  <p class="small muted kv-quelle">${ICON.book}<span>Quelle: ${esc(k.quelle)}. Diese Fragen gibt es nur hier – sie tauchen nicht im normalen Üben, in den Fächern oder in den Games auf.</span></p>`;
+
+  const zurueck = '#/klausuren/' + k.id;
+  $('#bk').onclick = () => go('#/klausuren');
+  app.querySelectorAll('[data-plan]').forEach(b => b.onclick = () => startPlan(k, k.plan.find(p => p.tag === b.dataset.plan)));
+  app.querySelectorAll('[data-hk]').forEach(b => b.onclick = () => { planAbhaken(k.id, b.dataset.hk, !v.tage[b.dataset.hk]); viewVorbereitung(id); });
+  app.querySelectorAll('[data-lern]').forEach(b => b.onclick = () => lernseite(k, b.dataset.lern.split(',')));
+  app.querySelectorAll('[data-ueb]').forEach(b => b.onclick = () => startSession({titel: themaOf(b.dataset.ueb).name, kinds:['K','M'], scope:{klausur:k.id, themen:[b.dataset.ueb]}, n:12, zurueck}));
+  app.querySelectorAll('[data-mix]').forEach(b => b.onclick = () => {
+    const m = b.dataset.mix, scope = {klausur:k.id};
+    if (m === 'fall') scope.fall = true;
+    if (m === 'zahl') scope.zahl = true;
+    if (m === 'schwach' && !einheitenIn(scope).some(e => S.box[e.id] && S.box[e.id].b <= 2)) return toast('Noch keine Schwächen – erst ein paar Fragen üben.');
+    startSession({titel: {alle:'Alles gemischt', fall:'Fallaufgaben', zahl:'Zahlen-Drill', schwach:'Meine Schwächen'}[m], kinds:['K','M'], scope, n: m === 'zahl' ? 12 : 15, nurSchwach: m === 'schwach', zurueck});
+  });
+  $('#kvProbe').onclick = () => startProbe(k);
+  app.querySelectorAll('[data-sc]').forEach(c => c.onchange = () => { if (c.checked) v.check[c.dataset.sc] = Date.now(); else delete v.check[c.dataset.sc]; save(); viewVorbereitung(id); });
 }
 
 /* ---------------- Schnittstelle für konto.js / duell.js ---------------- */

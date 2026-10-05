@@ -148,6 +148,7 @@ const POKAL = '<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 
 const nav = {
   start: `<svg viewBox="0 0 24 24" class="nav-ico" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7v8.5a1.5 1.5 0 0 1-1.5 1.5h-4.5v-6h-5v6H5a1.5 1.5 0 0 1-1.5-1.5z" style="fill:currentColor"/></svg>`,
   faecher: ln(BUCH), buchnav: ln(BUCH), duelle: ln(POKAL), pokalnav: ln(POKAL),
+  klausur: ln('<rect x="5" y="3.5" width="14" height="17.5" rx="2.5"/><path d="M9 3.5V2h6v1.5M8.5 11.5l2.2 2.2 4.8-4.8M8.5 17h7"/>'),
   rang: ln('<path d="M5 20v-7M12 20V5M19 20v-10"/><path d="M3 20.5h18"/>'),
   karten: ln('<rect x="3" y="6" width="13" height="14" rx="2.5"/><path d="M7 3h11.5A2.5 2.5 0 0 1 21 5.5V17"/>'),
   ueben: ln('<path d="M13 2.5 4.5 13.5H11l-1 8 8.5-11H12z"/>'),
