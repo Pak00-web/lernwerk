@@ -1,5 +1,5 @@
 -- Automatisch erzeugt von tools/spiel-fragen.js – nicht von Hand ändern.
--- Lösungen der 167 Spielfragen aus fragen.js. Nach jeder Änderung an fragen.js neu erzeugen und im SQL Editor ausführen.
+-- Lösungen der 180 Spielfragen aus fragen.js. Nach jeder Änderung an fragen.js neu erzeugen und im SQL Editor ausführen.
 begin;
 delete from public.spiel_fragen;
 insert into public.spiel_fragen (id, fach, schwer, anzahl, richtig) values
@@ -72,6 +72,19 @@ insert into public.spiel_fragen (id, fach, schwer, anzahl, richtig) values
   ('a70', 'aew', 1, 3, 0),
   ('a71', 'aew', 1, 3, 0),
   ('a72', 'aew', 1, 3, 0),
+  ('a80', 'aew', 1, 4, 0),
+  ('a81', 'aew', 2, 3, 0),
+  ('a82', 'aew', 2, 4, 0),
+  ('a83', 'aew', 2, 3, 0),
+  ('a84', 'aew', 1, 3, 0),
+  ('a85', 'aew', 2, 3, 0),
+  ('a86', 'aew', 1, 3, 0),
+  ('a87', 'aew', 2, 3, 0),
+  ('a88', 'aew', 2, 3, 0),
+  ('a89', 'aew', 2, 3, 0),
+  ('a90', 'aew', 2, 3, 0),
+  ('a91', 'aew', 2, 3, 0),
+  ('a92', 'aew', 2, 3, 0),
   ('w5v1', 'wbl', 2, 4, 0),
   ('w5v2', 'wbl', 2, 4, 0),
   ('w6v1', 'wbl', 2, 4, 0),
